@@ -40,8 +40,7 @@ class NewProfileActivity : AbstractActivity<ActivityAddProfileBinding>() {
         }
     }
 
-    private val importFile =
-        registerForActivityResult(ActivityResultContracts.GetContent()) { fileURI ->
+    private val importFile = registerForActivityResult(ActivityResultContracts.GetContent()) { fileURI ->
             if (fileURI != null) {
                 binding.sourceURL.editText?.setText(fileURI.toString())
             }

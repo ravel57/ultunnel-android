@@ -192,4 +192,8 @@ class VPNService : VpnService(), PlatformInterfaceWrapper {
     override fun sendNotification(notification: Notification) =
         service.sendNotification(notification)
 
+    override fun updateRouteOptions(options: TunOptions?) {
+        TODO("Not yet implemented")
+    }
+
 }

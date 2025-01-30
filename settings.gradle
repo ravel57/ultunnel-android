@@ -13,5 +13,5 @@ dependencyResolutionManagement {
         maven { url "https://jitpack.io" }
     }
 }
-rootProject.name = "sing-box"
+rootProject.name = "ultunnel"
 include ':app'
