@@ -167,6 +167,8 @@ dependencies {
     implementation 'androidx.activity:activity-compose:1.10.1'
     implementation 'me.zhanghai.compose.preference:library:1.1.1'
     implementation "androidx.navigation:navigation-compose:2.9.3"
+
+    implementation 'com.google.code.gson:gson:2.11.0'
 }
 
 def playCredentialsJSON = rootProject.file("service-account-credentials.json")

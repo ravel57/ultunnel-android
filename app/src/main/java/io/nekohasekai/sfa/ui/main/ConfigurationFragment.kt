@@ -16,6 +16,8 @@ import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+import com.google.gson.Gson
+import com.google.gson.JsonParser
 import io.nekohasekai.sfa.R
 import io.nekohasekai.sfa.database.Profile
 import io.nekohasekai.sfa.database.ProfileManager
@@ -26,6 +28,8 @@ import io.nekohasekai.sfa.databinding.ViewConfigutationItemBinding
 import io.nekohasekai.sfa.ktx.errorDialogBuilder
 import io.nekohasekai.sfa.ktx.shareProfile
 import io.nekohasekai.sfa.ktx.shareProfileURL
+import io.nekohasekai.sfa.model.Config
+import io.nekohasekai.sfa.model.ConfigFileFromServer
 import io.nekohasekai.sfa.ui.MainActivity
 import io.nekohasekai.sfa.ui.profile.EditProfileActivity
 import io.nekohasekai.sfa.ui.profile.NewProfileActivity
@@ -35,6 +39,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.File
+import java.net.HttpURLConnection
+import java.net.URL
 import java.text.DateFormat
 import java.util.Collections
 
@@ -78,10 +85,63 @@ class ConfigurationFragment : Fragment() {
         }
         adapter.reload()
         binding.fab.setOnClickListener {
-            AddProfileDialog().show(childFragmentManager, "add_profile")
+//            AddProfileDialog().show(childFragmentManager, "add_profile")
+            lifecycleScope.launch(Dispatchers.IO) {
+                try {
+                    val url = "http://172.22.0.73:8081/api/v1/get-users-proxy-servers-singbox?secretKey=XMAv4HVAOTvyOUehJeUSB"
+                    val fetchedData = fetchData(url)
+                    fetchedData?.forEach { config ->
+                        val typedProfile = TypedProfile()
+                        val fileID = ProfileManager.nextFileID()
+                        val configDirectory = File(requireContext().filesDir, "configs").also { it.mkdirs() }
+                        val configFile = File(configDirectory, "$fileID.json")
+                        typedProfile.path = configFile.path
+                        val profile = Profile(name = config.name, typed = typedProfile)
+                        profile.userOrder = ProfileManager.nextOrder()
+                        configFile.writeText(config.content)
+                        ProfileManager.create(profile)
+                    }
+                    withContext(Dispatchers.Main) {}
+                } catch (e: Exception) {
+                    withContext(Dispatchers.Main) {
+                        requireContext().errorDialogBuilder(e).show()
+                    }
+                }
+            }
         }
         ProfileManager.registerCallback(this::updateProfiles)
         return binding.root
+    }
+
+    private suspend fun fetchData(url: String): List<ConfigFileFromServer>? {
+        return withContext(Dispatchers.IO) {
+            try {
+                val connection = URL(url).openConnection() as HttpURLConnection
+                connection.requestMethod = "GET"
+                connection.connectTimeout = 5000
+                connection.readTimeout = 5000
+                if (connection.responseCode == HttpURLConnection.HTTP_OK) {
+                    val content = connection.inputStream.bufferedReader().readText()
+                    val gson = Gson()
+                    val jsonElement = JsonParser.parseString(content)
+                    if (jsonElement.isJsonArray) {
+                        return@withContext jsonElement.asJsonArray.map {
+                            ConfigFileFromServer(
+                                content = it.toString(),
+                                name = gson.fromJson(it, Config::class.java).outbounds[0].type ?: "null",
+                            )
+                        }
+                    } else {
+                        return@withContext null
+                    }
+                } else {
+                    return@withContext null
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                return@withContext null
+            }
+        }
     }
 
 

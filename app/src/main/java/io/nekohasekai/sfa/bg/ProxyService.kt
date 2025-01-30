@@ -3,6 +3,7 @@ package io.nekohasekai.sfa.bg
 import android.app.Service
 import android.content.Intent
 import io.nekohasekai.libbox.Notification
+import io.nekohasekai.libbox.TunOptions
 
 class ProxyService :
     Service(),

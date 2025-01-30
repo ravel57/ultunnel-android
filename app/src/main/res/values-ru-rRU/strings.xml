@@ -6,6 +6,8 @@
     <string name="language">Язык</string>
     <string name="system_default">Системный по умолчанию</string>
 
+    <string name="stop">Стоп</string>
+    <string name="ok">ОК</string>
     <!-- Common Actions -->
     <string name="ok">OK</string>
     <string name="cancel">Отмена</string>
