@@ -49,8 +49,7 @@ object DefaultNetworkMonitor {
     ) {
         val listener = listener ?: return
         if (newNetwork != null) {
-            val interfaceName =
-                (Application.connectivity.getLinkProperties(newNetwork) ?: return).interfaceName
+            val interfaceName = (Application.connectivity.getLinkProperties(newNetwork) ?: return).interfaceName
             for (times in 0 until 10) {
                 var interfaceIndex: Int
                 try {
