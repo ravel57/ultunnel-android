@@ -88,6 +88,7 @@ class ConfigurationFragment : Fragment() {
 //            AddProfileDialog().show(childFragmentManager, "add_profile")
             lifecycleScope.launch(Dispatchers.IO) {
                 try {
+
                     val url = "http://172.22.0.73:8081/api/v1/get-users-proxy-servers-singbox?secretKey=XMAv4HVAOTvyOUehJeUSB"
                     val fetchedData = fetchData(url)
                     fetchedData?.forEach { config ->
