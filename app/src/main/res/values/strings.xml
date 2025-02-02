@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name" translatable="false">ultunnel</string>
+    <string name="app_name" translatable="false">UL tunnel</string>
 
     <string name="stop">Stop</string>
     <string name="ok">OK</string>
