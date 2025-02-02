@@ -115,6 +115,15 @@ object Settings {
         else -> ProxyService::class.java
     }
 
+	var accessKey by dataStore.string(SettingsKey.ACCESS_KEY) { "" }
+
+	fun serviceClass(): Class<*> {
+		return when (serviceMode) {
+			ServiceMode.VPN -> VPNService::class.java
+			else -> ProxyService::class.java
+		}
+	}
+
     suspend fun rebuildServiceMode(): Boolean {
         var newMode = ServiceMode.NORMAL
         try {

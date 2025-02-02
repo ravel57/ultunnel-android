@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
     <!-- App -->
-    <string name="app_name" translatable="false">sing-box</string>
+    <string name="app_name" translatable="false">ULtunnel</string>
     <string name="app_version_title">Версия приложения</string>
     <string name="language">Язык</string>
     <string name="system_default">Системный по умолчанию</string>
@@ -493,13 +493,15 @@
     <string name="vpn_app_type_other">Другое</string>
     <string name="vpn_core_type_unknown">Неизвестно</string>
     <string name="no_updates_available">Обновлений нет</string>
-    <string name="sponsor">Спонсор</string>
+    <string name="logs">Логи</string>
+    <string name="access_key">Ключ доступа</string>
     <string name="sponsor_message">Если я облегчил вашу современную жизнь, пожалуйста, рассмотрите возможность спонсорства.</string>
     <string name="action_start">Запустить</string>
     <string name="location_permission_title">Разрешение на местоположение</string>
-    <string name="location_permission_description"><![CDATA[Ваш профиль содержит <strong><tt>wifi_ssid</tt> или <tt>wifi_bssid</tt> правила маршрутизации</strong>. Для их работы sing-box использует <strong>разрешение на местоположение</strong> <strong>в фоне</strong>, чтобы получить информацию о подключённой Wi-Fi сети. Информация будет использоваться <strong>только для маршрутизации</strong>.]]></string>
+    <string name="location_permission_description"><![CDATA[Ваш профиль содержит <strong><tt>wifi_ssid</tt> или <tt>wifi_bssid</tt> правила маршрутизации</strong>. Для их работы UL tunnel использует <strong>разрешение на местоположение</strong> <strong>в фоне</strong>, чтобы получить информацию о подключённой Wi-Fi сети. Информация будет использоваться <strong>только для маршрутизации</strong>.]]></string>
     <string name="location_permission_background_description"><![CDATA[На Android 10 и выше требуется разрешение на <strong>фоновое местоположение</strong>. Выберите <strong>Разрешить всегда</strong>, чтобы предоставить разрешение.]]></string>
     <string name="open_settings">Открыть настройки</string>
+    <string name="fab_description">Start/Strop VPN</string>
     <string name="message_scan_app_no_apps_found">Совпадающих приложений не найдено</string>
     <string name="message_scan_app_found">Найдены следующие приложения. Выберите нужное действие.</string>
 

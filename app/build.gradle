@@ -1,3 +1,105 @@
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
+plugins {
+    id "com.android.application"
+    id "kotlin-android"
+    id "kotlin-parcelize"
+    id "com.google.devtools.ksp"
+    id "org.jetbrains.kotlin.plugin.compose"
+    id "com.github.triplet.play"
+}
+
+android {
+    namespace "io.nekohasekai.sfa"
+    compileSdk 36
+
+    ndkVersion "28.0.13004108"
+
+    def ndkPathFromEnv = System.getenv("ANDROID_NDK_HOME")
+    if (ndkPathFromEnv != null) {
+        ndkPath ndkPathFromEnv
+    }
+
+    ksp {
+        arg("room.incremental", "true")
+        arg("room.schemaLocation", "$projectDir/schemas")
+    }
+
+    defaultConfig {
+        applicationId "io.nekohasekai.sfa"
+        minSdk 21
+        targetSdk 35
+        versionCode getVersionProps("VERSION_CODE").toInteger()
+        versionName getVersionProps("VERSION_NAME")
+        setProperty("archivesBaseName", "ULtunnel-" + versionName)
+    }
+
+    signingConfigs {
+        release {
+            storeFile file("release.keystore")
+            storePassword getProps("KEYSTORE_PASS")
+            keyAlias getProps("ALIAS_NAME")
+            keyPassword getProps("ALIAS_PASS")
+        }
+    }
+
+    buildTypes {
+        debug {
+            if (getProps("KEYSTORE_PASS") != "") {
+                signingConfig signingConfigs.release
+            }
+        }
+        release {
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
+            signingConfig signingConfigs.release
+            vcsInfo.include false
+        }
+    }
+
+    dependenciesInfo {
+        includeInApk = false
+    }
+
+    flavorDimensions "vendor"
+    productFlavors {
+        play {
+        }
+        other {
+        }
+    }
+
+    splits {
+        abi {
+            enable true
+            universalApk true
+            reset()
+            include "armeabi-v7a", "arm64-v8a", "x86", "x86_64"
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    buildFeatures {
+        viewBinding true
+        aidl true
+        compose true
+    }
+
+    applicationVariants.configureEach { variant ->
+        variant.outputs.configureEach {
+            outputFileName = (outputFileName as String).replace("-release", "")
+            outputFileName = (outputFileName as String).replace("-play", "")
+            outputFileName = (outputFileName as String).replace("-other", "-foss")
+        }
+    }
+}
+
+dependencies {
+    implementation(fileTree("libs"))
 
     implementation "androidx.core:core-ktx:1.16.0"
     implementation "androidx.appcompat:appcompat:1.7.1"
@@ -31,6 +133,7 @@
     playImplementation "com.google.android.gms:play-services-mlkit-barcode-scanning:18.3.1"
 
     implementation 'com.google.code.gson:gson:2.11.0'
+    implementation "androidx.swiperefreshlayout:swiperefreshlayout:1.2.0-alpha01"
 
     def composeBom = platform('androidx.compose:compose-bom:2025.07.00')
     implementation composeBom
