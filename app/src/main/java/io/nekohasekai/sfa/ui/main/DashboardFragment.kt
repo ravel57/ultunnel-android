@@ -1,5 +1,9 @@
 package io.nekohasekai.sfa.ui.main
 
+import android.app.UiModeManager
+import android.content.Context
+import android.content.pm.PackageManager
+import android.content.res.Configuration
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -100,39 +104,12 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
                 else -> {}
             }
         }
+        binding.refresh.visibility = if (isAndroidTV(requireContext())) View.VISIBLE else View.INVISIBLE
+        binding.refresh.setOnClickListener {
+            updateProfiles()
+        }
         binding.swiperefresh.setOnRefreshListener {
-            lifecycleScope.launch(Dispatchers.IO) {
-                try {
-                    val url = "https://admin.ultunnel.ru/api/v1/get-users-proxy-servers-singbox?secretKey=${Settings.accessKey}"
-                    val fetchedData = fetchData(url).also {
-                        if (it?.isNotEmpty() == true) {
-                            BoxService.stop()
-                            ProfileManager.list().toMutableList().forEach { config ->
-                                ProfileManager.delete(config)
-                            }
-                        }
-                    }
-                    fetchedData?.forEach { config ->
-                        val typedProfile = TypedProfile()
-                        val fileID = ProfileManager.nextFileID()
-                        val configDirectory = File(requireContext().filesDir, "configs").also { it.mkdirs() }
-                        val configFile = File(configDirectory, "$fileID.json")
-                        typedProfile.path = configFile.path
-                        val profile = Profile(name = config.name, typed = typedProfile)
-                        profile.userOrder = ProfileManager.nextOrder()
-                        configFile.writeText(config.content)
-                        ProfileManager.create(profile)
-                    }
-                    withContext(Dispatchers.Main) {}
-                } catch (e: Exception) {
-                    withContext(Dispatchers.Main) {
-                        requireContext().errorDialogBuilder(e).show()
-                    }
-                } finally {
-                    binding.swiperefresh.isRefreshing = false
-                }
-            }
-
+            updateProfiles()
         }
     }
 
@@ -141,6 +118,47 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
         mediator?.detach()
         mediator = null
         binding = null
+    }
+
+    private fun isAndroidTV(context: Context): Boolean {
+        val uiModeManager = context.getSystemService(Context.UI_MODE_SERVICE) as UiModeManager
+        val isTvMode = uiModeManager.currentModeType == Configuration.UI_MODE_TYPE_TELEVISION
+        val hasLeanback = context.packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK)
+        return isTvMode || hasLeanback
+    }
+
+    private fun updateProfiles() {
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                val url = "https://admin.ultunnel.ru/api/v1/get-users-proxy-servers-singbox?secretKey=${Settings.accessKey}"
+                val fetchedData = fetchData(url).also {
+                    if (it?.isNotEmpty() == true) {
+                        BoxService.stop()
+                        ProfileManager.list().toMutableList().forEach { config ->
+                            ProfileManager.delete(config)
+                        }
+                    }
+                }
+                fetchedData?.forEach { config ->
+                    val typedProfile = TypedProfile()
+                    val fileID = ProfileManager.nextFileID()
+                    val configDirectory = File(requireContext().filesDir, "configs").also { it.mkdirs() }
+                    val configFile = File(configDirectory, "$fileID.json")
+                    typedProfile.path = configFile.path
+                    val profile = Profile(name = config.name, typed = typedProfile)
+                    profile.userOrder = ProfileManager.nextOrder()
+                    configFile.writeText(config.content)
+                    ProfileManager.create(profile)
+                }
+                withContext(Dispatchers.Main) {}
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    requireContext().errorDialogBuilder(e).show()
+                }
+            } finally {
+                binding?.swiperefresh?.isRefreshing = false
+            }
+        }
     }
 
     private fun checkDeprecatedNotes() {
@@ -173,7 +191,7 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
                 requireContext().launchCustomTab(note.migrationLink)
                 loopShowDeprecatedNotes(notes)
             }
-            builder.show()
+//            builder.show()
         }
     }
 

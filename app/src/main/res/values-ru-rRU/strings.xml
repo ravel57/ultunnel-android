@@ -192,4 +192,5 @@
     <string name="location_permission_background_description"><![CDATA[На Android 10 и выше требуется разрешение на <strong>фоновое местоположение</strong>. Выберите <strong>Разрешить всегда</strong>, чтобы предоставить разрешение.]]></string>
     <string name="open_settings">Открыть настройки</string>
     <string name="fab_description">Start/Strop VPN</string>
+    <string name="reload_description">Обновить список VPN</string>
 </resources>
