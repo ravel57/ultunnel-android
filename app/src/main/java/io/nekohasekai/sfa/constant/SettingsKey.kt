@@ -19,4 +19,7 @@ object SettingsKey {
 
     const val STARTED_BY_USER = "started_by_user"
 
+
+    const val ACCESS_KEY = "access_key"
+
 }

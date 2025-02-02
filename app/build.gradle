@@ -30,7 +30,7 @@ android {
         targetSdk 35
         versionCode getVersionProps("VERSION_CODE").toInteger()
         versionName getVersionProps("VERSION_NAME")
-        setProperty("archivesBaseName", "SFA-" + versionName)
+        setProperty("archivesBaseName", "ULtunnel-" + versionName)
     }
 
     signingConfigs {
@@ -131,6 +131,7 @@ dependencies {
     playImplementation "com.google.android.gms:play-services-mlkit-barcode-scanning:18.3.1"
 
     implementation 'com.google.code.gson:gson:2.11.0'
+    implementation "androidx.swiperefreshlayout:swiperefreshlayout:1.2.0-alpha01"
 }
 
 def playCredentialsJSON = rootProject.file("service-account-credentials.json")
