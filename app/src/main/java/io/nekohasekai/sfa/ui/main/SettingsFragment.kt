@@ -5,6 +5,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.text.Editable
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -12,8 +13,10 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.core.view.isGone
 import androidx.core.view.isVisible
+import androidx.core.widget.doOnTextChanged
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
 import io.nekohasekai.libbox.Libbox
 import io.nekohasekai.sfa.Application
 import io.nekohasekai.sfa.R
@@ -52,7 +55,7 @@ class SettingsFragment : Fragment() {
         }
     }
 
-    @SuppressLint("BatteryLife")
+    @SuppressLint("BatteryLife", "ResourceType")
     private fun onCreate() {
         val activity = activity as MainActivity? ?: return
         val binding = binding ?: return
@@ -112,8 +115,12 @@ class SettingsFragment : Fragment() {
         binding.openDebugButton.setOnClickListener {
             startActivity(Intent(requireContext(), DebugActivity::class.java))
         }
-        binding.startSponserButton.setOnClickListener {
-            activity.launchCustomTab("https://sekai.icu/sponsors/")
+        binding.startLogsButton.setOnClickListener {
+            findNavController().navigate(R.id.action_navigation_settings_to_navigation_log)
+        }
+        binding.accessKey.text = Editable.Factory.getInstance().newEditable(Settings.accessKey)
+        binding.accessKey.doOnTextChanged { text, _, _, _ ->
+            Settings.accessKey = text.toString()
         }
         lifecycleScope.launch(Dispatchers.IO) {
             reloadSettings()

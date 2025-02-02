@@ -56,6 +56,8 @@ object Settings {
 
     var systemProxyEnabled by dataStore.boolean(SettingsKey.SYSTEM_PROXY_ENABLED) { true }
 
+    var accessKey by dataStore.string(SettingsKey.ACCESS_KEY) { "" }
+
     fun serviceClass(): Class<*> {
         return when (serviceMode) {
             ServiceMode.VPN -> VPNService::class.java

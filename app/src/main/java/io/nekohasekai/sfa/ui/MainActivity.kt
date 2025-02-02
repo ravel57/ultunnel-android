@@ -13,11 +13,11 @@ import androidx.activity.result.contract.ActivityResultContract
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.core.content.ContextCompat
-import androidx.core.view.isVisible
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination
+import androidx.navigation.findNavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.navigateUp
@@ -52,8 +52,7 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.util.Date
 
-class MainActivity : AbstractActivity<ActivityMainBinding>(),
-    ServiceConnection.Callback {
+class MainActivity : AbstractActivity<ActivityMainBinding>(), ServiceConnection.Callback {
 
     companion object {
         private const val TAG = "MainActivity"
@@ -70,26 +69,27 @@ class MainActivity : AbstractActivity<ActivityMainBinding>(),
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        navHostFragment =
-            supportFragmentManager.findFragmentById(R.id.nav_host_fragment_activity_my) as NavHostFragment
+        navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment_activity_my) as NavHostFragment
         navController = navHostFragment.navController
         navController.setGraph(R.navigation.mobile_navigation)
         navController.addOnDestinationChangedListener(::onDestinationChanged)
-        appBarConfiguration =
-            AppBarConfiguration(
-                setOf(
-                    R.id.navigation_dashboard,
-                    R.id.navigation_log,
-                    R.id.navigation_configuration,
-                    R.id.navigation_settings,
-                )
+        appBarConfiguration = AppBarConfiguration(
+            setOf(
+                R.id.navigation_dashboard,
+                R.id.navigation_settings,
             )
+        )
         setupActionBarWithNavController(navController, appBarConfiguration)
         binding.navView.setupWithNavController(navController)
         reconnect()
         startIntegration()
 
         onNewIntent(intent)
+
+        if (Settings.accessKey.isEmpty()) {
+            val navController = findNavController(R.id.nav_host_fragment_activity_my)
+            navController.navigate(R.id.navigation_settings)
+        }
     }
 
     override fun onSupportNavigateUp(): Boolean {
@@ -103,7 +103,7 @@ class MainActivity : AbstractActivity<ActivityMainBinding>(),
         bundle: Bundle?
     ) {
         val destinationId = navDestination.id
-        binding.dashboardTabContainer.isVisible = destinationId == R.id.navigation_dashboard
+//        binding.dashboardTabContainer.isVisible = destinationId == R.id.navigation_dashboard
     }
 
     override public fun onNewIntent(intent: Intent) {
