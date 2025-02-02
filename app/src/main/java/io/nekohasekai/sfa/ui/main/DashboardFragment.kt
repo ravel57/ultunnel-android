@@ -105,12 +105,39 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
                 else -> {}
             }
         }
-        binding.refresh.visibility = if (isAndroidTV(requireContext())) View.VISIBLE else View.INVISIBLE
-        binding.refresh.setOnClickListener {
-            updateProfiles()
-        }
         binding.swiperefresh.setOnRefreshListener {
-            updateProfiles()
+            lifecycleScope.launch(Dispatchers.IO) {
+                try {
+                    val url = "https://admin.ultunnel.ru/api/v1/get-users-proxy-servers-singbox?secretKey=${Settings.accessKey}"
+                    val fetchedData = fetchData(url).also {
+                        if (it?.isNotEmpty() == true) {
+                            BoxService.stop()
+                            ProfileManager.list().toMutableList().forEach { config ->
+                                ProfileManager.delete(config)
+                            }
+                        }
+                    }
+                    fetchedData?.forEach { config ->
+                        val typedProfile = TypedProfile()
+                        val fileID = ProfileManager.nextFileID()
+                        val configDirectory = File(requireContext().filesDir, "configs").also { it.mkdirs() }
+                        val configFile = File(configDirectory, "$fileID.json")
+                        typedProfile.path = configFile.path
+                        val profile = Profile(name = config.name, typed = typedProfile)
+                        profile.userOrder = ProfileManager.nextOrder()
+                        configFile.writeText(config.content)
+                        ProfileManager.create(profile)
+                    }
+                    withContext(Dispatchers.Main) {}
+                } catch (e: Exception) {
+                    withContext(Dispatchers.Main) {
+                        requireContext().errorDialogBuilder(e).show()
+                    }
+                } finally {
+                    binding.swiperefresh.isRefreshing = false
+                }
+            }
+
         }
     }
 
@@ -189,14 +216,19 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
             builder.setPositiveButton(R.string.ok) { _, _ ->
                 loopShowDeprecatedNotes(notes)
             }
-            if (!note.migrationLink.isNullOrBlank()) {
-                builder.setNeutralButton(R.string.service_error_deprecated_warning_documentation) { _, _ ->
-                    requireContext().launchCustomTab(note.migrationLink)
-                    loopShowDeprecatedNotes(notes)
-                }
+            builder.setNeutralButton(R.string.service_error_deprecated_warning_documentation) { _, _ ->
+                requireContext().launchCustomTab(note.migrationLink)
+                loopShowDeprecatedNotes(notes)
             }
-//            builder.show()
+            builder.show()
         }
+    }
+
+    private fun enablePager() {
+        val activity = activity ?: return
+        val binding = binding ?: return
+        activity.binding.dashboardTabLayout.isVisible = true
+        binding.dashboardPager.isUserInputEnabled = true
     }
 
     private fun disablePager() {

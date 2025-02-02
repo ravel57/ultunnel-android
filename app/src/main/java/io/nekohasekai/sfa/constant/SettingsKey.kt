@@ -35,7 +35,6 @@ object SettingsKey {
     // cache
     const val STARTED_BY_USER = "started_by_user"
 
-
     const val ACCESS_KEY = "access_key"
 
     const val CACHED_UPDATE_INFO = "cached_update_info"
