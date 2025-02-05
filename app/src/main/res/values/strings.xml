@@ -141,6 +141,9 @@
     <string name="profile_create">Create</string>
     <string name="profile_share_url">Share URL as QR Code</string>
     <string name="profile_input_required">Required</string>
+    <string name="profile_empty">Empty profiles, swipe to update</string>
+    <string name="profile_item_last_updated">Last Updated: %s</string>
+    <string name="profile_last_updated">Last Updated</string>
     <string name="profile_update">Update</string>
     <string name="profile_auto_update">Auto Update</string>
     <string name="profile_auto_update_interval">Auto Update Interval (Minutes)</string>
