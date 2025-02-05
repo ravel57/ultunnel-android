@@ -36,14 +36,14 @@
             android:layout_height="wrap_content"
             android:textColor="?colorOnSurface"
             android:textSize="16sp"
-            tools:text="sing-box" />
+            tools:text="ultunnel" />
 
         <TextView
             android:id="@+id/package_name"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
-            tools:text="io.nekohasekai.sfa" />
+            tools:text="ru.ravel.ultunnel" />
 
     </LinearLayout>
 

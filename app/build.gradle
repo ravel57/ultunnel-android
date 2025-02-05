@@ -9,7 +9,7 @@ plugins {
 }
 
 android {
-    namespace "io.nekohasekai.sfa"
+    namespace "ru.ravel.ultunnel"
     compileSdk 35
 
     ndkVersion "28.0.12916984"
@@ -25,7 +25,7 @@ android {
     }
 
     defaultConfig {
-        applicationId "io.nekohasekai.sfa"
+        applicationId "ru.ravel.ultunnel"
         minSdk 21
         targetSdk 35
         versionCode getVersionProps("VERSION_CODE").toInteger()

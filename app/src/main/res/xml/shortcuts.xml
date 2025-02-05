@@ -7,7 +7,7 @@
         android:shortcutShortLabel="@string/quick_toggle">
         <intent
             android:action="android.intent.action.MAIN"
-            android:targetClass="io.nekohasekai.sfa.ui.ShortcutActivity"
-            android:targetPackage="io.nekohasekai.sfa" />
+            android:targetClass="ru.ravel.ultunnel.ui.ShortcutActivity"
+            android:targetPackage="ru.ravel.ultunnel" />
     </shortcut>
 </shortcuts>
