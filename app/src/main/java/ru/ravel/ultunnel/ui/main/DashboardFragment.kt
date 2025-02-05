@@ -48,8 +48,9 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
 	private val activity: MainActivity? get() = super.getActivity() as MainActivity?
 	private var binding: FragmentDashboardBinding? = null
 	private var mediator: TabLayoutMediator? = null
-
-	override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
+	override fun onCreateView(
+        inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?,
+    ): View {
 		val binding = FragmentDashboardBinding.inflate(inflater, container, false)
 		this.binding = binding
 		onCreate()

@@ -51,7 +51,7 @@ class ServiceNotification(
 
 	private val notificationBuilder by lazy {
 		NotificationCompat.Builder(service, notificationChannel).setShowWhen(false).setOngoing(true)
-			.setContentTitle("ultunnel").setOnlyAlertOnce(true)
+			.setContentTitle("UL tunnel").setOnlyAlertOnce(true)
 			.setSmallIcon(R.drawable.ic_menu)
 			.setCategory(NotificationCompat.CATEGORY_SERVICE)
 			.setContentIntent(
@@ -91,7 +91,7 @@ class ServiceNotification(
 		}
 		service.startForeground(
 			ru.ravel.ultunnel.bg.ServiceNotification.Companion.notificationId, notificationBuilder
-				.setContentTitle(lastProfileName.takeIf { it.isNotBlank() } ?: "ultunnel")
+				.setContentTitle(lastProfileName.takeIf { it.isNotBlank() } ?: "UL tunnel")
 				.setContentText(service.getString(contentTextId)).build()
 		)
 	}

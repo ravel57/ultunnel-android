@@ -106,6 +106,9 @@ class MainActivity : AbstractActivity<ActivityMainBinding>(), ServiceConnection.
 			}
 			return@setOnItemSelectedListener NavigationUI.onNavDestinationSelected(item, navController)
 		}
+
+
+
 	}
 
 	override fun onSupportNavigateUp(): Boolean {
