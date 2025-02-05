@@ -7,25 +7,25 @@
 
     <fragment
         android:id="@+id/navigation_dashboard"
-        android:name="io.nekohasekai.sfa.ui.main.DashboardFragment"
+        android:name="ru.ravel.ultunnel.ui.main.DashboardFragment"
         android:label="@string/title_dashboard"
         tools:layout="@layout/fragment_dashboard" />
 
     <fragment
         android:id="@+id/navigation_log"
-        android:name="io.nekohasekai.sfa.ui.main.LogFragment"
+        android:name="ru.ravel.ultunnel.ui.main.LogFragment"
         android:label="@string/title_log"
         tools:layout="@layout/fragment_log" />
 
     <fragment
         android:id="@+id/navigation_configuration"
-        android:name="io.nekohasekai.sfa.ui.main.ConfigurationFragment"
+        android:name="ru.ravel.ultunnel.ui.main.ConfigurationFragment"
         android:label="@string/title_configuration"
         tools:layout="@layout/fragment_configuration" />
 
     <fragment
         android:id="@+id/navigation_settings"
-        android:name="io.nekohasekai.sfa.ui.main.SettingsFragment"
+        android:name="ru.ravel.ultunnel.ui.main.SettingsFragment"
         android:label="@string/title_settings"
         tools:layout="@layout/fragment_settings">
         <action
