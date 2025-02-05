@@ -19,6 +19,10 @@ import io.nekohasekai.sfa.update.UpdateTrack
 object Vendor : VendorInterface {
     private const val TAG = "Vendor"
 
+    override fun checkUpdateAvailable(): Boolean {
+        return false
+    }
+
     override fun checkUpdate(activity: Activity, byUser: Boolean) {
         try {
             val updateInfo = checkUpdateAsync()
