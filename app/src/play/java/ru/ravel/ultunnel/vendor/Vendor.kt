@@ -1,4 +1,4 @@
-package io.nekohasekai.sfa.vendor
+package ru.ravel.ultunnel.vendor
 
 import android.app.Activity
 import android.content.Context
@@ -11,10 +11,10 @@ import com.google.android.play.core.install.model.AppUpdateType
 import com.google.android.play.core.install.model.InstallStatus
 import com.google.android.play.core.install.model.UpdateAvailability
 import com.google.mlkit.common.MlKitException
-import io.nekohasekai.sfa.R
-import io.nekohasekai.sfa.compose.screen.qrscan.QRCodeCropArea
-import io.nekohasekai.sfa.update.UpdateInfo
-import io.nekohasekai.sfa.update.UpdateState
+import ru.ravel.ultunnel.R
+import ru.ravel.ultunnel.compose.screen.qrscan.QRCodeCropArea
+import ru.ravel.ultunnel.update.UpdateInfo
+import ru.ravel.ultunnel.update.UpdateState
 
 object Vendor : VendorInterface {
     private const val TAG = "Vendor"
@@ -73,7 +73,7 @@ object Vendor : VendorInterface {
     }
 
     private fun Context.showNoUpdatesDialog() {
-        MaterialAlertDialogBuilder(this).setTitle(io.nekohasekai.sfa.R.string.check_update)
+        MaterialAlertDialogBuilder(this).setTitle(R.string.check_update)
             .setMessage(R.string.no_updates_available).setPositiveButton(R.string.ok, null).show()
     }
 
