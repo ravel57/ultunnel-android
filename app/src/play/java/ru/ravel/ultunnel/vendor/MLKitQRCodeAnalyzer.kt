@@ -1,6 +1,7 @@
 package ru.ravel.ultunnel.vendor
 
 import android.graphics.Bitmap
+import android.util.Log
 import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
@@ -18,6 +19,7 @@ class MLKitQRCodeAnalyzer(
     private val onFailure: ((Exception) -> Unit),
     private val onCropArea: ((QRCodeCropArea?) -> Unit)? = null,
 ) : ImageAnalysis.Analyzer {
+
     private val barcodeScanner =
         BarcodeScanning.getClient(
             BarcodeScannerOptions.Builder()
@@ -43,6 +45,7 @@ class MLKitQRCodeAnalyzer(
         if (failureOccurred && nowMills - failureTimestamp < 5000L) {
             failureTimestamp = nowMills
             onCropArea?.invoke(null)
+            Log.d("MLKitQRCodeAnalyzer", "throttled analysis since error occurred in previous pass")
             image.close()
             return
         }
@@ -98,6 +101,8 @@ class MLKitQRCodeAnalyzer(
                 failureTimestamp = System.currentTimeMillis()
                 onCropArea?.invoke(null)
                 onFailure(it)
+            }
+            .addOnCompleteListener {
                 image.close()
             }
     }
