@@ -10,5 +10,7 @@
 local.properties
 /app/libs/
 /service-account-credentials.json
+/app/ultunnel.jks
+/app/key.properties
 /CLAUDE.md
 /.claude/
