@@ -1,4 +1,4 @@
-package io.nekohasekai.sfa.vendor
+package ru.ravel.ultunnel.vendor
 
 import android.app.Activity
 import android.content.Context
@@ -11,7 +11,7 @@ import com.google.android.play.core.install.model.AppUpdateType
 import com.google.android.play.core.install.model.InstallStatus
 import com.google.android.play.core.install.model.UpdateAvailability
 import com.google.mlkit.common.MlKitException
-import io.nekohasekai.sfa.R
+import ru.ravel.ultunnel.R
 
 object Vendor : VendorInterface {
 
@@ -72,7 +72,7 @@ object Vendor : VendorInterface {
     }
 
     private fun Context.showNoUpdatesDialog() {
-        MaterialAlertDialogBuilder(this).setTitle(io.nekohasekai.sfa.R.string.check_update)
+        MaterialAlertDialogBuilder(this).setTitle(R.string.check_update)
             .setMessage(R.string.no_updates_available).setPositiveButton(R.string.ok, null).show()
     }
 
