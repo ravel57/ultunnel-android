@@ -37,7 +37,7 @@ android {
         targetSdk 35
         versionCode getVersionProps("VERSION_CODE").toInteger()
         versionName getVersionProps("VERSION_NAME")
-        setProperty("archivesBaseName", "ULtunnel-" + versionName)
+        setProperty("archivesBaseName", "ultunnel-" + versionName)
     }
 
 //    signingConfigs {
