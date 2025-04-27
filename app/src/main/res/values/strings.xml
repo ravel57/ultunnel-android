@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name" translatable="false">ultunnel</string>
+    <string name="app_name" translatable="false">sing-box</string>
 
     <string name="stop">Stop</string>
     <string name="ok">OK</string>
@@ -28,7 +28,7 @@
     <string name="profile_share">Share</string>
     <string name="profile_share_url">Share URL as QR Code</string>
     <string name="profile_input_required">Required</string>
-    <string name="profile_empty">Empty profiles, swipe to update</string>
+    <string name="profile_empty">Empty profiles</string>
     <string name="profile_item_last_updated">Last Updated: %s</string>
     <string name="profile_last_updated">Last Updated</string>
     <string name="profile_update">Update</string>
@@ -181,16 +181,13 @@
     <string name="vpn_app_type_other">Other</string>
     <string name="vpn_core_type_unknown">Unknown</string>
     <string name="no_updates_available">No updates available</string>
-    <string name="logs">Logs</string>
-    <string name="access_key">Access key</string>
+    <string name="sponsor">Sponsor</string>
     <string name="sponsor_message">If I\'ve defended your modern life, please consider sponsoring me.</string>
     <string name="action_start">Start</string>
     <string name="location_permission_title">Location permission</string>
-    <string name="location_permission_description"><![CDATA[Your profile contains <strong><tt>wifi_ssid</tt> or <tt>wifi_bssid</tt> routing rules</strong>. To make them work, ultunnel uses the <strong>location</strong> permission <strong>in the background</strong> to get information about the connected Wi-Fi network. The information will be used <strong>for routing purposes only</strong>.]]></string>
+    <string name="location_permission_description"><![CDATA[Your profile contains <strong><tt>wifi_ssid</tt> or <tt>wifi_bssid</tt> routing rules</strong>. To make them work, sing-box uses the <strong>location</strong> permission <strong>in the background</strong> to get information about the connected Wi-Fi network. The information will be used <strong>for routing purposes only</strong>.]]></string>
     <string name="location_permission_background_description"><![CDATA[On Android 10 and up, <strong>background location</strong> permission is required. Select <strong>Allow all the time</strong> to grant the permission.]]></string>
     <string name="open_settings">Open Settings</string>
-    <string name="fab_description">Start/Strop VPN</string>
-    <string name="reload_description">Reload VPN list</string>
-
-
+    <string name="notification_permission_title">Notification permission</string>
+    <string name="notification_permission_required_description">sing-box is unable to show real-time network speeds without the permission to send notifications. Please grant the permission or disable real-time network speeds notification before starting the service.</string>
 </resources>
