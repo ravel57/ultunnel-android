@@ -274,30 +274,30 @@ class OverviewFragment : Fragment() {
 		internal var items: MutableList<Profile> = mutableListOf()
 		internal var selectedProfileID = -1L
 		internal var lastSelectedIndex: Int? = null
+
+
 		internal fun reload() {
 			scope.launch(Dispatchers.IO) {
-				items = ProfileManager.list().toMutableList()
-				if (items.isNotEmpty()) {
-					selectedProfileID = Settings.selectedProfile
-					for ((index, profile) in items.withIndex()) {
-						if (profile.id == selectedProfileID) {
-							lastSelectedIndex = index
-							break
-						}
-					}
-					if (lastSelectedIndex == null) {
-						lastSelectedIndex = 0
-						selectedProfileID = items[0].id
-						Settings.selectedProfile = selectedProfileID
-					}
+				val newItems = ProfileManager.list().toMutableList()
+				val selected = Settings.selectedProfile
+				var selectedIndex = newItems.indexOfFirst { it.id == selected }
+				if (selectedIndex == -1 && newItems.isNotEmpty()) {
+					selectedIndex = 0
+					Settings.selectedProfile = newItems[0].id
 				}
 				withContext(Dispatchers.Main) {
+					items = newItems
 					parent.statusText.isVisible = items.isEmpty()
 					parent.container.isVisible = items.isNotEmpty()
+					parent.profileList.adapter = null
+					parent.profileList.layoutManager?.onRestoreInstanceState(null)
+					parent.profileList.adapter = this@Adapter
 					notifyDataSetChanged()
+					lastSelectedIndex = selectedIndex
 				}
 			}
 		}
+
 
 		override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): Holder {
 			return Holder(

@@ -225,8 +225,8 @@
     <string name="status_connections">Соединения</string>
     <string name="status_connections_inbound">Входящие</string>
     <string name="status_connections_outbound">Исходящие</string>
-    <string name="status_uplink">Исходящий трафик</string>
-    <string name="status_downlink">Входящий трафик</string>
+    <string name="status_uplink">Исходящий</string>
+    <string name="status_downlink">Входящий</string>
     <string name="status_traffic">Трафик</string>
     <string name="status_traffic_total">Общий трафик</string>
 
@@ -500,7 +500,7 @@
     <string name="sponsor_message">Если я облегчил вашу современную жизнь, пожалуйста, рассмотрите возможность спонсорства.</string>
     <string name="action_start">Запустить</string>
     <string name="location_permission_title">Разрешение на местоположение</string>
-    <string name="location_permission_description"><![CDATA[Ваш профиль содержит <strong><tt>wifi_ssid</tt> или <tt>wifi_bssid</tt> правила маршрутизации</strong>. Для их работы UL tunnel использует <strong>разрешение на местоположение</strong> <strong>в фоне</strong>, чтобы получить информацию о подключённой Wi-Fi сети. Информация будет использоваться <strong>только для маршрутизации</strong>.]]></string>
+    <string name="location_permission_description"><![CDATA[Ваш профиль содержит <strong><tt>wifi_ssid</tt> или <tt>wifi_bssid</tt> правила маршрутизации</strong>. Для их работы ULtunnel использует <strong>разрешение на местоположение</strong> <strong>в фоне</strong>, чтобы получить информацию о подключённой Wi-Fi сети. Информация будет использоваться <strong>только для маршрутизации</strong>.]]></string>
     <string name="location_permission_background_description"><![CDATA[На Android 10 и выше требуется разрешение на <strong>фоновое местоположение</strong>. Выберите <strong>Разрешить всегда</strong>, чтобы предоставить разрешение.]]></string>
     <string name="open_settings">Открыть настройки</string>
     <string name="fab_description">Start/Strop VPN</string>
@@ -583,4 +583,5 @@
     <string name="privilege_module_restart_notification_message">Модуль LSPosed обновлён. Перезагрузите устройство, чтобы применить изменения.</string>
     <string name="privilege_module_restart_channel">Модуль LSPosed</string>
     <string name="reload_description">Обновить список VPN</string>
+    <string name="share_with">Поделиться</string>
 </resources>

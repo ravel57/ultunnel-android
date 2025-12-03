@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -12,11 +13,9 @@ import androidx.annotation.StringRes
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.viewpager2.adapter.FragmentStateAdapter
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.tabs.TabLayoutMediator
-import com.google.gson.Gson
-import com.google.gson.JsonObject
-import com.google.gson.JsonParser
 import io.nekohasekai.libbox.DeprecatedNoteIterator
 import io.nekohasekai.libbox.Libbox
 import kotlinx.coroutines.Dispatchers
@@ -130,8 +129,8 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
 		lifecycleScope.launch(Dispatchers.IO) {
 			try {
 				val url = "https://admin.ultunnel.ru/api/v1/get-users-proxy-servers-singbox?secretKey=${Settings.accessKey}"
-				val fetchedData = fetchData(url).also {
-					if (it?.isNotEmpty() == true) {
+				val fetchedData = fetchData(url)?.also {
+					if (it.isNotEmpty()) {
 						BoxService.stop()
 						ProfileManager.list().toMutableList().forEach { config ->
 							ProfileManager.delete(config)
@@ -202,7 +201,7 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
 
 	private suspend fun fetchData(url: String): List<ConfigFileFromServer>? {
 		return withContext(Dispatchers.IO) {
-			val gson = Gson()
+			val mapper = ObjectMapper()
 			try {
 				val connection = URL(url).openConnection() as HttpURLConnection
 				connection.requestMethod = "GET"
@@ -210,19 +209,22 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
 				connection.readTimeout = 5000
 				if (connection.responseCode == HttpURLConnection.HTTP_OK) {
 					val content = connection.inputStream.bufferedReader().readText()
-					val jsonElement = JsonParser.parseString(content)
-					if (jsonElement.isJsonArray) {
-						return@withContext jsonElement.asJsonArray.flatMap { configWithServerName ->
-							val json = gson.fromJson(configWithServerName, ConfigWithServerName::class.java)
-							json.configs
-								.map { gson.fromJson(it, JsonObject::class.java) }
-								.map { jsonElement ->
-									val jsonConfig = gson.fromJson(jsonElement, Config::class.java)
-									return@map ConfigFileFromServer(
-										content = jsonElement.toString(),
-										name = "${json.server}-${jsonConfig.outbounds[0].type ?: "null"}",
-									)
+					val root = mapper.readTree(content)
+					if (root.isArray) {
+						return@withContext root.flatMap { node ->
+							val json = mapper.treeToValue(node, ConfigWithServerName::class.java)
+							json.configs.mapNotNull { configString ->
+								val cleaned = configString.trim()
+								if (!cleaned.startsWith("{")) {
+									Log.e("DashboardFragment.fetchData()", "Invalid JSON string in configs: $cleaned")
+									return@mapNotNull null
 								}
+								val config = mapper.readValue(cleaned, Config::class.java)
+								ConfigFileFromServer(
+									content = cleaned,
+									name = "${json.server}-${config.outbounds.firstOrNull()?.type ?: "null"}"
+								)
+							}
 						}
 					} else {
 						return@withContext null
@@ -231,7 +233,7 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
 					return@withContext null
 				}
 			} catch (e: Exception) {
-				e.printStackTrace()
+				Log.e("DashboardFragment.fetchData()", e.message, e)
 				return@withContext null
 			}
 		}
