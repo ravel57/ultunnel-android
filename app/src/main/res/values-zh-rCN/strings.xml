@@ -1,4 +1,5 @@
 <resources>
+    <string name="app_name">ULtunnel</string>
     <string name="stop">停止</string>
     <string name="ok">好</string>
     <string name="no_thanks">不，谢谢</string>

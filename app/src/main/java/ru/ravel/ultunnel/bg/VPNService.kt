@@ -77,8 +77,10 @@ class VPNService : VpnService(), PlatformInterfaceWrapper {
 		}
 
 		if (options.autoRoute) {
-			builder.addDnsServer(options.dnsServerAddress.value)
-
+			val dns = options.dnsServers
+			while (dns.hasNext()) {
+				builder.addDnsServer(dns.next())
+			}
 			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
 				val inet4RouteAddress = options.inet4RouteAddress
 				if (inet4RouteAddress.hasNext()) {
@@ -191,9 +193,5 @@ class VPNService : VpnService(), PlatformInterfaceWrapper {
 
 	override fun sendNotification(notification: Notification) =
 		service.sendNotification(notification)
-
-	override fun updateRouteOptions(options: TunOptions?) {
-		TODO("Not yet implemented")
-	}
 
 }

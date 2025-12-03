@@ -36,7 +36,6 @@ import ru.ravel.ultunnel.Application
 import ru.ravel.ultunnel.R
 import ru.ravel.ultunnel.constant.Action
 import ru.ravel.ultunnel.constant.Alert
-import ru.ravel.ultunnel.constant.Bugs
 import ru.ravel.ultunnel.constant.Status
 import ru.ravel.ultunnel.database.ProfileManager
 import ru.ravel.ultunnel.database.Settings
@@ -49,26 +48,6 @@ class BoxService(
 ) : CommandServerHandler {
 
 	companion object {
-
-		private var initializeOnce = false
-		private fun initialize() {
-			if (initializeOnce) return
-			val baseDir = Application.application.filesDir
-			baseDir.mkdirs()
-			val workingDir = Application.application.getExternalFilesDir(null) ?: return
-			workingDir.mkdirs()
-			val tempDir = Application.application.cacheDir
-			tempDir.mkdirs()
-			Libbox.setup(SetupOptions().also {
-				it.basePath = baseDir.path
-				it.workingPath = workingDir.path
-				it.tempPath = tempDir.path
-				it.fixAndroidStack = Bugs.fixAndroidStack
-			})
-			Libbox.redirectStderr(File(workingDir, "stderr.log").path)
-			initializeOnce = true
-			return
-		}
 
 		fun start() {
 			val intent = runBlocking {
@@ -92,7 +71,7 @@ class BoxService(
 
 	private val status = MutableLiveData(Status.Stopped)
 	private val binder = ServiceBinder(status)
-	private val notification = ru.ravel.ultunnel.bg.ServiceNotification(status, service)
+	private val notification = ServiceNotification(status, service)
 	private var boxService: BoxService? = null
 	private var commandServer: CommandServer? = null
 	private var receiverRegistered = false
@@ -112,6 +91,26 @@ class BoxService(
 			}
 		}
 	}
+
+
+	@Volatile private var libboxSetupDone = false
+
+
+	private fun ensureLibboxSetup() {
+		if (libboxSetupDone) return
+		val boxDir = File(service.cacheDir, "box").apply { mkdirs() }
+		val tempDir = File(service.cacheDir, "tmp").apply { mkdirs() }
+		val setup = SetupOptions().apply {
+			basePath = boxDir.absolutePath
+			workingPath = boxDir.absolutePath
+			tempPath = tempDir.absolutePath
+			username = "android"
+		}
+		Libbox.setup(setup)
+		libboxSetupDone = true
+	}
+
+
 
 	private fun startCommandServer() {
 		val commandServer = CommandServer(this, 300)
@@ -150,10 +149,18 @@ class BoxService(
 			}
 
 			DefaultNetworkMonitor.start()
-			Libbox.registerLocalDNSTransport(LocalResolver)
 			Libbox.setMemoryLimit(!Settings.disableMemoryLimit)
 
 			val newService = try {
+				val boxDir = File(service.cacheDir, "box").apply { mkdirs() }
+				val tempDir = File(service.cacheDir, "tmp").apply { mkdirs() }
+				val setup = SetupOptions().apply {
+					basePath = boxDir.absolutePath
+					workingPath = boxDir.absolutePath
+					tempPath = tempDir.absolutePath
+					username = "android"
+				}
+				Libbox.setup(setup)
 				Libbox.newService(content, platformInterface)
 			} catch (e: Exception) {
 				stopAndAlert(Alert.CreateService, e.message)
@@ -263,7 +270,6 @@ class BoxService(
 			}
 			commandServer?.setService(null)
 			boxService = null
-			Libbox.registerLocalDNSTransport(null)
 			DefaultNetworkMonitor.stop()
 
 			commandServer?.apply {
@@ -312,8 +318,8 @@ class BoxService(
 
 		GlobalScope.launch(Dispatchers.IO) {
 			Settings.startedByUser = true
-			initialize()
 			try {
+				ensureLibboxSetup()
 				startCommandServer()
 			} catch (e: Exception) {
 				stopAndAlert(Alert.StartCommandServer, e.message)
@@ -364,7 +370,7 @@ class BoxService(
 						setAction(Action.OPEN_URL).setData(Uri.parse(notification.openURL))
 						setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
 					},
-					ru.ravel.ultunnel.bg.ServiceNotification.flags,
+					ServiceNotification.flags,
 				)
 			)
 		}

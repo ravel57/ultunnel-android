@@ -3,7 +3,6 @@ package ru.ravel.ultunnel.bg
 import android.app.Service
 import android.content.Intent
 import io.nekohasekai.libbox.Notification
-import io.nekohasekai.libbox.TunOptions
 
 class ProxyService : Service(), PlatformInterfaceWrapper {
 
@@ -19,9 +18,5 @@ class ProxyService : Service(), PlatformInterfaceWrapper {
 
 	override fun sendNotification(notification: Notification) =
 		service.sendNotification(notification)
-
-	override fun updateRouteOptions(options: TunOptions?) {
-		TODO("Not yet implemented")
-	}
 
 }
