@@ -583,5 +583,7 @@
     <string name="privilege_module_restart_notification_message">Модуль LSPosed обновлён. Перезагрузите устройство, чтобы применить изменения.</string>
     <string name="privilege_module_restart_channel">Модуль LSPosed</string>
     <string name="reload_description">Обновить список VPN</string>
+    <string name="notification_permission_required_description">sing-box is unable to show real-time network speeds without the permission to send notifications. Please grant the permission or disable real-time network speeds notification before starting the service.</string>
     <string name="share_with">Поделиться</string>
+    <string name="notification_permission_title">Reload VPN list</string>
 </resources>
