@@ -17,6 +17,7 @@
     <string name="profile_name">名称</string>
     <string name="profile_type">类型</string>
     <string name="profile_source">源</string>
+    <string name="profile_url">URL</string>
     <string name="profile_import_file">导入文件</string>
     <string name="profile_create">创建</string>
     <string name="profile_edit_content">编辑内容</string>
@@ -66,6 +67,7 @@
     <string name="service_error_deprecated_warning_documentation">文档</string>
     <string name="status_status">状态</string>
     <string name="status_memory">内存</string>
+    <string name="status_goroutines">Goroutines</string>
     <string name="status_connections">连接</string>
     <string name="status_connections_inbound">入站</string>
     <string name="status_connections_outbound">出站</string>
@@ -141,6 +143,7 @@
     <string name="import_profile_message">您确定要导入配置文件 %s 吗？</string>
     <string name="icloud_profile_unsupported">当前平台不支持 iCloud 配置文件</string>
     <string name="search">搜索</string>
+    <string name="urltest">URLTest</string>
     <string name="expand">展开</string>
     <string name="http_proxy">HTTP 代理</string>
     <string name="title_scan_vpn">扫描 VPN 应用</string>
@@ -155,13 +158,17 @@
     <string name="vpn_app_type_other">其他</string>
     <string name="vpn_core_type_unknown">未知</string>
     <string name="no_updates_available">没有可用更新</string>
-    <string name="sponsor">赞助</string>
+    <string name="access_key">Access key</string>
     <string name="sponsor_message">支持我的工作</string>
     <string name="action_start">启动</string>
     <string name="location_permission_title">位置权限</string>
     <string name="location_permission_description"><![CDATA[您的个人资料包含 <strong><tt>wifi_ssid</tt> 或 <tt>wifi_bssid</tt> 路由规则</strong>。为了使它们正常工作，sing-box 在<strong>后台</strong>使用 <strong>位置</strong> 权限来获取有关所连接 Wi-Fi 网络的信息。该信息将<strong>仅用于路由目的</strong>。]]></string>
     <string name="location_permission_background_description"><![CDATA[在 Android 10 及更高版本中，需要<strong>后台位置</strong>权限。选择<strong>始终允许</strong>以授予权限。]]></string>
     <string name="open_settings">打开设置</string>
+    <string name="reload_description">Reload VPN list</string>
     <string name="notification_permission_title">通知权限</string>
     <string name="notification_permission_required_description">sing-box 无法在没有发送通知权限的情况下显示实时网速。请授予权限或禁用实时网速通知后再启动服务。</string>
+    <string name="logs">Logs</string>
+    <string name="fab_description">Start/Strop VPN</string>
+    <string name="share_with">Share with</string>
 </resources>
