@@ -128,7 +128,7 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
 	private fun updateProfiles() {
 		lifecycleScope.launch(Dispatchers.IO) {
 			try {
-				val url = "https://admin.ultunnel.ru/api/v1/get-users-proxy-servers-singbox?secretKey=${Settings.accessKey}"
+				val url = "https://admin.ultunnel.ru/api/v1/get-users-proxy-servers-singbox?secretKey=${Settings.accessKey}&platform=android"
 				val fetchedData = fetchData(url)?.also {
 					if (it.isNotEmpty()) {
 						BoxService.stop()
