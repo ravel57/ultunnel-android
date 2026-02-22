@@ -1,11 +1,11 @@
-package io.nekohasekai.sfa.compose.screen.dashboard
+package ru.ravel.ultunnel.compose.screen.dashboard
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import io.nekohasekai.sfa.compose.navigation.NewProfileArgs
-import io.nekohasekai.sfa.constant.Status
-import io.nekohasekai.sfa.database.Profile
-import io.nekohasekai.sfa.utils.CommandClient
+import ru.ravel.ultunnel.compose.navigation.NewProfileArgs
+import ru.ravel.ultunnel.constant.Status
+import ru.ravel.ultunnel.database.Profile
+import ru.ravel.ultunnel.utils.CommandClient
 
 @Composable
 fun DashboardCardRenderer(

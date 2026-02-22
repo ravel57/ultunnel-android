@@ -1,6 +1,7 @@
 package ru.ravel.ultunnel.database
 
 import android.os.Parcelable
+import androidx.room.ColumnInfo
 import androidx.room.Delete
 import androidx.room.Entity
 import androidx.room.Insert
@@ -16,10 +17,11 @@ import kotlinx.parcelize.Parcelize
 @TypeConverters(TypedProfile.Convertor::class)
 @Parcelize
 class Profile(
-    @PrimaryKey(autoGenerate = true) var id: Long = 0L,
-    var userOrder: Long = 0L,
-    var name: String = "",
-    var typed: TypedProfile = TypedProfile(),
+	@PrimaryKey(autoGenerate = true) var id: Long = 0L,
+	var userOrder: Long = 0L,
+	var name: String = "",
+	@ColumnInfo(defaultValue = "NULL") var icon: String? = null,
+	var typed: TypedProfile = TypedProfile(),
 ) : Parcelable {
 
 	@androidx.room.Dao
@@ -58,4 +60,3 @@ class Profile(
 	}
 
 }
-

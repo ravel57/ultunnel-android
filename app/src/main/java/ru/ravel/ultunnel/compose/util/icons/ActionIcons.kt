@@ -1,4 +1,4 @@
-package io.nekohasekai.sfa.compose.util.icons
+package ru.ravel.ultunnel.compose.util.icons
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Announcement
@@ -466,7 +466,7 @@ import androidx.compose.material.icons.filled.WorkOutline
 import androidx.compose.material.icons.filled.Wysiwyg
 import androidx.compose.material.icons.filled.ZoomIn
 import androidx.compose.material.icons.filled.ZoomOut
-import io.nekohasekai.sfa.compose.util.ProfileIcon
+import ru.ravel.ultunnel.compose.util.ProfileIcon
 
 /**
  * Action category icons - User actions and common UI operations

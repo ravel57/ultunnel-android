@@ -1,4 +1,4 @@
-package io.nekohasekai.sfa.vendor
+package ru.ravel.ultunnel.vendor
 
 import android.content.IIntentSender
 import android.content.Intent
@@ -12,7 +12,7 @@ import android.os.Bundle
 import android.os.IBinder
 import android.os.ParcelFileDescriptor
 import android.system.Os
-import io.nekohasekai.sfa.BuildConfig
+import ru.ravel.ultunnel.BuildConfig
 import java.io.IOException
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit

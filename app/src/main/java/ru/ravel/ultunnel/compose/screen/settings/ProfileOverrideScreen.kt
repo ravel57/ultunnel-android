@@ -1,4 +1,4 @@
-package io.nekohasekai.sfa.compose.screen.settings
+package ru.ravel.ultunnel.compose.screen.settings
 
 import android.content.Intent
 import android.net.Uri
@@ -55,12 +55,12 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.navigation.NavController
-import io.nekohasekai.sfa.R
-import io.nekohasekai.sfa.bg.RootClient
-import io.nekohasekai.sfa.compose.screen.profileoverride.PerAppProxyScanner
-import io.nekohasekai.sfa.compose.topbar.OverrideTopBar
-import io.nekohasekai.sfa.database.Settings
-import io.nekohasekai.sfa.vendor.PackageQueryManager
+import ru.ravel.ultunnel.R
+import ru.ravel.ultunnel.bg.RootClient
+import ru.ravel.ultunnel.compose.screen.profileoverride.PerAppProxyScanner
+import ru.ravel.ultunnel.compose.topbar.OverrideTopBar
+import ru.ravel.ultunnel.database.Settings
+import ru.ravel.ultunnel.vendor.PackageQueryManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext

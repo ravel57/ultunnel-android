@@ -1,4 +1,4 @@
-package io.nekohasekai.sfa.compose.util.icons
+package ru.ravel.ultunnel.compose.util.icons
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Backspace
@@ -87,7 +87,7 @@ import androidx.compose.material.icons.filled.Waves
 import androidx.compose.material.icons.filled.WebStories
 import androidx.compose.material.icons.filled.Weekend
 import androidx.compose.material.icons.filled.WhereToVote
-import io.nekohasekai.sfa.compose.util.ProfileIcon
+import ru.ravel.ultunnel.compose.util.ProfileIcon
 
 /**
  * Content category icons - Content creation and management

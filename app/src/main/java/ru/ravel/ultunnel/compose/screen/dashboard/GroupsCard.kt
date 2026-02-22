@@ -1,4 +1,4 @@
-package io.nekohasekai.sfa.compose.screen.dashboard
+package ru.ravel.ultunnel.compose.screen.dashboard
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
@@ -20,7 +20,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -65,16 +64,16 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import io.nekohasekai.libbox.Libbox
-import io.nekohasekai.sfa.R
-import io.nekohasekai.sfa.compat.LazyColumnCompat
-import io.nekohasekai.sfa.compat.rememberOverscrollEffectCompat
-import io.nekohasekai.sfa.compose.model.Group
-import io.nekohasekai.sfa.compose.model.GroupItem
-import io.nekohasekai.sfa.compose.screen.dashboard.groups.GroupsViewModel
-import io.nekohasekai.sfa.compose.topbar.OverrideTopBar
-import io.nekohasekai.sfa.compose.util.rememberSheetDismissFromContentOnlyIfGestureStartedAtTopModifier
-import io.nekohasekai.sfa.constant.Status
-import io.nekohasekai.sfa.utils.CommandClient
+import ru.ravel.ultunnel.R
+import ru.ravel.ultunnel.compat.LazyColumnCompat
+import ru.ravel.ultunnel.compat.rememberOverscrollEffectCompat
+import ru.ravel.ultunnel.compose.screen.dashboard.groups.GroupsViewModel
+import ru.ravel.ultunnel.compose.topbar.OverrideTopBar
+import ru.ravel.ultunnel.compose.util.rememberSheetDismissFromContentOnlyIfGestureStartedAtTopModifier
+import ru.ravel.ultunnel.compose.screen.dashboard.groups.GroupsUiState
+import ru.ravel.ultunnel.constant.Status
+import ru.ravel.ultunnel.ui.dashboard.GroupItem
+import ru.ravel.ultunnel.utils.CommandClient
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -182,13 +181,13 @@ fun GroupsCard(
 
 @Composable
 private fun GroupsCardContent(
-    uiState: io.nekohasekai.sfa.compose.screen.dashboard.groups.GroupsUiState,
-    onToggleExpanded: (String) -> Unit,
-    onItemSelected: (String, String) -> Unit,
-    onUrlTest: (String) -> Unit,
-    listHeaderContent: (@Composable () -> Unit)? = null,
-    asSheet: Boolean = false,
-    modifier: Modifier = Modifier,
+	uiState: GroupsUiState,
+	onToggleExpanded: (String) -> Unit,
+	onItemSelected: (String, String) -> Unit,
+	onUrlTest: (String) -> Unit,
+	listHeaderContent: (@Composable () -> Unit)? = null,
+	asSheet: Boolean = false,
+	modifier: Modifier = Modifier,
 ) {
     val lazyListState = rememberSaveable(saver = LazyListState.Saver) { LazyListState() }
     val scrollModifier =
@@ -279,7 +278,7 @@ private fun GroupsCardContent(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ProxyGroupItem(
-    group: Group,
+    group: ru.ravel.ultunnel.ui.dashboard.Group,
     isExpanded: Boolean,
     onToggleExpanded: () -> Unit,
     onItemSelected: (String) -> Unit,
@@ -435,7 +434,10 @@ private fun ProxyGroupItem(
 }
 
 @Composable
-private fun ProxyItemsList(items: List<GroupItem>, selectedTag: String, isSelectable: Boolean, onItemSelected: (String) -> Unit) {
+private fun ProxyItemsList(
+    items: List<GroupItem>,
+    selectedTag: String, isSelectable: Boolean, onItemSelected: (String) -> Unit
+) {
     val itemsPerRow = 2
     val chunkedItems =
         remember(items) {

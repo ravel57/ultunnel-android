@@ -1,7 +1,7 @@
-package io.nekohasekai.sfa.compose.util.icons
+package ru.ravel.ultunnel.compose.util.icons
 
 import androidx.compose.ui.graphics.vector.ImageVector
-import io.nekohasekai.sfa.compose.util.ProfileIcon
+import ru.ravel.ultunnel.compose.util.ProfileIcon
 
 /**
  * Complete Material Icons Library following Google's official taxonomy

@@ -1,4 +1,4 @@
-package io.nekohasekai.sfa.xposed.hooks.hidevpn
+package ru.ravel.ultunnel.xposed.hooks.hidevpn
 
 import android.content.Context
 import android.content.Intent
@@ -7,8 +7,8 @@ import android.net.ProxyInfo
 import android.os.Binder
 import android.os.UserHandle
 import de.robv.android.xposed.XposedHelpers
-import io.nekohasekai.sfa.xposed.HookErrorStore
-import io.nekohasekai.sfa.xposed.hooks.SafeMethodHook
+import ru.ravel.ultunnel.xposed.HookErrorStore
+import ru.ravel.ultunnel.xposed.hooks.SafeMethodHook
 
 class HookConnectivityManagerProxyChangeAction(private val helper: ConnectivityServiceHookHelper) {
     private companion object {

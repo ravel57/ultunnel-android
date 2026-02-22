@@ -1,7 +1,7 @@
 package ru.ravel.ultunnel.constant
 
 object Action {
-	const val SERVICE = "io.nekohasekai.sfa.SERVICE"
-	const val SERVICE_CLOSE = "io.nekohasekai.sfa.SERVICE_CLOSE"
-	const val OPEN_URL = "io.nekohasekai.sfa.SERVICE_OPEN_URL"
+	const val SERVICE = "ru.ravel.ultunnel.SERVICE"
+	const val SERVICE_CLOSE = "ru.ravel.ultunnel.SERVICE_CLOSE"
+	const val OPEN_URL = "ru.ravel.ultunnel.SERVICE_OPEN_URL"
 }

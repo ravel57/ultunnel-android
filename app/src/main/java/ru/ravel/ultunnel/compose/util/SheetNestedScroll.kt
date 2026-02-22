@@ -1,4 +1,4 @@
-package io.nekohasekai.sfa.compose.util
+package ru.ravel.ultunnel.compose.util
 
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown

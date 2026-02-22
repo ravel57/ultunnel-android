@@ -1,4 +1,4 @@
-package io.nekohasekai.sfa.compose.shared
+package ru.ravel.ultunnel.compose.shared
 
 import android.Manifest
 import android.content.pm.ApplicationInfo
@@ -42,7 +42,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import io.nekohasekai.sfa.R
+import ru.ravel.ultunnel.R
 
 enum class SortMode {
     NAME,
@@ -146,13 +146,13 @@ fun buildDisplayPackages(
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun AppSelectionCard(
-    packageCache: PackageCache,
-    selected: Boolean,
-    onToggle: (Boolean) -> Unit,
-    enableCopyActions: Boolean = true,
-    onCopyLabel: (() -> Unit)? = null,
-    onCopyPackage: (() -> Unit)? = null,
-    onCopyUid: (() -> Unit)? = null,
+	packageCache: PackageCache,
+	selected: Boolean,
+	onToggle: (Boolean) -> Unit,
+	enableCopyActions: Boolean = true,
+	onCopyLabel: (() -> Unit)? = null,
+	onCopyPackage: (() -> Unit)? = null,
+	onCopyUid: (() -> Unit)? = null,
 ) {
     var showContextMenu by remember { mutableStateOf(false) }
     var showCopyMenu by remember { mutableStateOf(false) }

@@ -1,9 +1,9 @@
-package io.nekohasekai.sfa.utils
+package ru.ravel.ultunnel.utils
 
 import android.content.Context
 import android.content.pm.PackageInfo
-import io.nekohasekai.sfa.bg.ParceledListSlice
-import io.nekohasekai.sfa.xposed.HookStatusKeys
+import ru.ravel.ultunnel.bg.ParceledListSlice
+import ru.ravel.ultunnel.xposed.HookStatusKeys
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 

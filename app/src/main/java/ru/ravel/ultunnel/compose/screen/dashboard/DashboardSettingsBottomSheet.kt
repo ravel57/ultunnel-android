@@ -1,4 +1,4 @@
-package io.nekohasekai.sfa.compose.screen.dashboard
+package ru.ravel.ultunnel.compose.screen.dashboard
 
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
@@ -62,19 +62,19 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
-import io.nekohasekai.sfa.R
-import io.nekohasekai.sfa.compat.animateItemCompat
+import ru.ravel.ultunnel.R
+import ru.ravel.ultunnel.compat.animateItemCompat
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardSettingsBottomSheet(
-    sheetState: SheetState,
-    visibleCards: Set<CardGroup>,
-    cardOrder: List<CardGroup>,
-    onToggleCard: (CardGroup) -> Unit,
-    onReorderCards: (List<CardGroup>) -> Unit,
-    onResetOrder: () -> Unit,
-    onDismiss: () -> Unit,
+	sheetState: SheetState,
+	visibleCards: Set<CardGroup>,
+	cardOrder: List<CardGroup>,
+	onToggleCard: (CardGroup) -> Unit,
+	onReorderCards: (List<CardGroup>) -> Unit,
+	onResetOrder: () -> Unit,
+	onDismiss: () -> Unit,
 ) {
     var reorderedList by remember(cardOrder) { mutableStateOf(cardOrder) }
     var currentVisibleCards by remember(visibleCards) { mutableStateOf(visibleCards) }
@@ -290,15 +290,15 @@ fun DashboardSettingsBottomSheet(
 
 @Composable
 fun DashboardItemCard(
-    cardGroup: CardGroup,
-    isVisible: Boolean,
-    isDragging: Boolean,
-    dragOffset: Float,
-    onToggleVisibility: () -> Unit,
-    onDragStart: () -> Unit,
-    onDrag: (Float) -> Unit,
-    onDragEnd: () -> Unit,
-    modifier: Modifier = Modifier,
+	cardGroup: CardGroup,
+	isVisible: Boolean,
+	isDragging: Boolean,
+	dragOffset: Float,
+	onToggleVisibility: () -> Unit,
+	onDragStart: () -> Unit,
+	onDrag: (Float) -> Unit,
+	onDragEnd: () -> Unit,
+	modifier: Modifier = Modifier,
 ) {
     val offsetY = remember { mutableStateOf(0f) }
 

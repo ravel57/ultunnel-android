@@ -1,6 +1,38 @@
 [versions]
-spotless = "8.1.0"
+composeMarkdown = "0.5.8"
+core = "3.5.4"
+coreKtx = "1.17.0"
+emojiKt = "2.3.0"
+guava = "33.5.0-android"
+kotlinxSerializationJson = "1.10.0"
+kotlinxCoroutinesAndroid = "1.10.2"
+material = "1.13.0"
+navigationUiKtx = "2.9.7"
+navigationFragmentKtx = "2.9.7"
+preferenceKtx = "1.2.1"
+reorderable = "3.0.0"
+spotless = "8.2.1"
 ktlint = "1.7.1"
+swiperefreshlayout = "1.2.0"
+composeMaterial = "1.5.6"
+[libraries]
+androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "coreKtx" }
+androidx-navigation-fragment-ktx = { module = "androidx.navigation:navigation-fragment-ktx", version.ref = "navigationFragmentKtx" }
+androidx-navigation-ui-ktx = { module = "androidx.navigation:navigation-ui-ktx", version.ref = "navigationUiKtx" }
+androidx-preference-ktx = { module = "androidx.preference:preference-ktx", version.ref = "preferenceKtx" }
+androidx-swiperefreshlayout = { group = "androidx.swiperefreshlayout", name = "swiperefreshlayout", version.ref = "swiperefreshlayout" }
+androidx-ui-test-junit4 = { module = "androidx.compose.ui:ui-test-junit4" }
+androidx-ui-tooling = { module = "androidx.compose.ui:ui-tooling" }
+androidx-ui-test-manifest = { module = "androidx.compose.ui:ui-test-manifest" }
+compose-markdown = { module = "com.github.jeziellago:compose-markdown", version.ref = "composeMarkdown" }
+core = { module = "com.google.zxing:core", version.ref = "core" }
+emoji-kt = { module = "org.kodein.emoji:emoji-kt", version.ref = "emojiKt" }
+guava = { module = "com.google.guava:guava", version.ref = "guava" }
+kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "kotlinxCoroutinesAndroid" }
+kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
+material = { module = "com.google.android.material:material", version.ref = "material" }
+reorderable = { module = "sh.calvin.reorderable:reorderable", version.ref = "reorderable" }
+androidx-compose-material = { group = "androidx.wear.compose", name = "compose-material", version.ref = "composeMaterial" }
 
 [plugins]
 spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }

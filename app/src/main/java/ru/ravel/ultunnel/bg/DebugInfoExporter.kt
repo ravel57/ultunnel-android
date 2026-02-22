@@ -1,8 +1,8 @@
-package io.nekohasekai.sfa.bg
+package ru.ravel.ultunnel.bg
 
 import android.content.Context
 import android.util.Log
-import io.nekohasekai.sfa.utils.HookErrorClient
+import ru.ravel.ultunnel.utils.HookErrorClient
 import java.io.BufferedInputStream
 import java.io.BufferedOutputStream
 import java.io.File
@@ -15,6 +15,7 @@ import java.util.Date
 import java.util.Locale
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
+import kotlin.collections.isNotEmpty
 
 object DebugInfoExporter {
     private const val TAG = "DebugInfoExporter"

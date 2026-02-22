@@ -1,7 +1,7 @@
-package io.nekohasekai.sfa.xposed.hooks
+package ru.ravel.ultunnel.xposed.hooks
 
 import de.robv.android.xposed.XC_MethodHook
-import io.nekohasekai.sfa.xposed.HookErrorStore
+import ru.ravel.ultunnel.xposed.HookErrorStore
 
 abstract class SafeMethodHook(private val source: String) : XC_MethodHook() {
     @Volatile

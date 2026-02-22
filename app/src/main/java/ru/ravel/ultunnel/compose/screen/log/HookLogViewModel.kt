@@ -1,16 +1,16 @@
-package io.nekohasekai.sfa.compose.screen.log
+package ru.ravel.ultunnel.compose.screen.log
 
 import android.content.Context
 import android.text.format.DateFormat
 import androidx.lifecycle.viewModelScope
-import io.nekohasekai.sfa.bg.LogEntry
-import io.nekohasekai.sfa.compose.util.AnsiColorUtils
-import io.nekohasekai.sfa.constant.Status
-import io.nekohasekai.sfa.utils.HookErrorClient
+import ru.ravel.ultunnel.bg.LogEntry
+import ru.ravel.ultunnel.compose.util.AnsiColorUtils
+import ru.ravel.ultunnel.utils.HookErrorClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import ru.ravel.ultunnel.constant.Status
 import java.util.Date
 
 class HookLogViewModel : BaseLogViewModel() {

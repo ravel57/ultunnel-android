@@ -1,4 +1,4 @@
-package io.nekohasekai.sfa.compose.screen.qrscan
+package ru.ravel.ultunnel.compose.screen.qrscan
 
 import android.app.Application
 import android.net.Uri
@@ -14,9 +14,9 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LifecycleOwner
 import io.nekohasekai.libbox.Libbox
-import io.nekohasekai.sfa.qrs.QRSDecoder
-import io.nekohasekai.sfa.qrs.readIntLE
-import io.nekohasekai.sfa.vendor.Vendor
+import ru.ravel.ultunnel.qrs.QRSDecoder
+import ru.ravel.ultunnel.qrs.readIntLE
+//import io.nekohasekai.sfa.vendor.Vendor
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -73,20 +73,20 @@ class QRScanViewModel(application: Application) : AndroidViewModel(application) 
     private val showingError = AtomicBoolean(false)
     private val qrsLock = Any()
 
-    private val vendorAnalyzer: ImageAnalysis.Analyzer? = Vendor.createQRCodeAnalyzer(
-        onSuccess = { rawValue -> handleScanSuccess(rawValue) },
-        onFailure = { exception -> handleScanFailure(exception) },
-        onCropArea = ::updateCropArea,
-    )
+//    private val vendorAnalyzer: ImageAnalysis.Analyzer? = Vendor.createQRCodeAnalyzer(
+//        onSuccess = { rawValue -> handleScanSuccess(rawValue) },
+//        onFailure = { exception -> handleScanFailure(exception) },
+//        onCropArea = ::updateCropArea,
+//    )
 
-    init {
-        _uiState.update {
-            it.copy(
-                vendorAnalyzerAvailable = vendorAnalyzer != null,
-                useVendorAnalyzer = vendorAnalyzer != null,
-            )
-        }
-    }
+//    init {
+//        _uiState.update {
+//            it.copy(
+//                vendorAnalyzerAvailable = vendorAnalyzer != null,
+//                useVendorAnalyzer = vendorAnalyzer != null,
+//            )
+//        }
+//    }
 
     private val onSuccess: (String) -> Unit = { rawValue: String ->
         handleScanSuccess(rawValue)
@@ -135,7 +135,7 @@ class QRScanViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     private fun resetAnalyzer() {
-        if (_uiState.value.useVendorAnalyzer && vendorAnalyzer != null) {
+        if (_uiState.value.useVendorAnalyzer /*&& vendorAnalyzer != null*/) {
             _uiState.update { it.copy(useVendorAnalyzer = false) }
             imageAnalysis?.clearAnalyzer()
             imageAnalyzer = ZxingQRCodeAnalyzer(onSuccess, onFailure, onCropArea = ::updateCropArea)
@@ -164,11 +164,11 @@ class QRScanViewModel(application: Application) : AndroidViewModel(application) 
                     .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                     .build()
 
-                imageAnalyzer = if (_uiState.value.useVendorAnalyzer && vendorAnalyzer != null) {
-                    vendorAnalyzer
-                } else {
-                    ZxingQRCodeAnalyzer(onSuccess, onFailure, onCropArea = ::updateCropArea)
-                }
+//                imageAnalyzer = if (_uiState.value.useVendorAnalyzer && vendorAnalyzer != null) {
+//                    vendorAnalyzer
+//                } else {
+//                    ZxingQRCodeAnalyzer(onSuccess, onFailure, onCropArea = ::updateCropArea)
+//                }
                 imageAnalysis?.setAnalyzer(analysisExecutor, imageAnalyzer!!)
 
                 bindCamera(lifecycleOwner)
@@ -229,18 +229,18 @@ class QRScanViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     fun toggleVendorAnalyzer() {
-        if (vendorAnalyzer == null) return
+//        if (vendorAnalyzer == null) return
 
         val newState = !_uiState.value.useVendorAnalyzer
         _uiState.update { it.copy(useVendorAnalyzer = newState) }
         updateCropArea(null)
 
         imageAnalysis?.clearAnalyzer()
-        imageAnalyzer = if (newState) {
-            vendorAnalyzer
-        } else {
-            ZxingQRCodeAnalyzer(onSuccess, onFailure, onCropArea = ::updateCropArea)
-        }
+//        imageAnalyzer = if (newState) {
+//            vendorAnalyzer
+//        } else {
+//            ZxingQRCodeAnalyzer(onSuccess, onFailure, onCropArea = ::updateCropArea)
+//        }
         imageAnalysis?.setAnalyzer(analysisExecutor, imageAnalyzer!!)
     }
 

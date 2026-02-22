@@ -1,4 +1,4 @@
-package io.nekohasekai.sfa.compose.base
+package ru.ravel.ultunnel.compose.base
 
 sealed class UiState<out T> {
     object Loading : UiState<Nothing>()

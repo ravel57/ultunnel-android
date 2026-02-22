@@ -1,4 +1,4 @@
-package io.nekohasekai.sfa.vendor
+package ru.ravel.ultunnel.vendor
 
 import android.annotation.SuppressLint
 import android.os.IBinder

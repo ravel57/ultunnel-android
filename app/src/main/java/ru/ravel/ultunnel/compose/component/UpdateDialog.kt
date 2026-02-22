@@ -1,4 +1,4 @@
-package io.nekohasekai.sfa.compose.component
+package ru.ravel.ultunnel.compose.component
 
 import android.content.Intent
 import android.net.Uri
@@ -20,8 +20,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import dev.jeziellago.compose.markdowntext.MarkdownText
-import io.nekohasekai.sfa.R
-import io.nekohasekai.sfa.update.UpdateInfo
+import ru.ravel.ultunnel.R
+import ru.ravel.ultunnel.update.UpdateInfo
 import org.kodein.emoji.Emoji
 import org.kodein.emoji.EmojiTemplateCatalog
 import org.kodein.emoji.all

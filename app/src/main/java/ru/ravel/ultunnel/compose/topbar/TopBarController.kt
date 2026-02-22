@@ -1,4 +1,4 @@
-package io.nekohasekai.sfa.compose.topbar
+package ru.ravel.ultunnel.compose.topbar
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect

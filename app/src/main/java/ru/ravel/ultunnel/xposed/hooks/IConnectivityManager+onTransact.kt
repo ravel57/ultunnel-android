@@ -1,17 +1,17 @@
-package io.nekohasekai.sfa.xposed.hooks
+package ru.ravel.ultunnel.xposed.hooks
 
 import android.content.Context
 import android.content.pm.PackageInfo
 import android.os.Binder
 import android.os.Parcel
 import de.robv.android.xposed.XposedHelpers
-import io.nekohasekai.sfa.BuildConfig
-import io.nekohasekai.sfa.bg.PackageEntry
-import io.nekohasekai.sfa.bg.ParceledListSlice
-import io.nekohasekai.sfa.xposed.HookErrorStore
-import io.nekohasekai.sfa.xposed.HookStatusKeys
-import io.nekohasekai.sfa.xposed.HookStatusStore
-import io.nekohasekai.sfa.xposed.PrivilegeSettingsStore
+import ru.ravel.ultunnel.BuildConfig
+import ru.ravel.ultunnel.bg.PackageEntry
+import ru.ravel.ultunnel.bg.ParceledListSlice
+import ru.ravel.ultunnel.xposed.HookErrorStore
+import ru.ravel.ultunnel.xposed.HookStatusKeys
+import ru.ravel.ultunnel.xposed.HookStatusStore
+import ru.ravel.ultunnel.xposed.PrivilegeSettingsStore
 
 class HookIConnectivityManagerOnTransact(private val classLoader: ClassLoader, private val context: Context?) : XHook {
     private companion object {

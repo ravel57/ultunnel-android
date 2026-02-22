@@ -1,7 +1,7 @@
-package io.nekohasekai.sfa.compose.model
+package ru.ravel.ultunnel.compose.model
 
 import androidx.compose.runtime.Immutable
-import io.nekohasekai.sfa.ktx.toList
+import ru.ravel.ultunnel.ktx.toList
 import io.nekohasekai.libbox.Connection as LibboxConnection
 import io.nekohasekai.libbox.ProcessInfo as LibboxProcessInfo
 

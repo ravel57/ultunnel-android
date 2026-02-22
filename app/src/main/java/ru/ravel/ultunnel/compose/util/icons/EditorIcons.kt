@@ -1,4 +1,4 @@
-package io.nekohasekai.sfa.compose.util.icons
+package ru.ravel.ultunnel.compose.util.icons
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.FormatListBulleted
@@ -124,7 +124,7 @@ import androidx.compose.material.icons.filled.VerticalAlignCenter
 import androidx.compose.material.icons.filled.VerticalAlignTop
 import androidx.compose.material.icons.filled.VerticalDistribute
 import androidx.compose.material.icons.filled.WaterfallChart
-import io.nekohasekai.sfa.compose.util.ProfileIcon
+import ru.ravel.ultunnel.compose.util.ProfileIcon
 
 /**
  * Editor category icons - Text and content editing

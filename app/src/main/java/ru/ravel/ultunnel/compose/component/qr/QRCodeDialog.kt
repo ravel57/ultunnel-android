@@ -1,4 +1,4 @@
-package io.nekohasekai.sfa.compose.component.qr
+package ru.ravel.ultunnel.compose.component.qr
 
 import android.graphics.Bitmap
 import androidx.compose.foundation.Image
@@ -21,6 +21,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import ru.ravel.ultunnel.R
 
 @Composable
 fun QRCodeDialog(bitmap: Bitmap, onDismiss: () -> Unit) {
@@ -55,7 +56,7 @@ fun QRCodeDialog(bitmap: Bitmap, onDismiss: () -> Unit) {
                 ) {
                     Image(
                         bitmap = bitmap.asImageBitmap(),
-                        contentDescription = stringResource(io.nekohasekai.sfa.R.string.content_description_qr_code),
+                        contentDescription = stringResource(R.string.content_description_qr_code),
                         modifier = Modifier.fillMaxSize(),
                     )
                 }

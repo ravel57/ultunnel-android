@@ -6,8 +6,6 @@
     <string name="language">Язык</string>
     <string name="system_default">Системный по умолчанию</string>
 
-    <string name="stop">Стоп</string>
-    <string name="ok">ОК</string>
     <!-- Common Actions -->
     <string name="ok">OK</string>
     <string name="cancel">Отмена</string>
@@ -23,7 +21,6 @@
     <string name="browse">Просмотр</string>
     <string name="search">Поиск</string>
     <string name="action">Действие</string>
-    <string name="action_start">Начать</string>
     <string name="action_deselect">Отменить выбор</string>
     <string name="expand">Развернуть</string>
     <string name="collapse">Свернуть</string>
@@ -47,14 +44,10 @@
     <string name="default_text">По умолчанию</string>
 
     <!-- Navigation Titles -->
-    <string name="title_dashboard">Главная</string>
     <string name="title_dashboard">Панель управления</string>
     <string name="title_configuration">Профили</string>
-    <string name="title_log">Журналы</string>
     <string name="title_settings">Настройки</string>
     <string name="title_log">Логи</string>
-    <string name="title_settings">Параметры</string>
-    <string name="title_app_settings">Приложение</string>
     <string name="title_new_profile">Новый профиль</string>
     <string name="title_edit_profile">Редактировать профиль</string>
     <string name="title_edit_configuration">Редактировать конфигурацию</string>
@@ -63,7 +56,6 @@
     <string name="title_debug">Отладка</string>
     <string name="title_connections">Соединения</string>
     <string name="title_others">Другое</string>
-    <string name="title_scan_result">Результат сканирования</string>
 
     <!-- Status -->
     <string name="status_default">Служба не запущена</string>
@@ -135,11 +127,9 @@
     <string name="add_profile">Добавить профиль</string>
     <string name="update_profile">Обновить профиль</string>
     <string name="import_remote_profile">Импортировать удалённый профиль</string>
-    <string name="import_remote_profile_message">Импортировать удалённый профиль %1$s? Для загрузки конфигурации будет установлено соединение с %2$s.</string>
     <string name="import_from_file_description">Импорт конфигурации из локального файла</string>
     <string name="scan_qr_code_description">Сканирование QR-кода с конфигурацией</string>
     <string name="create_new_profile_description">Создать новый профиль с нуля</string>
-    <string name="icloud_profile_unsupported">Профили iCloud не поддерживаются на текущей платформе</string>
     <string name="profile_name">Имя</string>
     <string name="profile_type">Тип</string>
     <string name="profile_source">Источник</string>
@@ -167,9 +157,6 @@
 
     <string name="profile_add_import_file">Импортировать из файла</string>
     <string name="profile_add_scan_qr_code">Сканировать QR-код</string>
-    <string name="profile_add_scan_use_front_camera">Фронтальная камера</string>
-    <string name="profile_add_scan_use_vendor_analyzer">Анализатор MLKit</string>
-    <string name="profile_add_scan_enable_torch">Фонарь</string>
 
     <string name="profile_add_create_manually">Создать вручную</string>
     <string name="profile_override">Перезапись профиля</string>
@@ -190,25 +177,7 @@
     <string name="import_profile_confirm_message">Импортировать профиль \'%s\'?</string>
     <string name="import_action">Импортировать</string>
 
-    <string name="menu_undo">Отменить</string>
-    <string name="menu_redo">Повторить</string>
-    <string name="menu_format">Форматировать</string>
-    <string name="menu_delete">Удалить</string>
-    <string name="menu_share">Поделиться</string>
-
-    <string name="status_default">Сервис не запущен</string>
-    <string name="status_starting">Сервис запускается…</string>
-    <string name="status_stopping">Сервис останавливается…</string>
-    <string name="status_started">Сервис запущен</string>
-
-    <string name="enabled">Включено</string>
-    <string name="disabled">Выключено</string>
-
     <string name="settings_clear_working_directory">Очистить рабочую директорию</string>
-
-    <string name="error_title">Ошибка</string>
-    <string name="file_manager_missing">На вашем устройстве отсутствует стандартный файловый менеджер Android. Установите его, например, Material Files.</string>
-    <string name="loading">Загрузка…</string>
 
     <string name="service_error_missing_permission">Отсутствует разрешение на VPN</string>
     <string name="service_error_missing_notification_permission">Отсутствует разрешение на уведомления</string>
@@ -252,21 +221,14 @@
     <!-- Settings -->
     <string name="service">Служба</string>
     <string name="core">Ядро</string>
-    <string name="dynamic_notification">Отображать скорость в уведомлении</string>
     <string name="core_version_title">Версия ядра</string>
     <string name="core_data_size">Размер данных</string>
-    <string name="check_update_automatic">Автоматическая проверка обновлений</string>
-    <string name="check_update">Проверить обновление</string>
     <string name="privacy_policy">Политика конфиденциальности</string>
     <string name="title_app_settings">Приложение</string>
     <string name="memory_limit">Ограничение памяти</string>
-    <string name="background_permission">Фоновое разрешение</string>
     <string name="background_permission_description">Получите необходимые разрешения для правильной работы VPN.
 
 Если вы используете устройство от китайского производителя, карточка может не исчезнуть после предоставления разрешения.</string>
-    <string name="read_more">Читать далее</string>
-    <string name="request_background_permission">Игнорировать оптимизацию батареи</string>
-    <string name="import_remote_profile">Импортировать удалённый профиль</string>
     <string name="import_remote_profile_message">Вы уверены, что хотите импортировать удалённый профиль %1$s? Вы подключитесь к %2$s для загрузки конфигурации.</string>
     <string name="about">О приложении</string>
     <string name="source_code">Исходный код</string>
@@ -289,54 +251,39 @@
     <string name="profile_override_description">Переопределяет элементы конфигурации профиля платформоспецифическими значениями.</string>
     <string name="profile_override_configure">Настроить</string>
 
-    <string name="title_per_app_proxy">Прокси для приложений</string>
-    <string name="per_app_proxy_description">Переопределяет include_package и exclude_package в конфигурации.</string>
     <!-- Per-App Proxy -->
     <string name="per_app_proxy">Прокси для отдельных приложений</string>
     <string name="per_app_proxy_mode">Режим прокси</string>
     <string name="per_app_proxy_mode_include">Включить</string>
-    <string name="per_app_proxy_mode_include_description">Только выбранные приложения допускаются через VPN</string>
     <string name="per_app_proxy_mode_include_description">Только выбранные приложения будут использовать VPN</string>
     <string name="per_app_proxy_mode_exclude">Исключить</string>
-    <string name="per_app_proxy_mode_exclude_description">Выбранные приложения будут исключены из VPN</string>
     <string name="per_app_proxy_mode_exclude_description">Выбранные приложения не будут использовать VPN</string>
     <string name="per_app_proxy_action_copy">Копировать</string>
-    <string name="per_app_proxy_action_copy_application_label">Имя</string>
     <string name="per_app_proxy_action_copy_package_name">Имя пакета</string>
-    <string name="per_app_proxy_action_copy_uid">UID</string>
 
     <string name="per_app_proxy_sort_mode">Сортировать по</string>
     <string name="per_app_proxy_action_copy_uid">Уникальный ID</string>
-    <string name="per_app_proxy_sort_mode">Сортировка</string>
     <string name="per_app_proxy_sort_mode_name">По имени</string>
     <string name="per_app_proxy_sort_mode_package_name">По имени пакета</string>
-    <string name="per_app_proxy_sort_mode_uid">По UID</string>
-    <string name="per_app_proxy_sort_mode_install_time">По времени установки</string>
     <string name="per_app_proxy_sort_mode_update_time">По времени обновления</string>
     <string name="per_app_proxy_sort_mode_reverse">Обратно</string>
 
     <string name="per_app_proxy_sort_mode_uid">По уникальному ID</string>
     <string name="per_app_proxy_sort_mode_install_time">По дате установки</string>
-    <string name="per_app_proxy_sort_mode_update_time">По дате обновления</string>
-    <string name="per_app_proxy_sort_mode_reverse">В обратном порядке</string>
     <string name="per_app_proxy_filter">Фильтр</string>
     <string name="per_app_proxy_hide_system_apps">Скрыть системные приложения</string>
-    <string name="per_app_proxy_hide_offline_apps">Скрыть офлайн-приложения</string>
     <string name="per_app_proxy_hide_offline_apps">Скрыть оффлайн-приложения</string>
     <string name="per_app_proxy_hide_disabled_apps">Скрыть отключённые приложения</string>
 
     <string name="per_app_proxy_select">Выбрать</string>
     <string name="per_app_proxy_select_all">Выбрать всё</string>
-    <string name="per_app_proxy_select_all">Выбрать все</string>
     <string name="per_app_proxy_select_none">Снять выделение</string>
 
-    <string name="per_app_proxy_backup">Резервное копирование</string>
     <string name="per_app_proxy_backup">Резервная копия</string>
     <string name="per_app_proxy_import">Импорт из буфера обмена</string>
     <string name="per_app_proxy_export">Экспорт в буфер обмена</string>
 
     <string name="per_app_proxy_scan">Сканировать</string>
-    <string name="per_app_proxy_scan">Сканирование</string>
     <string name="per_app_proxy_scan_china_apps">Китайские приложения</string>
     <string name="per_app_proxy_manage">Управление</string>
     <string name="content_description_app_icon">Значок приложения</string>
@@ -349,17 +296,12 @@
 
     <!-- Permissions -->
     <string name="background_permission">Фоновое разрешение</string>
-    <string name="background_permission_description">Предоставить необходимые разрешения для корректной работы VPN.\n\nЕсли Вы используете устройство китайского производителя, уведомление может не исчезнуть даже после предоставления разрешения.</string>
     <string name="request_background_permission">Игнорировать оптимизацию батареи</string>
-    <string name="location_permission_title">Разрешение на определение местоположения</string>
-    <string name="location_permission_description">Ваш профиль содержит правила маршрутизации &lt;strong&gt;&lt;tt&gt;wifi_ssid&lt;/tt&gt; или &lt;tt&gt;wifi_bssid&lt;/tt&gt;&lt;/strong&gt;. Для их работы sing-box использует разрешение на &lt;strong&gt;определение местоположения&lt;/strong&gt; &lt;strong&gt;в фоновом режиме&lt;/strong&gt;, чтобы получить информацию о подключённой сети Wi-Fi. Эта информация будет использоваться &lt;strong&gt;исключительно для маршрутизации&lt;/strong&gt;.</string>
-    <string name="location_permission_background_description">В Android 10 и новее требуется разрешение на &lt;strong&gt;определение местоположения в фоне&lt;/strong&gt;. Выберите &lt;strong&gt;«Разрешить всегда»&lt;/strong&gt; для предоставления этого разрешения.</string>
     <string name="notification_permission_title">Разрешение на уведомления</string>
     <string name="notification_permission_required_description">Без разрешения на отправку уведомлений sing-box не сможет отображать скорость сети в реальном времени. Предоставьте разрешение или отключите уведомления о скорости перед запуском службы.</string>
     <string name="root_access_required">Требуются права ROOT</string>
     <string name="root_access_denied">Доступ ROOT запрещен</string>
 
-    <string name="content_description_app_icon">Иконка приложения</string>
     <!-- Updates -->
     <string name="check_update">Проверить обновления</string>
     <string name="check_update_automatic">Автоматическая проверка обновлений</string>
@@ -372,7 +314,6 @@
     <string name="view_release">Посмотреть релиз</string>
     <string name="downloading">Загрузка...</string>
     <string name="exporting">Экспорт...</string>
-    <string name="no_updates_available">Обновлений нет</string>
     <string name="new_version_available">Доступна новая версия: %s</string>
     <string name="auto_update">Автообновление</string>
     <string name="auto_update_description">Автоматически загружать и устанавливать обновления в фоне</string>
@@ -459,29 +400,20 @@
 
     <!-- Toast Messages -->
     <string name="toast_clipboard_empty">Буфер обмена пуст</string>
-    <string name="toast_app_list_empty">Список приложений пуст</string>
     <string name="toast_copied_to_clipboard">Экспортировано в буфер обмена</string>
     <string name="toast_imported_from_clipboard">Импортировано из буфера обмена</string>
-    <string name="message_import_from_clipboard">Импорт списка приложений из буфера обмена перезапишет текущий список. Вы уверены, что хотите продолжить?</string>
-
     <!-- Scanning -->
     <string name="profile_add_scan_use_front_camera">Фронтальная камера</string>
     <string name="profile_add_scan_use_vendor_analyzer">Анализатор MLKit</string>
     <string name="profile_add_scan_enable_torch">Фонарик</string>
     <string name="message_scanning">Сканирование…</string>
-    <string name="message_scan_app_error">Ошибка сканирования приложений</string>
-    <string name="message_scan_app_no_apps_found">Не найдено подходящих приложений</string>
-    <string name="message_scan_app_found">Найдены следующие приложения, выберите действие.</string>
     <string name="title_scan_result">Результаты сканирования</string>
     <string name="action_select">Выбрать</string>
-    <string name="action_deselect">Снять выделение</string>
     <string name="per_app_proxy_update_on_change">Обновление при установке нового китайского приложения</string>
     <string name="import_profile">Импортировать профиль</string>
     <string name="import_profile_message">Вы уверены, что хотите импортировать профиль %s?</string>
     <string name="icloud_profile_unsupported">Профиль iCloud не поддерживается на текущей платформе</string>
-    <string name="search">Поиск</string>
     <string name="urltest" translatable="false">URLTest</string>
-    <string name="expand">Развернуть</string>
     <string name="http_proxy">HTTP прокси</string>
     <string name="title_scan_vpn">Сканирование VPN приложений</string>
     <string name="message_scan_vpn">Проверка установленных VPN приложений и их содержимого</string>
@@ -583,7 +515,5 @@
     <string name="privilege_module_restart_notification_message">Модуль LSPosed обновлён. Перезагрузите устройство, чтобы применить изменения.</string>
     <string name="privilege_module_restart_channel">Модуль LSPosed</string>
     <string name="reload_description">Обновить список VPN</string>
-    <string name="notification_permission_required_description">sing-box is unable to show real-time network speeds without the permission to send notifications. Please grant the permission or disable real-time network speeds notification before starting the service.</string>
     <string name="share_with">Поделиться</string>
-    <string name="notification_permission_title">Reload VPN list</string>
 </resources>

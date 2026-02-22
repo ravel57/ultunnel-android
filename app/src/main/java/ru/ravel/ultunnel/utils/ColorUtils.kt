@@ -33,11 +33,12 @@ object ColorUtils {
 			if (ansiInstruction.decorationCode == "0" && stack.isNotEmpty()) {
 				spans.add(stack.pop().copy(end = end - offset))
 			} else {
-				val span = AnsiSpan(
-					AnsiInstruction(context, stringCode),
-					start - if (offset > start) start else offset - 1,
-					0
-				)
+				val span =
+					AnsiSpan(
+						AnsiInstruction(context, stringCode),
+						start - if (offset > start) start else offset - 1,
+						0,
+					)
 				stack.push(span)
 			}
 		}
@@ -48,7 +49,7 @@ object ColorUtils {
 					it,
 					ansiSpan.start,
 					ansiSpan.end,
-					Spannable.SPAN_EXCLUSIVE_INCLUSIVE
+					Spannable.SPAN_EXCLUSIVE_INCLUSIVE,
 				)
 			}
 		}
@@ -56,15 +57,13 @@ object ColorUtils {
 		return spannable
 	}
 
-	private data class AnsiSpan(
-		val instruction: AnsiInstruction, val start: Int, val end: Int,
-	)
+	private data class AnsiSpan(val instruction: AnsiInstruction, val start: Int, val end: Int)
 
 	private class AnsiInstruction(context: Context, code: String) {
-
 		val spans: List<ParcelableSpan> by lazy {
 			listOfNotNull(
-				getSpan(colorCode, context), getSpan(decorationCode, context)
+				getSpan(colorCode, context),
+				getSpan(decorationCode, context),
 			)
 		}
 

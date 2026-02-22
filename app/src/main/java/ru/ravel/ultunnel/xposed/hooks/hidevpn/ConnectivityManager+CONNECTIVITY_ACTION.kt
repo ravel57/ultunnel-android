@@ -1,10 +1,10 @@
-package io.nekohasekai.sfa.xposed.hooks.hidevpn
+package ru.ravel.ultunnel.xposed.hooks.hidevpn
 
 import android.net.ConnectivityManager
 import android.net.NetworkInfo
 import de.robv.android.xposed.XposedHelpers
-import io.nekohasekai.sfa.xposed.VpnSanitizer
-import io.nekohasekai.sfa.xposed.hooks.SafeMethodHook
+import ru.ravel.ultunnel.xposed.VpnSanitizer
+import ru.ravel.ultunnel.xposed.hooks.SafeMethodHook
 
 class HookConnectivityManagerConnectivityAction(private val helper: ConnectivityServiceHookHelper) {
     private companion object {

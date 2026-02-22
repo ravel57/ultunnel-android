@@ -1,8 +1,8 @@
-package io.nekohasekai.sfa.compose.component.qr
+package ru.ravel.ultunnel.compose.component.qr
 
 import android.graphics.Bitmap
-import io.nekohasekai.sfa.compose.util.QRCodeGenerator
-import io.nekohasekai.sfa.qrs.QRSEncoder
+import ru.ravel.ultunnel.compose.util.QRCodeGenerator
+import ru.ravel.ultunnel.qrs.QRSEncoder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job

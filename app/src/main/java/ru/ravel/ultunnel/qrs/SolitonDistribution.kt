@@ -1,4 +1,4 @@
-package io.nekohasekai.sfa.qrs
+package ru.ravel.ultunnel.qrs
 
 import kotlin.random.Random
 

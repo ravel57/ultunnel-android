@@ -1,4 +1,4 @@
-package io.nekohasekai.sfa.compose.util
+package ru.ravel.ultunnel.compose.util
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString

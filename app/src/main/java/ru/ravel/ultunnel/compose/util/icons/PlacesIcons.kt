@@ -1,4 +1,4 @@
-package io.nekohasekai.sfa.compose.util.icons
+package ru.ravel.ultunnel.compose.util.icons
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AcUnit
@@ -83,7 +83,7 @@ import androidx.compose.material.icons.filled.Villa
 import androidx.compose.material.icons.filled.Wash
 import androidx.compose.material.icons.filled.WaterDamage
 import androidx.compose.material.icons.filled.WheelchairPickup
-import io.nekohasekai.sfa.compose.util.ProfileIcon
+import ru.ravel.ultunnel.compose.util.ProfileIcon
 
 /**
  * Places category icons - Locations and venues

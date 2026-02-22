@@ -1,4 +1,4 @@
-package io.nekohasekai.sfa.compose.screen.dashboard
+package ru.ravel.ultunnel.compose.screen.dashboard
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -21,7 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import io.nekohasekai.sfa.R
+import ru.ravel.ultunnel.R
 
 @Composable
 fun DebugCard(memory: String, goroutines: String, modifier: Modifier = Modifier) {

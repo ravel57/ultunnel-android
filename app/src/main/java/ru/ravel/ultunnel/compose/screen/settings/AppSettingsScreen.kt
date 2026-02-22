@@ -1,4 +1,4 @@
-package io.nekohasekai.sfa.compose.screen.settings
+package ru.ravel.ultunnel.compose.screen.settings
 
 import android.app.LocaleConfig
 import android.app.NotificationChannel
@@ -25,17 +25,14 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.outlined.AdminPanelSettings
 import androidx.compose.material.icons.outlined.Autorenew
 import androidx.compose.material.icons.outlined.Download
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Language
-import androidx.compose.material.icons.outlined.NewReleases
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.Speed
-import androidx.compose.material.icons.outlined.SystemUpdateAlt
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Badge
 import androidx.compose.material3.Card
@@ -71,23 +68,21 @@ import androidx.core.os.LocaleListCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.navigation.NavController
-import io.nekohasekai.sfa.Application
-import io.nekohasekai.sfa.BuildConfig
-import io.nekohasekai.sfa.R
-import io.nekohasekai.sfa.compose.component.UpdateAvailableDialog
-import io.nekohasekai.sfa.compose.topbar.OverrideTopBar
-import io.nekohasekai.sfa.database.Settings
-import io.nekohasekai.sfa.update.UpdateCheckException
-import io.nekohasekai.sfa.update.UpdateState
-import io.nekohasekai.sfa.update.UpdateTrack
-import io.nekohasekai.sfa.utils.HookStatusClient
-import io.nekohasekai.sfa.vendor.Vendor
-import io.nekohasekai.sfa.xposed.XposedActivation
+import ru.ravel.ultunnel.BuildConfig
+import ru.ravel.ultunnel.R
+import ru.ravel.ultunnel.compose.component.UpdateAvailableDialog
+import ru.ravel.ultunnel.compose.topbar.OverrideTopBar
+import ru.ravel.ultunnel.database.Settings
+import ru.ravel.ultunnel.update.UpdateState
+import ru.ravel.ultunnel.utils.HookStatusClient
+//import io.nekohasekai.sfa.vendor.Vendor
+import ru.ravel.ultunnel.xposed.XposedActivation
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.xmlpull.v1.XmlPullParser
+import ru.ravel.ultunnel.Application
 import java.util.Locale
 import android.provider.Settings as AndroidSettings
 
@@ -162,25 +157,25 @@ fun AppSettingsScreen(navController: NavController) {
             val channel = Application.notification.getNotificationChannel("service")
             notificationEnabled = channel?.importance != NotificationManager.IMPORTANCE_NONE
         } else {
-            notificationEnabled = Application.notification.areNotificationsEnabled()
+//            notificationEnabled = Application.notification.areNotificationsEnabled()
         }
-        if (silentInstallEnabled) {
-            scope.launch {
-                val success = withContext(Dispatchers.IO) {
-                    Vendor.verifySilentInstallMethod(silentInstallMethod)
-                }
-                isMethodAvailable = success
-                silentInstallError = if (success) {
-                    null
-                } else {
-                    when (silentInstallMethod) {
-                        "PACKAGE_INSTALLER" -> context.getString(R.string.package_installer_not_available)
-                        "SHIZUKU" -> context.getString(R.string.shizuku_not_available)
-                        else -> context.getString(R.string.silent_install_verify_failed, silentInstallMethod)
-                    }
-                }
-            }
-        }
+//        if (silentInstallEnabled) {
+//            scope.launch {
+//                val success = withContext(Dispatchers.IO) {
+//                    Vendor.verifySilentInstallMethod(silentInstallMethod)
+//                }
+//                isMethodAvailable = success
+//                silentInstallError = if (success) {
+//                    null
+//                } else {
+//                    when (silentInstallMethod) {
+//                        "PACKAGE_INSTALLER" -> context.getString(R.string.package_installer_not_available)
+//                        "SHIZUKU" -> context.getString(R.string.shizuku_not_available)
+//                        else -> context.getString(R.string.silent_install_verify_failed, silentInstallMethod)
+//                    }
+//                }
+//            }
+//        }
     }
 
     if (showTrackDialog) {
@@ -256,20 +251,20 @@ fun AppSettingsScreen(navController: NavController) {
                 Settings.silentInstallMethod = method
                 isVerifyingMethod = true
                 scope.launch {
-                    val success = withContext(Dispatchers.IO) {
-                        Vendor.verifySilentInstallMethod(method)
-                    }
-                    isVerifyingMethod = false
-                    isMethodAvailable = success
-                    silentInstallError = if (success) {
-                        null
-                    } else {
-                        when (method) {
-                            "PACKAGE_INSTALLER" -> context.getString(R.string.package_installer_not_available)
-                            "SHIZUKU" -> context.getString(R.string.shizuku_not_available)
-                            else -> context.getString(R.string.silent_install_verify_failed, method)
-                        }
-                    }
+//                    val success = withContext(Dispatchers.IO) {
+//                        Vendor.verifySilentInstallMethod(method)
+//                    }
+//                    isVerifyingMethod = false
+//                    isMethodAvailable = success
+//                    silentInstallError = if (success) {
+//                        null
+//                    } else {
+//                        when (method) {
+//                            "PACKAGE_INSTALLER" -> context.getString(R.string.package_installer_not_available)
+//                            "SHIZUKU" -> context.getString(R.string.shizuku_not_available)
+//                            else -> context.getString(R.string.silent_install_verify_failed, method)
+//                        }
+//                    }
                 }
             },
             onDismiss = { showInstallMethodMenu = false },
@@ -330,9 +325,9 @@ fun AppSettingsScreen(navController: NavController) {
                 downloadError = null
                 downloadJob = scope.launch {
                     try {
-                        withContext(Dispatchers.IO) {
-                            Vendor.downloadAndInstall(context, updateInfo!!.downloadUrl)
-                        }
+//                        withContext(Dispatchers.IO) {
+//                            Vendor.downloadAndInstall(context, updateInfo!!.downloadUrl)
+//                        }
                         showDownloadDialog = false
                     } catch (e: Exception) {
                         Log.e("AppSettingsScreen", "Error downloading update", e)
@@ -555,74 +550,74 @@ fun AppSettingsScreen(navController: NavController) {
             ),
         ) {
             Column {
-                val updateItemCount =
-                    run {
-                        var count = 0
-                        if (Vendor.supportsTrackSelection()) {
-                            count += 1
-                        }
-                        count += 1
-                        if (Vendor.supportsSilentInstall()) {
-                            count += 1
-                            if (silentInstallEnabled) {
-                                count += 1
-                                if (silentInstallMethod == "SHIZUKU" && !isMethodAvailable) {
-                                    count += 1
-                                }
-                                if (silentInstallMethod == "PACKAGE_INSTALLER" && !isMethodAvailable) {
-                                    count += 1
-                                }
-                            }
-                        }
-                        if (Vendor.supportsAutoUpdate()) {
-                            count += 1
-                        }
-                        count
-                    }
+//                val updateItemCount =
+//                    run {
+//                        var count = 0
+//                        if (Vendor.supportsTrackSelection()) {
+//                            count += 1
+//                        }
+//                        count += 1
+//                        if (Vendor.supportsSilentInstall()) {
+//                            count += 1
+//                            if (silentInstallEnabled) {
+//                                count += 1
+//                                if (silentInstallMethod == "SHIZUKU" && !isMethodAvailable) {
+//                                    count += 1
+//                                }
+//                                if (silentInstallMethod == "PACKAGE_INSTALLER" && !isMethodAvailable) {
+//                                    count += 1
+//                                }
+//                            }
+//                        }
+//                        if (Vendor.supportsAutoUpdate()) {
+//                            count += 1
+//                        }
+//                        count
+//                    }
 
-                var updateItemIndex = 0
-                fun updateItemModifier(): Modifier {
-                    val index = updateItemIndex++
-                    return when {
-                        updateItemCount == 1 -> Modifier.clip(RoundedCornerShape(12.dp))
-                        index == 0 -> Modifier.clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp))
-                        index == updateItemCount - 1 ->
-                            Modifier.clip(RoundedCornerShape(bottomStart = 12.dp, bottomEnd = 12.dp))
-                        else -> Modifier
-                    }
-                }
-
-                if (Vendor.supportsTrackSelection()) {
-                    ListItem(
-                        headlineContent = {
-                            Text(
-                                stringResource(R.string.update_track),
-                                style = MaterialTheme.typography.bodyLarge,
-                            )
-                        },
-                        supportingContent = {
-                            val trackName = when (UpdateTrack.fromString(currentTrack)) {
-                                UpdateTrack.STABLE -> stringResource(R.string.update_track_stable)
-                                UpdateTrack.BETA -> stringResource(R.string.update_track_beta)
-                            }
-                            Text(trackName, style = MaterialTheme.typography.bodyMedium)
-                        },
-                        leadingContent = {
-                            Icon(
-                                imageVector = Icons.Outlined.NewReleases,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
-                            )
-                        },
-                        modifier =
-                        updateItemModifier()
-                            .clickable { showTrackDialog = true },
-                        colors =
-                        ListItemDefaults.colors(
-                            containerColor = Color.Transparent,
-                        ),
-                    )
-                }
+//                var updateItemIndex = 0
+//                fun updateItemModifier(): Modifier {
+//                    val index = updateItemIndex++
+//                    return when {
+//                        updateItemCount == 1 -> Modifier.clip(RoundedCornerShape(12.dp))
+//                        index == 0 -> Modifier.clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp))
+//                        index == updateItemCount - 1 ->
+//                            Modifier.clip(RoundedCornerShape(bottomStart = 12.dp, bottomEnd = 12.dp))
+//                        else -> Modifier
+//                    }
+//                }
+//
+//                if (Vendor.supportsTrackSelection()) {
+//                    ListItem(
+//                        headlineContent = {
+//                            Text(
+//                                stringResource(R.string.update_track),
+//                                style = MaterialTheme.typography.bodyLarge,
+//                            )
+//                        },
+//                        supportingContent = {
+//                            val trackName = when (UpdateTrack.fromString(currentTrack)) {
+//                                UpdateTrack.STABLE -> stringResource(R.string.update_track_stable)
+//                                UpdateTrack.BETA -> stringResource(R.string.update_track_beta)
+//                            }
+//                            Text(trackName, style = MaterialTheme.typography.bodyMedium)
+//                        },
+//                        leadingContent = {
+//                            Icon(
+//                                imageVector = Icons.Outlined.NewReleases,
+//                                contentDescription = null,
+//                                tint = MaterialTheme.colorScheme.primary,
+//                            )
+//                        },
+//                        modifier =
+//                        updateItemModifier()
+//                            .clickable { showTrackDialog = true },
+//                        colors =
+//                        ListItemDefaults.colors(
+//                            containerColor = Color.Transparent,
+//                        ),
+//                    )
+//                }
 
                 ListItem(
                     headlineContent = {
@@ -649,234 +644,234 @@ fun AppSettingsScreen(navController: NavController) {
                             },
                         )
                     },
-                    modifier = updateItemModifier(),
+//                    modifier = updateItemModifier(),
                     colors =
                     ListItemDefaults.colors(
                         containerColor = Color.Transparent,
                     ),
                 )
 
-                if (Vendor.supportsSilentInstall()) {
-                    ListItem(
-                        headlineContent = {
-                            Text(
-                                stringResource(R.string.silent_install),
-                                style = MaterialTheme.typography.bodyLarge,
-                            )
-                        },
-                        supportingContent = {
-                            Text(
-                                silentInstallError ?: stringResource(R.string.silent_install_description),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = if (silentInstallError != null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        },
-                        leadingContent = {
-                            Icon(
-                                imageVector = Icons.Outlined.AdminPanelSettings,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
-                            )
-                        },
-                        trailingContent = {
-                            if (isVerifyingMethod) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(24.dp),
-                                    strokeWidth = 2.dp,
-                                )
-                            } else {
-                                Switch(
-                                    checked = silentInstallEnabled,
-                                    onCheckedChange = { checked ->
-                                        silentInstallEnabled = checked
-                                        Settings.silentInstallEnabled = checked
-                                        if (checked) {
-                                            isVerifyingMethod = true
-                                            scope.launch {
-                                                val success = withContext(Dispatchers.IO) {
-                                                    Vendor.verifySilentInstallMethod(silentInstallMethod)
-                                                }
-                                                isVerifyingMethod = false
-                                                isMethodAvailable = success
-                                                silentInstallError = if (success) {
-                                                    null
-                                                } else {
-                                                    when (silentInstallMethod) {
-                                                        "PACKAGE_INSTALLER" -> context.getString(R.string.package_installer_not_available)
-                                                        "SHIZUKU" -> context.getString(R.string.shizuku_not_available)
-                                                        else -> context.getString(R.string.silent_install_verify_failed, silentInstallMethod)
-                                                    }
-                                                }
-                                            }
-                                        } else {
-                                            silentInstallError = null
-                                        }
-                                    },
-                                )
-                            }
-                        },
-                        modifier = updateItemModifier(),
-                        colors =
-                        ListItemDefaults.colors(
-                            containerColor = Color.Transparent,
-                        ),
-                    )
+//                if (Vendor.supportsSilentInstall()) {
+//                    ListItem(
+//                        headlineContent = {
+//                            Text(
+//                                stringResource(R.string.silent_install),
+//                                style = MaterialTheme.typography.bodyLarge,
+//                            )
+//                        },
+//                        supportingContent = {
+//                            Text(
+//                                silentInstallError ?: stringResource(R.string.silent_install_description),
+//                                style = MaterialTheme.typography.bodySmall,
+//                                color = if (silentInstallError != null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+//                            )
+//                        },
+//                        leadingContent = {
+//                            Icon(
+//                                imageVector = Icons.Outlined.AdminPanelSettings,
+//                                contentDescription = null,
+//                                tint = MaterialTheme.colorScheme.primary,
+//                            )
+//                        },
+//                        trailingContent = {
+//                            if (isVerifyingMethod) {
+//                                CircularProgressIndicator(
+//                                    modifier = Modifier.size(24.dp),
+//                                    strokeWidth = 2.dp,
+//                                )
+//                            } else {
+//                                Switch(
+//                                    checked = silentInstallEnabled,
+//                                    onCheckedChange = { checked ->
+//                                        silentInstallEnabled = checked
+//                                        Settings.silentInstallEnabled = checked
+//                                        if (checked) {
+//                                            isVerifyingMethod = true
+//                                            scope.launch {
+//                                                val success = withContext(Dispatchers.IO) {
+//                                                    Vendor.verifySilentInstallMethod(silentInstallMethod)
+//                                                }
+//                                                isVerifyingMethod = false
+//                                                isMethodAvailable = success
+//                                                silentInstallError = if (success) {
+//                                                    null
+//                                                } else {
+//                                                    when (silentInstallMethod) {
+//                                                        "PACKAGE_INSTALLER" -> context.getString(R.string.package_installer_not_available)
+//                                                        "SHIZUKU" -> context.getString(R.string.shizuku_not_available)
+//                                                        else -> context.getString(R.string.silent_install_verify_failed, silentInstallMethod)
+//                                                    }
+//                                                }
+//                                            }
+//                                        } else {
+//                                            silentInstallError = null
+//                                        }
+//                                    },
+//                                )
+//                            }
+//                        },
+//                        modifier = updateItemModifier(),
+//                        colors =
+//                        ListItemDefaults.colors(
+//                            containerColor = Color.Transparent,
+//                        ),
+//                    )
+//
+//                    if (silentInstallEnabled) {
+//                        ListItem(
+//                            headlineContent = {
+//                                Text(
+//                                    stringResource(R.string.silent_install_method),
+//                                    style = MaterialTheme.typography.bodyLarge,
+//                                )
+//                            },
+//                            supportingContent = {
+//                                Text(
+//                                    if (xposedActivated) {
+//                                        stringResource(R.string.install_method_root)
+//                                    } else {
+//                                        when (silentInstallMethod) {
+//                                            "PACKAGE_INSTALLER" -> stringResource(R.string.install_method_package_installer)
+//                                            "SHIZUKU" -> stringResource(R.string.install_method_shizuku)
+//                                            "ROOT" -> stringResource(R.string.install_method_root)
+//                                            else -> silentInstallMethod
+//                                        }
+//                                    },
+//                                    style = MaterialTheme.typography.bodyMedium,
+//                                )
+//                            },
+//                            leadingContent = {
+//                                Icon(
+//                                    imageVector = Icons.Outlined.Settings,
+//                                    contentDescription = null,
+//                                    tint = MaterialTheme.colorScheme.primary,
+//                                )
+//                            },
+//                            modifier =
+//                            updateItemModifier()
+//                                .let { if (!xposedActivated) it.clickable { showInstallMethodMenu = true } else it },
+//                            colors =
+//                            ListItemDefaults.colors(
+//                                containerColor = Color.Transparent,
+//                            ),
+//                        )
+//
+//                        if (silentInstallMethod == "SHIZUKU" && !isMethodAvailable) {
+//                            ListItem(
+//                                headlineContent = {
+//                                    Text(
+//                                        stringResource(R.string.get_shizuku),
+//                                        style = MaterialTheme.typography.bodyLarge,
+//                                    )
+//                                },
+//                                supportingContent = {
+//                                    Text(
+//                                        stringResource(R.string.shizuku_description),
+//                                        style = MaterialTheme.typography.bodySmall,
+//                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+//                                    )
+//                                },
+//                                leadingContent = {
+//                                    Icon(
+//                                        imageVector = Icons.Outlined.Download,
+//                                        contentDescription = null,
+//                                        tint = MaterialTheme.colorScheme.primary,
+//                                    )
+//                                },
+//                                modifier =
+//                                updateItemModifier()
+//                                    .clickable {
+//                                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://shizuku.rikka.app/"))
+//                                        context.startActivity(intent)
+//                                    },
+//                                colors =
+//                                ListItemDefaults.colors(
+//                                    containerColor = Color.Transparent,
+//                                ),
+//                            )
+//                        }
+//
+//                        if (silentInstallMethod == "PACKAGE_INSTALLER" && !isMethodAvailable) {
+//                            ListItem(
+//                                headlineContent = {
+//                                    Text(
+//                                        stringResource(R.string.grant_install_permission),
+//                                        style = MaterialTheme.typography.bodyLarge,
+//                                    )
+//                                },
+//                                supportingContent = {
+//                                    Text(
+//                                        stringResource(R.string.grant_install_permission_description),
+//                                        style = MaterialTheme.typography.bodySmall,
+//                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+//                                    )
+//                                },
+//                                leadingContent = {
+//                                    Icon(
+//                                        imageVector = Icons.Outlined.Settings,
+//                                        contentDescription = null,
+//                                        tint = MaterialTheme.colorScheme.primary,
+//                                    )
+//                                },
+//                                modifier =
+//                                updateItemModifier()
+//                                    .clickable {
+//                                        val intent = Intent(
+//                                            AndroidSettings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
+//                                            Uri.parse("package:${context.packageName}"),
+//                                        )
+//                                        context.startActivity(intent)
+//                                    },
+//                                colors =
+//                                ListItemDefaults.colors(
+//                                    containerColor = Color.Transparent,
+//                                ),
+//                            )
+//                        }
+//                    }
+//                }
 
-                    if (silentInstallEnabled) {
-                        ListItem(
-                            headlineContent = {
-                                Text(
-                                    stringResource(R.string.silent_install_method),
-                                    style = MaterialTheme.typography.bodyLarge,
-                                )
-                            },
-                            supportingContent = {
-                                Text(
-                                    if (xposedActivated) {
-                                        stringResource(R.string.install_method_root)
-                                    } else {
-                                        when (silentInstallMethod) {
-                                            "PACKAGE_INSTALLER" -> stringResource(R.string.install_method_package_installer)
-                                            "SHIZUKU" -> stringResource(R.string.install_method_shizuku)
-                                            "ROOT" -> stringResource(R.string.install_method_root)
-                                            else -> silentInstallMethod
-                                        }
-                                    },
-                                    style = MaterialTheme.typography.bodyMedium,
-                                )
-                            },
-                            leadingContent = {
-                                Icon(
-                                    imageVector = Icons.Outlined.Settings,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.primary,
-                                )
-                            },
-                            modifier =
-                            updateItemModifier()
-                                .let { if (!xposedActivated) it.clickable { showInstallMethodMenu = true } else it },
-                            colors =
-                            ListItemDefaults.colors(
-                                containerColor = Color.Transparent,
-                            ),
-                        )
-
-                        if (silentInstallMethod == "SHIZUKU" && !isMethodAvailable) {
-                            ListItem(
-                                headlineContent = {
-                                    Text(
-                                        stringResource(R.string.get_shizuku),
-                                        style = MaterialTheme.typography.bodyLarge,
-                                    )
-                                },
-                                supportingContent = {
-                                    Text(
-                                        stringResource(R.string.shizuku_description),
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    )
-                                },
-                                leadingContent = {
-                                    Icon(
-                                        imageVector = Icons.Outlined.Download,
-                                        contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.primary,
-                                    )
-                                },
-                                modifier =
-                                updateItemModifier()
-                                    .clickable {
-                                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://shizuku.rikka.app/"))
-                                        context.startActivity(intent)
-                                    },
-                                colors =
-                                ListItemDefaults.colors(
-                                    containerColor = Color.Transparent,
-                                ),
-                            )
-                        }
-
-                        if (silentInstallMethod == "PACKAGE_INSTALLER" && !isMethodAvailable) {
-                            ListItem(
-                                headlineContent = {
-                                    Text(
-                                        stringResource(R.string.grant_install_permission),
-                                        style = MaterialTheme.typography.bodyLarge,
-                                    )
-                                },
-                                supportingContent = {
-                                    Text(
-                                        stringResource(R.string.grant_install_permission_description),
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    )
-                                },
-                                leadingContent = {
-                                    Icon(
-                                        imageVector = Icons.Outlined.Settings,
-                                        contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.primary,
-                                    )
-                                },
-                                modifier =
-                                updateItemModifier()
-                                    .clickable {
-                                        val intent = Intent(
-                                            AndroidSettings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
-                                            Uri.parse("package:${context.packageName}"),
-                                        )
-                                        context.startActivity(intent)
-                                    },
-                                colors =
-                                ListItemDefaults.colors(
-                                    containerColor = Color.Transparent,
-                                ),
-                            )
-                        }
-                    }
-                }
-
-                if (Vendor.supportsAutoUpdate()) {
-                    ListItem(
-                        headlineContent = {
-                            Text(
-                                stringResource(R.string.auto_update),
-                                style = MaterialTheme.typography.bodyLarge,
-                            )
-                        },
-                        supportingContent = {
-                            Text(
-                                stringResource(R.string.auto_update_description),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        },
-                        leadingContent = {
-                            Icon(
-                                imageVector = Icons.Outlined.SystemUpdateAlt,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
-                            )
-                        },
-                        trailingContent = {
-                            Switch(
-                                checked = autoUpdateEnabled,
-                                onCheckedChange = { checked ->
-                                    autoUpdateEnabled = checked
-                                    scope.launch(Dispatchers.IO) {
-                                        Settings.autoUpdateEnabled = checked
-                                        Vendor.scheduleAutoUpdate()
-                                    }
-                                },
-                            )
-                        },
-                        modifier = updateItemModifier(),
-                        colors =
-                        ListItemDefaults.colors(
-                            containerColor = Color.Transparent,
-                        ),
-                    )
-                }
+//                if (Vendor.supportsAutoUpdate()) {
+//                    ListItem(
+//                        headlineContent = {
+//                            Text(
+//                                stringResource(R.string.auto_update),
+//                                style = MaterialTheme.typography.bodyLarge,
+//                            )
+//                        },
+//                        supportingContent = {
+//                            Text(
+//                                stringResource(R.string.auto_update_description),
+//                                style = MaterialTheme.typography.bodySmall,
+//                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+//                            )
+//                        },
+//                        leadingContent = {
+//                            Icon(
+//                                imageVector = Icons.Outlined.SystemUpdateAlt,
+//                                contentDescription = null,
+//                                tint = MaterialTheme.colorScheme.primary,
+//                            )
+//                        },
+//                        trailingContent = {
+//                            Switch(
+//                                checked = autoUpdateEnabled,
+//                                onCheckedChange = { checked ->
+//                                    autoUpdateEnabled = checked
+//                                    scope.launch(Dispatchers.IO) {
+//                                        Settings.autoUpdateEnabled = checked
+//                                        Vendor.scheduleAutoUpdate()
+//                                    }
+//                                },
+//                            )
+//                        },
+//                        modifier = updateItemModifier(),
+//                        colors =
+//                        ListItemDefaults.colors(
+//                            containerColor = Color.Transparent,
+//                        ),
+//                    )
+//                }
             }
         }
 
@@ -936,20 +931,20 @@ fun AppSettingsScreen(navController: NavController) {
                             scope.launch {
                                 UpdateState.isChecking.value = true
                                 withContext(Dispatchers.IO) {
-                                    try {
-                                        val result = Vendor.checkUpdateAsync()
-                                        UpdateState.setUpdate(result)
-                                        if (result == null) {
-                                            showErrorDialog = R.string.no_updates_available
-                                        } else {
-                                            showUpdateAvailableDialog = true
-                                        }
-                                    } catch (_: UpdateCheckException.TrackNotSupported) {
-                                        UpdateState.setUpdate(null)
-                                        showErrorDialog = R.string.update_track_not_supported
-                                    } catch (_: Exception) {
-                                        UpdateState.setUpdate(null)
-                                    }
+//                                    try {
+//                                        val result = Vendor.checkUpdateAsync()
+//                                        UpdateState.setUpdate(result)
+//                                        if (result == null) {
+//                                            showErrorDialog = R.string.no_updates_available
+//                                        } else {
+//                                            showUpdateAvailableDialog = true
+//                                        }
+//                                    } catch (_: UpdateCheckException.TrackNotSupported) {
+//                                        UpdateState.setUpdate(null)
+//                                        showErrorDialog = R.string.update_track_not_supported
+//                                    } catch (_: Exception) {
+//                                        UpdateState.setUpdate(null)
+//                                    }
                                 }
                                 UpdateState.isChecking.value = false
                             }

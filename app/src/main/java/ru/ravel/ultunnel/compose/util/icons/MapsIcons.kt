@@ -1,4 +1,4 @@
-package io.nekohasekai.sfa.compose.util.icons
+package ru.ravel.ultunnel.compose.util.icons
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddLocation
@@ -216,7 +216,7 @@ import androidx.compose.material.icons.filled.WineBar
 import androidx.compose.material.icons.filled.WrongLocation
 import androidx.compose.material.icons.filled.ZoomInMap
 import androidx.compose.material.icons.filled.ZoomOutMap
-import io.nekohasekai.sfa.compose.util.ProfileIcon
+import ru.ravel.ultunnel.compose.util.ProfileIcon
 
 /**
  * Maps category icons - Location and navigation

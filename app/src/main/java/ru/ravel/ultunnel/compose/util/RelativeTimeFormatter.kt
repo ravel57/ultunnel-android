@@ -1,7 +1,7 @@
-package io.nekohasekai.sfa.compose.util
+package ru.ravel.ultunnel.compose.util
 
 import android.content.Context
-import io.nekohasekai.sfa.R
+import ru.ravel.ultunnel.R
 import java.text.DateFormat
 import java.util.Date
 import java.util.concurrent.TimeUnit

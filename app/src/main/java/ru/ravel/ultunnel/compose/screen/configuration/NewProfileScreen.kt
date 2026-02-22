@@ -1,4 +1,4 @@
-package io.nekohasekai.sfa.compose.screen.configuration
+package ru.ravel.ultunnel.compose.screen.configuration
 
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -65,9 +65,9 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import io.nekohasekai.sfa.R
-import io.nekohasekai.sfa.compose.base.SelectableMessageDialog
-import io.nekohasekai.sfa.compose.topbar.OverrideTopBar
+import ru.ravel.ultunnel.R
+import ru.ravel.ultunnel.compose.base.SelectableMessageDialog
+import ru.ravel.ultunnel.compose.topbar.OverrideTopBar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

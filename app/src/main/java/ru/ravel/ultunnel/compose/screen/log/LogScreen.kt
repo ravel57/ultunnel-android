@@ -1,5 +1,6 @@
-package io.nekohasekai.sfa.compose.screen.log
+package ru.ravel.ultunnel.compose.screen.log
 
+import android.annotation.SuppressLint
 import android.content.ClipData
 import android.content.Intent
 import android.os.Build
@@ -90,17 +91,18 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
-import io.nekohasekai.sfa.Application
-import io.nekohasekai.sfa.R
-import io.nekohasekai.sfa.compat.WindowSizeClassCompat
-import io.nekohasekai.sfa.compat.isWidthAtLeastBreakpointCompat
-import io.nekohasekai.sfa.compose.topbar.OverrideTopBar
-import io.nekohasekai.sfa.constant.Status
+import ru.ravel.ultunnel.Application
+import ru.ravel.ultunnel.R
+import ru.ravel.ultunnel.compat.WindowSizeClassCompat
+import ru.ravel.ultunnel.compat.isWidthAtLeastBreakpointCompat
+import ru.ravel.ultunnel.compose.topbar.OverrideTopBar
+import ru.ravel.ultunnel.constant.Status
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+@SuppressLint("LocalContextGetResourceValueCall")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LogScreen(
@@ -126,6 +128,15 @@ fun LogScreen(
     val resolvedTitle = title ?: stringResource(R.string.title_log)
     val emptyStateMessage = emptyMessage ?: stringResource(R.string.privilege_settings_hook_logs_empty)
 
+    val copiedToClipboardText = stringResource(R.string.copied_to_clipboard)
+    val successLogsSavedText = stringResource(R.string.success_logs_saved)
+    val logsCopiedText = stringResource(R.string.logs_copied_to_clipboard)
+    val noLogsToCopyText = stringResource(R.string.no_logs_to_copy)
+    val intentShareLogsTitle = stringResource(R.string.intent_share_logs)
+    val noLogsToShareText = stringResource(R.string.no_logs_to_share)
+    val failedShareLogs: (Exception) -> String = remember(context) {
+        { e -> context.getString(R.string.failed_share_logs, e.message.orEmpty()) }
+    }
     OverrideTopBar {
         TopAppBar(
             title = { Text(resolvedTitle) },
@@ -312,14 +323,9 @@ fun LogScreen(
                                 onClick = {
                                     val selectedText = resolvedViewModel.getSelectedLogsText()
                                     if (selectedText.isNotEmpty()) {
-                                        val clipLabel = resolvedTitle
-                                        val clip = ClipData.newPlainText(clipLabel, selectedText)
+                                        val clip = ClipData.newPlainText(resolvedTitle, selectedText)
                                         Application.clipboard.setPrimaryClip(clip)
-                                        Toast.makeText(
-                                            context,
-                                            context.getString(R.string.copied_to_clipboard),
-                                            Toast.LENGTH_SHORT,
-                                        ).show()
+                                        Toast.makeText(context, copiedToClipboardText, Toast.LENGTH_SHORT).show()
                                         resolvedViewModel.clearSelection()
                                     }
                                 },
@@ -551,18 +557,10 @@ fun LogScreen(
                                     val logsText = resolvedViewModel.getAllLogsText()
                                     outputStream.write(logsText.toByteArray())
                                     outputStream.flush()
-                                    Toast.makeText(
-                                        context,
-                                        context.getString(R.string.success_logs_saved),
-                                        Toast.LENGTH_SHORT,
-                                    ).show()
+                                    Toast.makeText(context, successLogsSavedText, Toast.LENGTH_SHORT).show()
                                 }
                             } catch (e: Exception) {
-                                Toast.makeText(
-                                    context,
-                                    context.getString(R.string.failed_save_logs, e.message),
-                                    Toast.LENGTH_SHORT,
-                                ).show()
+                                Toast.makeText(context, logsCopiedText, Toast.LENGTH_SHORT).show()
                             }
                         }
                     },
@@ -689,17 +687,9 @@ fun LogScreen(
                                 val clip =
                                     ClipData.newPlainText(resolvedTitle, logsText)
                                 Application.clipboard.setPrimaryClip(clip)
-                                Toast.makeText(
-                                    context,
-                                    context.getString(R.string.logs_copied_to_clipboard),
-                                    Toast.LENGTH_SHORT,
-                                ).show()
+                                Toast.makeText(context, logsCopiedText, Toast.LENGTH_SHORT).show()
                             } else {
-                                Toast.makeText(
-                                    context,
-                                    context.getString(R.string.no_logs_to_copy),
-                                    Toast.LENGTH_SHORT,
-                                ).show()
+                                Toast.makeText(context, noLogsToCopyText, Toast.LENGTH_SHORT).show()
                             }
                             resolvedViewModel.toggleOptionsMenu()
                             expandedSave = false
@@ -773,22 +763,14 @@ fun LogScreen(
                                     context.startActivity(
                                         Intent.createChooser(
                                             shareIntent,
-                                            context.getString(R.string.intent_share_logs),
+                                            intentShareLogsTitle,
                                         ),
                                     )
                                 } catch (e: Exception) {
-                                    Toast.makeText(
-                                        context,
-                                        context.getString(R.string.failed_share_logs, e.message),
-                                        Toast.LENGTH_SHORT,
-                                    ).show()
+                                    Toast.makeText(context, failedShareLogs(e), Toast.LENGTH_SHORT).show()
                                 }
                             } else {
-                                Toast.makeText(
-                                    context,
-                                    context.getString(R.string.no_logs_to_share),
-                                    Toast.LENGTH_SHORT,
-                                ).show()
+                                Toast.makeText(context, noLogsToShareText, Toast.LENGTH_SHORT).show()
                             }
                             resolvedViewModel.toggleOptionsMenu()
                             expandedSave = false

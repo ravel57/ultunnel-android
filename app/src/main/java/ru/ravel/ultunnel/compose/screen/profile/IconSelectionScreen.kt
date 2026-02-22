@@ -1,4 +1,4 @@
-package io.nekohasekai.sfa.compose.screen.profile
+package ru.ravel.ultunnel.compose.screen.profile
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
@@ -66,11 +66,11 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import io.nekohasekai.sfa.R
-import io.nekohasekai.sfa.compose.topbar.OverrideTopBar
-import io.nekohasekai.sfa.compose.util.ProfileIcon
-import io.nekohasekai.sfa.compose.util.icons.IconCategory
-import io.nekohasekai.sfa.compose.util.icons.MaterialIconsLibrary
+import ru.ravel.ultunnel.R
+import ru.ravel.ultunnel.compose.topbar.OverrideTopBar
+import ru.ravel.ultunnel.compose.util.ProfileIcon
+import ru.ravel.ultunnel.compose.util.icons.IconCategory
+import ru.ravel.ultunnel.compose.util.icons.MaterialIconsLibrary
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

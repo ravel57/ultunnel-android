@@ -54,7 +54,7 @@ fun getVersionProps(propName: String): String {
 }
 
 android {
-    namespace = "io.nekohasekai.sfa"
+    namespace = "ru.ravel.ultunnel"
     compileSdk = 36
 
     ndkVersion = "28.0.13004108"
@@ -67,8 +67,8 @@ android {
     }
 
     defaultConfig {
-        applicationId = "io.nekohasekai.sfa"
-        minSdk = 21
+        applicationId = "ru.ravel.ultunnel"
+        minSdk = 26
         targetSdk = 35
         versionCode = getVersionProps("VERSION_CODE").toInt()
         versionName = getVersionProps("VERSION_NAME")
@@ -105,13 +105,13 @@ android {
     flavorDimensions += "vendor"
     productFlavors {
         create("play") {
-            minSdk = 23
+            minSdk = 26
         }
         create("other") {
-            minSdk = 23
+            minSdk = 26
         }
         create("otherLegacy") {
-            minSdk = 21
+            minSdk = 26
         }
     }
 
@@ -175,7 +175,9 @@ android {
 }
 
 dependencies {
-    // libbox
+    implementation(libs.androidx.swiperefreshlayout)
+	implementation(libs.androidx.compose.material)
+	// libbox
     "playImplementation"(files("libs/libbox.aar"))
     "otherImplementation"(files("libs/libbox.aar"))
     "otherLegacyImplementation"(files("libs/libbox-legacy.aar"))
@@ -194,23 +196,23 @@ dependencies {
     val browserVersion21 = "1.9.0"
 
     // Common dependencies (no API level difference)
-    implementation("androidx.core:core-ktx:1.17.0")
+    implementation(libs.androidx.core.ktx)
     implementation("androidx.appcompat:appcompat:1.7.1")
-    implementation("com.google.android.material:material:1.13.0")
+    implementation(libs.material)
     implementation("androidx.constraintlayout:constraintlayout:2.2.1")
-    implementation("androidx.navigation:navigation-fragment-ktx:2.9.7")
-    implementation("androidx.navigation:navigation-ui-ktx:2.9.7")
-    implementation("com.google.zxing:core:3.5.4")
+    implementation(libs.androidx.navigation.fragment.ktx)
+    implementation(libs.androidx.navigation.ui.ktx)
+    implementation(libs.core)
     implementation("androidx.coordinatorlayout:coordinatorlayout:1.3.0")
-    implementation("androidx.preference:preference-ktx:1.2.1")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.10.0")
-    implementation("com.blacksquircle.ui:editorkit:2.2.0")
-    implementation("com.blacksquircle.ui:language-json:2.2.0")
+    implementation(libs.androidx.preference.ktx)
+    implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.kotlinx.serialization.json)
+    implementation("com.blacksquircle.ui:editorkit:2.9.0")
+    implementation("com.blacksquircle.ui:language-json:2.9.0")
     implementation("com.android.tools.smali:smali-dexlib2:3.0.9") {
         exclude(group = "com.google.guava", module = "guava")
     }
-    implementation("com.google.guava:guava:33.5.0-android")
+    implementation(libs.guava)
 
     // API 23+ dependencies (play/other)
     "playImplementation"("androidx.lifecycle:lifecycle-livedata-ktx:$lifecycleVersion23")
@@ -312,18 +314,22 @@ dependencies {
     "otherLegacyImplementation"("androidx.compose.runtime:runtime-livedata")
 
     // Debug/Test dependencies
-    debugImplementation("androidx.compose.ui:ui-tooling")
-    debugImplementation("androidx.compose.ui:ui-test-manifest")
-    androidTestImplementation("androidx.compose.ui:ui-test-junit4")
+    debugImplementation(libs.androidx.ui.tooling)
+    debugImplementation(libs.androidx.ui.test.manifest)
+    androidTestImplementation(libs.androidx.ui.test.junit4)
 
     // Common Compose-related libraries
-    implementation("sh.calvin.reorderable:reorderable:3.0.0")
-    implementation("com.github.jeziellago:compose-markdown:0.5.8")
-    implementation("org.kodein.emoji:emoji-kt:2.3.0")
+    implementation(libs.reorderable)
+    implementation(libs.compose.markdown)
+    implementation(libs.emoji.kt)
 
     // Xposed API for self-hooking VPN hide module
     compileOnly("de.robv.android.xposed:api:82")
     compileOnly(project(":libxposed-api"))
+
+    implementation("tools.jackson.core:jackson-core:3.0.4")
+    implementation("tools.jackson.core:jackson-databind:3.0.4")
+    implementation("com.google.code.gson:gson:2.13.2")
 }
 
 val playCredentialsJSON = rootProject.file("service-account-credentials.json")

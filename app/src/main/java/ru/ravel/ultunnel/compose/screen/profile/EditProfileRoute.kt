@@ -1,4 +1,4 @@
-package io.nekohasekai.sfa.compose.screen.profile
+package ru.ravel.ultunnel.compose.screen.profile
 
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.core.tween

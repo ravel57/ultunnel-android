@@ -41,5 +41,4 @@ class HTTPClient : Closeable {
 		client.close()
 	}
 
-
 }

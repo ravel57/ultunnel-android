@@ -1,13 +1,13 @@
-package io.nekohasekai.sfa.compose.screen.profile
+package ru.ravel.ultunnel.compose.screen.profile
 
 import androidx.core.widget.addTextChangedListener
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import io.nekohasekai.libbox.Libbox
-import io.nekohasekai.sfa.database.Profile
-import io.nekohasekai.sfa.database.ProfileManager
-import io.nekohasekai.sfa.ktx.unwrap
+import ru.ravel.ultunnel.database.Profile
+import ru.ravel.ultunnel.database.ProfileManager
+import ru.ravel.ultunnel.ktx.unwrap
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay

@@ -1,16 +1,16 @@
-package io.nekohasekai.sfa.compose.screen.log
+package ru.ravel.ultunnel.compose.screen.log
 
 import androidx.lifecycle.viewModelScope
 import io.nekohasekai.libbox.Libbox
 import io.nekohasekai.libbox.LogEntry
-import io.nekohasekai.sfa.compose.util.AnsiColorUtils
-import io.nekohasekai.sfa.constant.Status
-import io.nekohasekai.sfa.utils.AppLifecycleObserver
-import io.nekohasekai.sfa.utils.CommandClient
+import ru.ravel.ultunnel.compose.util.AnsiColorUtils
+import ru.ravel.ultunnel.utils.AppLifecycleObserver
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import ru.ravel.ultunnel.constant.Status
+import ru.ravel.ultunnel.utils.CommandClient
 import java.util.LinkedList
 
 class LogViewModel :

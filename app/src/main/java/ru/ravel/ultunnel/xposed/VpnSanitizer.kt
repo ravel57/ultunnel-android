@@ -1,4 +1,4 @@
-package io.nekohasekai.sfa.xposed
+package ru.ravel.ultunnel.xposed
 
 import android.net.LinkProperties
 import android.net.NetworkCapabilities

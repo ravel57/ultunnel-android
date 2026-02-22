@@ -1,4 +1,4 @@
-package io.nekohasekai.sfa.compose.screen.settings
+package ru.ravel.ultunnel.compose.screen.settings
 
 import android.os.Build
 import android.os.PowerManager
@@ -48,12 +48,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import io.nekohasekai.sfa.R
-import io.nekohasekai.sfa.compose.topbar.OverrideTopBar
-import io.nekohasekai.sfa.database.Settings
-import io.nekohasekai.sfa.update.UpdateState
-import io.nekohasekai.sfa.utils.HookModuleUpdateNotifier
-import io.nekohasekai.sfa.utils.HookStatusClient
+import ru.ravel.ultunnel.R
+import ru.ravel.ultunnel.compose.topbar.OverrideTopBar
+import ru.ravel.ultunnel.update.UpdateState
+import ru.ravel.ultunnel.utils.HookModuleUpdateNotifier
+import ru.ravel.ultunnel.utils.HookStatusClient
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

@@ -1,4 +1,4 @@
-package io.nekohasekai.sfa.xposed.hooks.hidevpn
+package ru.ravel.ultunnel.xposed.hooks.hidevpn
 
 import android.content.Context
 import android.net.LinkProperties
@@ -8,12 +8,12 @@ import android.os.Build
 import android.os.IBinder
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XposedHelpers
-import io.nekohasekai.sfa.xposed.HookErrorStore
-import io.nekohasekai.sfa.xposed.PrivilegeSettingsStore
-import io.nekohasekai.sfa.xposed.VpnAppStore
-import io.nekohasekai.sfa.xposed.VpnSanitizer
-import io.nekohasekai.sfa.xposed.hooks.SafeMethodHook
-import io.nekohasekai.sfa.xposed.hooks.XHook
+import ru.ravel.ultunnel.xposed.HookErrorStore
+import ru.ravel.ultunnel.xposed.PrivilegeSettingsStore
+import ru.ravel.ultunnel.xposed.VpnAppStore
+import ru.ravel.ultunnel.xposed.VpnSanitizer
+import ru.ravel.ultunnel.xposed.hooks.SafeMethodHook
+import ru.ravel.ultunnel.xposed.hooks.XHook
 import java.lang.reflect.Method
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean

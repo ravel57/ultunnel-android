@@ -1,18 +1,16 @@
-package io.nekohasekai.sfa.compose.screen.connections
+package ru.ravel.ultunnel.compose.screen.connections
 
 import androidx.lifecycle.viewModelScope
 import io.nekohasekai.libbox.ConnectionEvents
 import io.nekohasekai.libbox.Connections
 import io.nekohasekai.libbox.Libbox
-import io.nekohasekai.sfa.compose.base.BaseViewModel
-import io.nekohasekai.sfa.compose.base.ScreenEvent
-import io.nekohasekai.sfa.compose.model.Connection
-import io.nekohasekai.sfa.compose.model.ConnectionSort
-import io.nekohasekai.sfa.compose.model.ConnectionStateFilter
-import io.nekohasekai.sfa.constant.Status
-import io.nekohasekai.sfa.ktx.toList
-import io.nekohasekai.sfa.utils.AppLifecycleObserver
-import io.nekohasekai.sfa.utils.CommandClient
+import ru.ravel.ultunnel.compose.base.BaseViewModel
+import ru.ravel.ultunnel.compose.base.ScreenEvent
+import ru.ravel.ultunnel.compose.model.Connection
+import ru.ravel.ultunnel.compose.model.ConnectionSort
+import ru.ravel.ultunnel.compose.model.ConnectionStateFilter
+import ru.ravel.ultunnel.ktx.toList
+import ru.ravel.ultunnel.utils.AppLifecycleObserver
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -21,6 +19,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import ru.ravel.ultunnel.constant.Status
+import ru.ravel.ultunnel.utils.CommandClient
 import java.util.concurrent.atomic.AtomicLong
 
 data class ConnectionsUiState(

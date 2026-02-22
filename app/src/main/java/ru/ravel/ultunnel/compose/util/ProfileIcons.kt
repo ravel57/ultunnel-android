@@ -1,9 +1,8 @@
-package io.nekohasekai.sfa.compose.util
+package ru.ravel.ultunnel.compose.util
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.InsertDriveFile
 import androidx.compose.ui.graphics.vector.ImageVector
-import io.nekohasekai.sfa.compose.util.icons.MaterialIconsLibrary
 
 data class ProfileIcon(val id: String, val icon: ImageVector, val label: String)
 

@@ -1,4 +1,4 @@
-package io.nekohasekai.sfa.compose.util.icons
+package ru.ravel.ultunnel.compose.util.icons
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Approval
@@ -50,7 +50,7 @@ import androidx.compose.material.icons.filled.Topic
 import androidx.compose.material.icons.filled.Upload
 import androidx.compose.material.icons.filled.UploadFile
 import androidx.compose.material.icons.filled.Workspaces
-import io.nekohasekai.sfa.compose.util.ProfileIcon
+import ru.ravel.ultunnel.compose.util.ProfileIcon
 
 /**
  * File category icons - File types and operations

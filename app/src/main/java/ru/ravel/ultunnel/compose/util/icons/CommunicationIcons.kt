@@ -1,4 +1,4 @@
-package io.nekohasekai.sfa.compose.util.icons
+package ru.ravel.ultunnel.compose.util.icons
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Chat
@@ -99,7 +99,7 @@ import androidx.compose.material.icons.filled.Unsubscribe
 import androidx.compose.material.icons.filled.Voicemail
 import androidx.compose.material.icons.filled.VpnKey
 import androidx.compose.material.icons.filled.VpnKeyOff
-import io.nekohasekai.sfa.compose.util.ProfileIcon
+import ru.ravel.ultunnel.compose.util.ProfileIcon
 
 /**
  * Communication category icons - Messaging, calls, emails

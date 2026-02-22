@@ -1,4 +1,4 @@
-package io.nekohasekai.sfa.xposed
+package ru.ravel.ultunnel.xposed
 
 object HookStatusKeys {
     const val DESCRIPTOR = "android.net.IConnectivityManager"

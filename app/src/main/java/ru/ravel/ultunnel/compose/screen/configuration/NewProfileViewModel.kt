@@ -1,16 +1,14 @@
-package io.nekohasekai.sfa.compose.screen.configuration
+package ru.ravel.ultunnel.compose.screen.configuration
 
 import android.app.Application
 import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import io.nekohasekai.libbox.Libbox
-import io.nekohasekai.sfa.R
-import io.nekohasekai.sfa.bg.UpdateProfileWork
-import io.nekohasekai.sfa.database.Profile
-import io.nekohasekai.sfa.database.ProfileManager
-import io.nekohasekai.sfa.database.TypedProfile
-import io.nekohasekai.sfa.utils.HTTPClient
+import ru.ravel.ultunnel.R
+import ru.ravel.ultunnel.database.Profile
+import ru.ravel.ultunnel.database.ProfileManager
+import ru.ravel.ultunnel.database.TypedProfile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -18,6 +16,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import ru.ravel.ultunnel.bg.UpdateProfileWork
+import ru.ravel.ultunnel.utils.HTTPClient
 import java.io.File
 import java.io.InputStream
 import java.util.Date

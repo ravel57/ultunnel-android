@@ -1,4 +1,4 @@
-package io.nekohasekai.sfa.compose.util.icons
+package ru.ravel.ultunnel.compose.util.icons
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccessTime
@@ -202,7 +202,7 @@ import androidx.compose.material.icons.filled.WifiProtectedSetup
 import androidx.compose.material.icons.filled.WifiTethering
 import androidx.compose.material.icons.filled.WifiTetheringError
 import androidx.compose.material.icons.filled.WifiTetheringOff
-import io.nekohasekai.sfa.compose.util.ProfileIcon
+import ru.ravel.ultunnel.compose.util.ProfileIcon
 
 /**
  * Device category icons - Device-specific icons and features

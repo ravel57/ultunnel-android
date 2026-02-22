@@ -1,14 +1,14 @@
-package io.nekohasekai.sfa.utils
+package ru.ravel.ultunnel.utils
 
 import android.content.Context
 import android.os.RemoteException
 import android.util.Log
-import io.nekohasekai.sfa.bg.PackageEntry
-import io.nekohasekai.sfa.bg.ParceledListSlice
-import io.nekohasekai.sfa.bg.RootClient
-import io.nekohasekai.sfa.database.Settings
-import io.nekohasekai.sfa.xposed.HookModuleVersion
-import io.nekohasekai.sfa.xposed.HookStatusKeys
+import ru.ravel.ultunnel.bg.PackageEntry
+import ru.ravel.ultunnel.bg.ParceledListSlice
+import ru.ravel.ultunnel.bg.RootClient
+import ru.ravel.ultunnel.database.Settings
+import ru.ravel.ultunnel.xposed.HookModuleVersion
+import ru.ravel.ultunnel.xposed.HookStatusKeys
 
 object PrivilegeSettingsClient {
     private const val TAG = "PrivilegeSettingsClient"

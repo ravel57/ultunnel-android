@@ -1,4 +1,4 @@
-package io.nekohasekai.sfa.compose.screen.dashboard
+package ru.ravel.ultunnel.compose.screen.dashboard
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
@@ -24,9 +24,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import io.nekohasekai.sfa.R
-import io.nekohasekai.sfa.compose.util.ProfileIcons
-import io.nekohasekai.sfa.database.Profile
+import ru.ravel.ultunnel.R
+import ru.ravel.ultunnel.compose.util.ProfileIcons
+import ru.ravel.ultunnel.database.Profile
 
 @Composable
 fun ProfileSelectorButton(selectedProfile: Profile?, onClick: () -> Unit, modifier: Modifier = Modifier) {

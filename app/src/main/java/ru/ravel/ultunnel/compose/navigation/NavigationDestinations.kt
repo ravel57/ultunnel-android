@@ -1,4 +1,4 @@
-package io.nekohasekai.sfa.compose.navigation
+package ru.ravel.ultunnel.compose.navigation
 
 import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
@@ -8,7 +8,7 @@ import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.SwapVert
 import androidx.compose.ui.graphics.vector.ImageVector
-import io.nekohasekai.sfa.R
+import ru.ravel.ultunnel.R
 
 sealed class Screen(val route: String, @StringRes val titleRes: Int, val icon: ImageVector) {
     object Dashboard : Screen(

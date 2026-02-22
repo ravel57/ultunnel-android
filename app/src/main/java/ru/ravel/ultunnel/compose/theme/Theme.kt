@@ -1,4 +1,4 @@
-package io.nekohasekai.sfa.compose.theme
+package ru.ravel.ultunnel.compose.theme
 
 import android.app.Activity
 import android.os.Build

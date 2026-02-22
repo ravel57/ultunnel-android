@@ -1,4 +1,4 @@
-package io.nekohasekai.sfa.compose.component
+package ru.ravel.ultunnel.compose.component
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -35,9 +35,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import io.nekohasekai.sfa.R
-import io.nekohasekai.sfa.constant.Status
+import ru.ravel.ultunnel.R
 import kotlinx.coroutines.delay
+import ru.ravel.ultunnel.constant.Status
 
 @Composable
 fun ServiceStatusBar(

@@ -1,4 +1,4 @@
-package io.nekohasekai.sfa.bg;
+package ru.ravel.ultunnel.bg;
 
 import android.os.Parcel;
 import android.os.Parcelable;

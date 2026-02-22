@@ -1,4 +1,4 @@
-package io.nekohasekai.sfa.compose.screen.qrscan
+package ru.ravel.ultunnel.compose.screen.qrscan
 
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy

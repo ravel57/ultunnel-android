@@ -1,16 +1,16 @@
-package io.nekohasekai.sfa.xposed.hooks.hidevpn
+package ru.ravel.ultunnel.xposed.hooks.hidevpn
 
 import android.net.NetworkCapabilities
 import android.os.Binder
 import android.os.Parcel
 import de.robv.android.xposed.XposedBridge
 import de.robv.android.xposed.XposedHelpers
-import io.nekohasekai.sfa.xposed.HookErrorStore
-import io.nekohasekai.sfa.xposed.HookStatusStore
-import io.nekohasekai.sfa.xposed.VpnHideContext
-import io.nekohasekai.sfa.xposed.VpnSanitizer
-import io.nekohasekai.sfa.xposed.hooks.SafeMethodHook
-import io.nekohasekai.sfa.xposed.hooks.XHook
+import ru.ravel.ultunnel.xposed.HookErrorStore
+import ru.ravel.ultunnel.xposed.HookStatusStore
+import ru.ravel.ultunnel.xposed.VpnHideContext
+import ru.ravel.ultunnel.xposed.VpnSanitizer
+import ru.ravel.ultunnel.xposed.hooks.SafeMethodHook
+import ru.ravel.ultunnel.xposed.hooks.XHook
 
 class HookNetworkCapabilitiesWriteToParcel : XHook {
     private companion object {

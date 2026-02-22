@@ -1,4 +1,4 @@
-package io.nekohasekai.sfa.xposed
+package ru.ravel.ultunnel.xposed
 
 import java.io.File
 import java.lang.reflect.Method

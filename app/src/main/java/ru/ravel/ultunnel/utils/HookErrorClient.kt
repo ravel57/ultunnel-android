@@ -1,10 +1,10 @@
-package io.nekohasekai.sfa.utils
+package ru.ravel.ultunnel.utils
 
 import android.content.Context
 import android.os.RemoteException
-import io.nekohasekai.sfa.bg.LogEntry
-import io.nekohasekai.sfa.bg.ParceledListSlice
-import io.nekohasekai.sfa.xposed.HookStatusKeys
+import ru.ravel.ultunnel.bg.LogEntry
+import ru.ravel.ultunnel.bg.ParceledListSlice
+import ru.ravel.ultunnel.xposed.HookStatusKeys
 
 object HookErrorClient {
     enum class Failure {

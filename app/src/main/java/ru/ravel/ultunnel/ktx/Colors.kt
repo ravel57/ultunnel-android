@@ -11,11 +11,7 @@ import com.google.android.material.color.MaterialColors
 
 
 @ColorInt
-fun Context.getAttrColor(
-	@AttrRes attrColor: Int,
-	typedValue: TypedValue = TypedValue(),
-	resolveRefs: Boolean = true,
-): Int {
+fun Context.getAttrColor(@AttrRes attrColor: Int, typedValue: TypedValue = TypedValue(), resolveRefs: Boolean = true): Int {
 	theme.resolveAttribute(attrColor, typedValue, resolveRefs)
 	return typedValue.data
 }

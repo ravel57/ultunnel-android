@@ -1,4 +1,4 @@
-package io.nekohasekai.sfa.compose.screen.connections
+package ru.ravel.ultunnel.compose.screen.connections
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -57,15 +56,15 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import io.nekohasekai.sfa.R
-import io.nekohasekai.sfa.compat.LazyColumnCompat
-import io.nekohasekai.sfa.compat.rememberOverscrollEffectCompat
-import io.nekohasekai.sfa.compose.model.Connection
-import io.nekohasekai.sfa.compose.model.ConnectionSort
-import io.nekohasekai.sfa.compose.model.ConnectionStateFilter
-import io.nekohasekai.sfa.compose.topbar.OverrideTopBar
-import io.nekohasekai.sfa.compose.util.rememberSheetDismissFromContentOnlyIfGestureStartedAtTopModifier
-import io.nekohasekai.sfa.constant.Status
+import ru.ravel.ultunnel.R
+import ru.ravel.ultunnel.compat.LazyColumnCompat
+import ru.ravel.ultunnel.compat.rememberOverscrollEffectCompat
+import ru.ravel.ultunnel.compose.model.Connection
+import ru.ravel.ultunnel.compose.model.ConnectionSort
+import ru.ravel.ultunnel.compose.model.ConnectionStateFilter
+import ru.ravel.ultunnel.compose.topbar.OverrideTopBar
+import ru.ravel.ultunnel.compose.util.rememberSheetDismissFromContentOnlyIfGestureStartedAtTopModifier
+import ru.ravel.ultunnel.constant.Status
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

@@ -1,4 +1,4 @@
-package io.nekohasekai.sfa.xposed
+package ru.ravel.ultunnel.xposed
 
 object VpnHideContext {
     private val targetUid = ThreadLocal<Int?>()

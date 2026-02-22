@@ -8,10 +8,12 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import ru.ravel.ultunnel.aidl.IService
+import ru.ravel.ultunnel.aidl.IServiceCallback
 import ru.ravel.ultunnel.constant.Status
 
-class ServiceBinder(private val status: MutableLiveData<Status>) : ru.ravel.ultunnel.aidl.IService.Stub() {
-	private val callbacks = RemoteCallbackList<ru.ravel.ultunnel.aidl.IServiceCallback>()
+class ServiceBinder(private val status: MutableLiveData<Status>) : IService.Stub() {
+	private val callbacks = RemoteCallbackList<IServiceCallback>()
 	private val broadcastLock = Mutex()
 
 	init {
@@ -23,7 +25,7 @@ class ServiceBinder(private val status: MutableLiveData<Status>) : ru.ravel.ultu
 	}
 
 	@OptIn(DelicateCoroutinesApi::class)
-	fun broadcast(work: (ru.ravel.ultunnel.aidl.IServiceCallback) -> Unit) {
+	fun broadcast(work: (IServiceCallback) -> Unit) {
 		GlobalScope.launch(Dispatchers.Main) {
 			broadcastLock.withLock {
 				val count = callbacks.beginBroadcast()
@@ -41,15 +43,13 @@ class ServiceBinder(private val status: MutableLiveData<Status>) : ru.ravel.ultu
 		}
 	}
 
-	override fun getStatus(): Int {
-		return (status.value ?: Status.Stopped).ordinal
-	}
+	override fun getStatus(): Int = (status.value ?: Status.Stopped).ordinal
 
-	override fun registerCallback(callback: ru.ravel.ultunnel.aidl.IServiceCallback) {
+	override fun registerCallback(callback: IServiceCallback) {
 		callbacks.register(callback)
 	}
 
-	override fun unregisterCallback(callback: ru.ravel.ultunnel.aidl.IServiceCallback?) {
+	override fun unregisterCallback(callback: IServiceCallback?) {
 		callbacks.unregister(callback)
 	}
 

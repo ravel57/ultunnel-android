@@ -1,4 +1,4 @@
-package io.nekohasekai.sfa.compose.screen.profile;
+package ru.ravel.ultunnel.compose.screen.profile;
 
 import android.content.Context;
 import android.util.AttributeSet;

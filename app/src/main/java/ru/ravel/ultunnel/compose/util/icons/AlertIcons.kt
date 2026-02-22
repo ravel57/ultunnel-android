@@ -1,4 +1,4 @@
-package io.nekohasekai.sfa.compose.util.icons
+package ru.ravel.ultunnel.compose.util.icons
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddAlert
@@ -8,7 +8,7 @@ import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.NotificationImportant
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.filled.WarningAmber
-import io.nekohasekai.sfa.compose.util.ProfileIcon
+import ru.ravel.ultunnel.compose.util.ProfileIcon
 
 /**
  * Alert category icons - Warnings, errors, and notifications

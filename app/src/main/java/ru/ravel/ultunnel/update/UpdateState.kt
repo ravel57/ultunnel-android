@@ -1,8 +1,8 @@
-package io.nekohasekai.sfa.update
+package ru.ravel.ultunnel.update
 
 import androidx.compose.runtime.mutableStateOf
-import io.nekohasekai.sfa.BuildConfig
-import io.nekohasekai.sfa.database.Settings
+import ru.ravel.ultunnel.BuildConfig
+import ru.ravel.ultunnel.database.Settings
 import java.io.File
 
 object UpdateState {

@@ -1,4 +1,4 @@
-package io.nekohasekai.sfa.compose
+package ru.ravel.ultunnel.compose
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween

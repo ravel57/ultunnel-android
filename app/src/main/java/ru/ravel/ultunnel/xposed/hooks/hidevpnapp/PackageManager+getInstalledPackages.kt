@@ -1,4 +1,4 @@
-package io.nekohasekai.sfa.xposed.hooks.hidevpnapp
+package ru.ravel.ultunnel.xposed.hooks.hidevpnapp
 
 import android.content.pm.ResolveInfo
 import android.os.Binder
@@ -7,12 +7,12 @@ import android.os.Process
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XposedBridge
 import de.robv.android.xposed.XposedHelpers
-import io.nekohasekai.sfa.BuildConfig
-import io.nekohasekai.sfa.xposed.HookErrorStore
-import io.nekohasekai.sfa.xposed.PrivilegeSettingsStore
-import io.nekohasekai.sfa.xposed.VpnAppStore
-import io.nekohasekai.sfa.xposed.hooks.SafeMethodHook
-import io.nekohasekai.sfa.xposed.hooks.XHook
+import ru.ravel.ultunnel.BuildConfig
+import ru.ravel.ultunnel.xposed.HookErrorStore
+import ru.ravel.ultunnel.xposed.PrivilegeSettingsStore
+import ru.ravel.ultunnel.xposed.VpnAppStore
+import ru.ravel.ultunnel.xposed.hooks.SafeMethodHook
+import ru.ravel.ultunnel.xposed.hooks.XHook
 import java.lang.reflect.Method
 
 class HookPackageManagerGetInstalledPackages(private val classLoader: ClassLoader) : XHook {

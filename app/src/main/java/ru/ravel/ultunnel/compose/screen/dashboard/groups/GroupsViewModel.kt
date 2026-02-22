@@ -1,21 +1,21 @@
-package io.nekohasekai.sfa.compose.screen.dashboard.groups
+package ru.ravel.ultunnel.compose.screen.dashboard.groups
 
 import androidx.lifecycle.viewModelScope
 import io.nekohasekai.libbox.Libbox
 import io.nekohasekai.libbox.OutboundGroup
-import io.nekohasekai.sfa.compose.base.BaseViewModel
-import io.nekohasekai.sfa.compose.base.ScreenEvent
-import io.nekohasekai.sfa.compose.model.Group
-import io.nekohasekai.sfa.compose.model.GroupItem
-import io.nekohasekai.sfa.compose.model.toList
-import io.nekohasekai.sfa.constant.Status
-import io.nekohasekai.sfa.utils.AppLifecycleObserver
-import io.nekohasekai.sfa.utils.CommandClient
+import ru.ravel.ultunnel.compose.base.BaseViewModel
+import ru.ravel.ultunnel.compose.base.ScreenEvent
+import ru.ravel.ultunnel.utils.AppLifecycleObserver
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import ru.ravel.ultunnel.compose.model.toList
+import ru.ravel.ultunnel.constant.Status
+import ru.ravel.ultunnel.ui.dashboard.Group
+import ru.ravel.ultunnel.ui.dashboard.GroupItem
+import ru.ravel.ultunnel.utils.CommandClient
 
 data class GroupsUiState(
     val groups: List<Group> = emptyList(),

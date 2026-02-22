@@ -1,4 +1,4 @@
-package io.nekohasekai.sfa.xposed
+package ru.ravel.ultunnel.xposed
 
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager

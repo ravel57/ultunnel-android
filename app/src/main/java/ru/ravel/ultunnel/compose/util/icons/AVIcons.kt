@@ -1,4 +1,4 @@
-package io.nekohasekai.sfa.compose.util.icons
+package ru.ravel.ultunnel.compose.util.icons
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.FeaturedPlayList
@@ -121,7 +121,7 @@ import androidx.compose.material.icons.filled.VideogameAssetOff
 import androidx.compose.material.icons.filled.Web
 import androidx.compose.material.icons.filled.WebAsset
 import androidx.compose.material.icons.filled.WebAssetOff
-import io.nekohasekai.sfa.compose.util.ProfileIcon
+import ru.ravel.ultunnel.compose.util.ProfileIcon
 
 /**
  * AV (Audio/Video) category icons - Media controls and playback

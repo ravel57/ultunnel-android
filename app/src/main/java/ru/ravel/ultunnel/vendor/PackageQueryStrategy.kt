@@ -1,4 +1,4 @@
-package io.nekohasekai.sfa.vendor
+package ru.ravel.ultunnel.vendor
 
 sealed class PackageQueryStrategy {
     data object ForcedRoot : PackageQueryStrategy()

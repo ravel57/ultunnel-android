@@ -21,15 +21,15 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.withContext
 import ru.ravel.ultunnel.Application
 import ru.ravel.ultunnel.R
+import ru.ravel.ultunnel.compose.MainActivity
 import ru.ravel.ultunnel.constant.Action
 import ru.ravel.ultunnel.constant.Status
 import ru.ravel.ultunnel.database.Settings
-import ru.ravel.ultunnel.ui.MainActivity
 import ru.ravel.ultunnel.utils.CommandClient
 
-class ServiceNotification(
-	private val status: MutableLiveData<Status>, private val service: Service,
-) : BroadcastReceiver(), CommandClient.Handler {
+class ServiceNotification(private val status: MutableLiveData<Status>, private val service: Service) :
+	BroadcastReceiver(),
+	CommandClient.Handler {
 	companion object {
 		private const val notificationId = 1
 		private const val notificationChannel = "service"
@@ -60,21 +60,23 @@ class ServiceNotification(
 					0,
 					Intent(
 						service,
-						MainActivity::class.java
+						MainActivity::class.java,
 					).setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT),
-					ru.ravel.ultunnel.bg.ServiceNotification.Companion.flags
-				)
+					flags,
+				),
 			)
 			.setPriority(NotificationCompat.PRIORITY_LOW).apply {
 				addAction(
 					NotificationCompat.Action.Builder(
-						0, service.getText(R.string.stop), PendingIntent.getBroadcast(
+						0,
+						service.getText(R.string.stop),
+						PendingIntent.getBroadcast(
 							service,
 							0,
 							Intent(Action.SERVICE_CLOSE).setPackage(service.packageName),
-							ru.ravel.ultunnel.bg.ServiceNotification.Companion.flags
-						)
-					).build()
+							flags,
+						),
+					).build(),
 				)
 			}
 	}
@@ -83,21 +85,22 @@ class ServiceNotification(
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
 			Application.notification.createNotificationChannel(
 				NotificationChannel(
-					ru.ravel.ultunnel.bg.ServiceNotification.Companion.notificationChannel,
+					notificationChannel,
 					"Service Notifications",
-					NotificationManager.IMPORTANCE_LOW
-				)
+					NotificationManager.IMPORTANCE_LOW,
+				),
 			)
 		}
 		service.startForeground(
-			ru.ravel.ultunnel.bg.ServiceNotification.Companion.notificationId, notificationBuilder
-				.setContentTitle(lastProfileName.takeIf { it.isNotBlank() } ?: "ultunnel")
-				.setContentText(service.getString(contentTextId)).build()
+			notificationId,
+			notificationBuilder
+				.setContentTitle(lastProfileName.takeIf { it.isNotBlank() } ?: "ULtunnel")
+				.setContentText(service.getString(contentTextId)).build(),
 		)
 	}
 
 	suspend fun start() {
-		if (Settings.dynamicNotification) {
+		if (Settings.dynamicNotification && checkPermission()) {
 			commandClient.connect()
 			withContext(Dispatchers.Main) {
 				registerReceiver()
@@ -106,10 +109,13 @@ class ServiceNotification(
 	}
 
 	private fun registerReceiver() {
-		service.registerReceiver(this, IntentFilter().apply {
-			addAction(Intent.ACTION_SCREEN_ON)
-			addAction(Intent.ACTION_SCREEN_OFF)
-		})
+		service.registerReceiver(
+			this,
+			IntentFilter().apply {
+				addAction(Intent.ACTION_SCREEN_ON)
+				addAction(Intent.ACTION_SCREEN_OFF)
+			},
+		)
 		receiverRegistered = true
 	}
 
@@ -117,8 +123,8 @@ class ServiceNotification(
 		val content =
 			Libbox.formatBytes(status.uplink) + "/s ↑\t" + Libbox.formatBytes(status.downlink) + "/s ↓"
 		Application.notificationManager.notify(
-			ru.ravel.ultunnel.bg.ServiceNotification.Companion.notificationId,
-			notificationBuilder.setContentText(content).build()
+			notificationId,
+			notificationBuilder.setContentText(content).build(),
 		)
 	}
 

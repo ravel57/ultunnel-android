@@ -1,11 +1,12 @@
-package io.nekohasekai.sfa.compose.screen.log
+package ru.ravel.ultunnel.compose.screen.log
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
-import io.nekohasekai.sfa.R
-import io.nekohasekai.sfa.constant.Status
+import ru.ravel.ultunnel.R
+import ru.ravel.ultunnel.constant.Status
+import androidx.compose.ui.res.stringResource
 
 @Composable
 fun HookLogScreen(onBack: () -> Unit) {
@@ -20,12 +21,12 @@ fun HookLogScreen(onBack: () -> Unit) {
         serviceStatus = Status.Stopped,
         showStartFab = false,
         showStatusBar = false,
-        title = context.getString(R.string.title_log),
+        title = stringResource(R.string.title_log),
         viewModel = viewModel,
         showPause = false,
         showClear = false,
         showStatusInfo = false,
-        emptyMessage = context.getString(R.string.privilege_settings_hook_logs_empty),
+        emptyMessage = stringResource(R.string.privilege_settings_hook_logs_empty),
         saveFilePrefix = "hook_logs",
         onBack = onBack,
     )

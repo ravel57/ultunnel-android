@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.nekohasekai.sfa.bg;
+package ru.ravel.ultunnel.bg;
 
 import android.os.Binder;
 import android.os.IBinder;

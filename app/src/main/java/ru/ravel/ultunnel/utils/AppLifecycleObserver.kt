@@ -1,4 +1,4 @@
-package io.nekohasekai.sfa.utils
+package ru.ravel.ultunnel.utils
 
 import android.content.BroadcastReceiver
 import android.content.Context

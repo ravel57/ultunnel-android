@@ -1,4 +1,4 @@
-package io.nekohasekai.sfa.compose.screen.connections
+package ru.ravel.ultunnel.compose.screen.connections
 
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Arrangement
@@ -43,11 +43,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import io.nekohasekai.libbox.Libbox
-import io.nekohasekai.sfa.R
-import io.nekohasekai.sfa.compat.rememberOverscrollEffectCompat
-import io.nekohasekai.sfa.compat.verticalScrollCompat
-import io.nekohasekai.sfa.compose.model.Connection
-import io.nekohasekai.sfa.compose.util.rememberSheetDismissFromContentOnlyIfGestureStartedAtTopModifier
+import ru.ravel.ultunnel.R
+import ru.ravel.ultunnel.compat.rememberOverscrollEffectCompat
+import ru.ravel.ultunnel.compat.verticalScrollCompat
+import ru.ravel.ultunnel.compose.model.Connection
+import ru.ravel.ultunnel.compose.util.rememberSheetDismissFromContentOnlyIfGestureStartedAtTopModifier
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale

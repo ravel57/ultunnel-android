@@ -1,4 +1,4 @@
-package io.nekohasekai.sfa.compose.util.icons
+package ru.ravel.ultunnel.compose.util.icons
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BrowserNotSupported
@@ -79,7 +79,7 @@ import androidx.compose.material.icons.filled.VideogameAsset
 import androidx.compose.material.icons.filled.VideogameAssetOff
 import androidx.compose.material.icons.filled.Watch
 import androidx.compose.material.icons.filled.WatchOff
-import io.nekohasekai.sfa.compose.util.ProfileIcon
+import ru.ravel.ultunnel.compose.util.ProfileIcon
 
 /**
  * Hardware category icons - Physical hardware and peripherals

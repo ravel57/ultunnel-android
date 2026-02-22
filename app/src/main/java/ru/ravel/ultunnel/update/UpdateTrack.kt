@@ -1,4 +1,4 @@
-package io.nekohasekai.sfa.update
+package ru.ravel.ultunnel.update
 
 enum class UpdateTrack {
     STABLE,

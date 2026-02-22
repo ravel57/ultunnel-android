@@ -1,8 +1,8 @@
-package io.nekohasekai.sfa.xposed
+package ru.ravel.ultunnel.xposed
 
 import android.util.Log
-import io.nekohasekai.sfa.BuildConfig
-import io.nekohasekai.sfa.bg.LogEntry
+import ru.ravel.ultunnel.BuildConfig
+import ru.ravel.ultunnel.bg.LogEntry
 import java.util.ArrayDeque
 
 object HookErrorStore {

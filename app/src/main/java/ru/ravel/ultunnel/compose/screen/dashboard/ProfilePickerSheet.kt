@@ -1,4 +1,4 @@
-package io.nekohasekai.sfa.compose.screen.dashboard
+package ru.ravel.ultunnel.compose.screen.dashboard
 
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -59,14 +59,14 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.nekohasekai.libbox.Libbox
 import io.nekohasekai.libbox.ProfileContent
-import io.nekohasekai.sfa.R
-import io.nekohasekai.sfa.compose.component.qr.QRCodeDialog
-import io.nekohasekai.sfa.compose.util.ProfileIcons
-import io.nekohasekai.sfa.compose.util.QRCodeGenerator
-import io.nekohasekai.sfa.compose.util.RelativeTimeFormatter
-import io.nekohasekai.sfa.database.Profile
-import io.nekohasekai.sfa.database.TypedProfile
-import io.nekohasekai.sfa.ktx.shareProfile
+import ru.ravel.ultunnel.R
+import ru.ravel.ultunnel.compose.component.qr.QRCodeDialog
+import ru.ravel.ultunnel.compose.util.ProfileIcons
+import ru.ravel.ultunnel.compose.util.QRCodeGenerator
+import ru.ravel.ultunnel.compose.util.RelativeTimeFormatter
+import ru.ravel.ultunnel.database.Profile
+import ru.ravel.ultunnel.database.TypedProfile
+import ru.ravel.ultunnel.ktx.shareProfile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext

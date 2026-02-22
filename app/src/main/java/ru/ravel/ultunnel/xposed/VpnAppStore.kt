@@ -1,4 +1,4 @@
-package io.nekohasekai.sfa.xposed
+package ru.ravel.ultunnel.xposed
 
 import android.Manifest
 import android.content.pm.ApplicationInfo
@@ -6,7 +6,7 @@ import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.os.Binder
 import android.os.SystemClock
-import io.nekohasekai.sfa.BuildConfig
+import ru.ravel.ultunnel.BuildConfig
 import java.lang.reflect.Method
 import java.util.concurrent.ConcurrentHashMap
 

@@ -1,4 +1,4 @@
-package io.nekohasekai.sfa.compose.util.icons
+package ru.ravel.ultunnel.compose.util.icons
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountTree
@@ -71,7 +71,7 @@ import androidx.compose.material.icons.filled.Wc
 import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.material.icons.filled.WifiCalling
 import androidx.compose.material.icons.filled.WifiOff
-import io.nekohasekai.sfa.compose.util.ProfileIcon
+import ru.ravel.ultunnel.compose.util.ProfileIcon
 
 /**
  * Notification category icons - Alerts and status updates

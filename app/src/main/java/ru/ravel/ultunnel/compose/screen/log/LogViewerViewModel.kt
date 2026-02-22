@@ -1,7 +1,7 @@
-package io.nekohasekai.sfa.compose.screen.log
+package ru.ravel.ultunnel.compose.screen.log
 
-import io.nekohasekai.sfa.constant.Status
 import kotlinx.coroutines.flow.StateFlow
+import ru.ravel.ultunnel.constant.Status
 
 interface LogViewerViewModel {
     val uiState: StateFlow<LogUiState>

@@ -1,4 +1,4 @@
-package io.nekohasekai.sfa.compose.component.qr
+package ru.ravel.ultunnel.compose.component.qr
 
 import android.Manifest
 import android.content.pm.PackageManager
@@ -53,10 +53,10 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
-import io.nekohasekai.sfa.R
-import io.nekohasekai.sfa.compose.screen.qrscan.QRCodeCropArea
-import io.nekohasekai.sfa.compose.screen.qrscan.QRScanResult
-import io.nekohasekai.sfa.compose.screen.qrscan.QRScanViewModel
+import ru.ravel.ultunnel.R
+import ru.ravel.ultunnel.compose.screen.qrscan.QRCodeCropArea
+import ru.ravel.ultunnel.compose.screen.qrscan.QRScanResult
+import ru.ravel.ultunnel.compose.screen.qrscan.QRScanViewModel
 import kotlin.math.max
 
 @OptIn(ExperimentalMaterial3Api::class)

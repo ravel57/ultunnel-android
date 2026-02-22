@@ -45,8 +45,8 @@ object DefaultNetworkMonitor {
 	}
 
 	private fun checkDefaultInterfaceUpdate(
-		newNetwork: Network?,
-	) {
+        newNetwork: Network?,
+    ) {
 		val listener = listener ?: return
 		if (newNetwork != null) {
 			val interfaceName = (Application.connectivity.getLinkProperties(newNetwork) ?: return).interfaceName

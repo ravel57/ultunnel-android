@@ -1,22 +1,25 @@
 package ru.ravel.ultunnel.bg
 
+import android.app.KeyguardManager
+import android.content.Context
 import android.service.quicksettings.Tile
 import android.service.quicksettings.TileService
 import androidx.annotation.RequiresApi
 import ru.ravel.ultunnel.constant.Status
 
-@RequiresApi(24)
-class TileService : TileService(), ServiceConnection.Callback {
-
+class TileService :
+	TileService(),
+	ServiceConnection.Callback {
 	private val connection = ServiceConnection(this, this)
 
 	override fun onServiceStatusChanged(status: Status) {
 		qsTile?.apply {
-			state = when (status) {
-				Status.Started -> Tile.STATE_ACTIVE
-				Status.Stopped -> Tile.STATE_INACTIVE
-				else -> Tile.STATE_UNAVAILABLE
-			}
+			state =
+				when (status) {
+					Status.Started -> Tile.STATE_ACTIVE
+					Status.Stopped -> Tile.STATE_INACTIVE
+					else -> Tile.STATE_UNAVAILABLE
+				}
 			updateTile()
 		}
 	}
@@ -32,15 +35,20 @@ class TileService : TileService(), ServiceConnection.Callback {
 	}
 
 	override fun onClick() {
+		val keyguardManager = getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
+		if (keyguardManager.isKeyguardLocked) {
+			unlockAndRun {
+				toggleService()
+			}
+		} else {
+			toggleService()
+		}
+	}
+
+	private fun toggleService() {
 		when (connection.status) {
-			Status.Stopped -> {
-				BoxService.start()
-			}
-
-			Status.Started -> {
-				BoxService.stop()
-			}
-
+			Status.Stopped -> BoxService.start()
+			Status.Started -> BoxService.stop()
 			else -> {}
 		}
 	}

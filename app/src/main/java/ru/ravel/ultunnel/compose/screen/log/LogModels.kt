@@ -1,7 +1,7 @@
-package io.nekohasekai.sfa.compose.screen.log
+package ru.ravel.ultunnel.compose.screen.log
 
 import androidx.compose.ui.text.AnnotatedString
-import io.nekohasekai.sfa.constant.Status
+import ru.ravel.ultunnel.constant.Status
 
 data class LogEntryData(val level: LogLevel, val message: String)
 

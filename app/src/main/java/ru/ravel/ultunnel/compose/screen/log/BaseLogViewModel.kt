@@ -1,8 +1,8 @@
-package io.nekohasekai.sfa.compose.screen.log
+package ru.ravel.ultunnel.compose.screen.log
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import io.nekohasekai.sfa.compose.util.AnsiColorUtils
+import ru.ravel.ultunnel.compose.util.AnsiColorUtils
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

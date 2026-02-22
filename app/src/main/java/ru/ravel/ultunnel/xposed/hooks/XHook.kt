@@ -1,4 +1,4 @@
-package io.nekohasekai.sfa.xposed.hooks
+package ru.ravel.ultunnel.xposed.hooks
 
 interface XHook {
     fun injectHook()

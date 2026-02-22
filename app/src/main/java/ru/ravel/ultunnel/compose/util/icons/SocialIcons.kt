@@ -1,4 +1,4 @@
-package io.nekohasekai.sfa.compose.util.icons
+package ru.ravel.ultunnel.compose.util.icons
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddModerator
@@ -190,7 +190,7 @@ import androidx.compose.material.icons.filled.Woman
 import androidx.compose.material.icons.filled.Woman2
 import androidx.compose.material.icons.filled.WorkspacePremium
 import androidx.compose.material.icons.filled.Workspaces
-import io.nekohasekai.sfa.compose.util.ProfileIcon
+import ru.ravel.ultunnel.compose.util.ProfileIcon
 
 /**
  * Social category icons - Social media and sharing

@@ -1,4 +1,4 @@
-package io.nekohasekai.sfa.compose.base
+package ru.ravel.ultunnel.compose.base
 
 import android.widget.Toast
 import androidx.compose.foundation.layout.Box
@@ -16,7 +16,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
-import io.nekohasekai.sfa.R
+import ru.ravel.ultunnel.R
 
 @Composable
 fun SelectableMessageDialog(title: String, message: String, onDismiss: () -> Unit) {

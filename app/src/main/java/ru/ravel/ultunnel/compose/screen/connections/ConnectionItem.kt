@@ -1,4 +1,4 @@
-package io.nekohasekai.sfa.compose.screen.connections
+package ru.ravel.ultunnel.compose.screen.connections
 
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
@@ -43,8 +43,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.nekohasekai.libbox.Libbox
-import io.nekohasekai.sfa.R
-import io.nekohasekai.sfa.compose.model.Connection
+import ru.ravel.ultunnel.R
+import ru.ravel.ultunnel.compose.model.Connection
 
 private fun Drawable.toBitmap(): Bitmap {
     if (this is BitmapDrawable) return bitmap

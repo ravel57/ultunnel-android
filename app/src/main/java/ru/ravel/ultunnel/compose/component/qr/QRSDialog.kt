@@ -1,4 +1,4 @@
-package io.nekohasekai.sfa.compose.component.qr
+package ru.ravel.ultunnel.compose.component.qr
 
 import android.content.Intent
 import android.graphics.Color
@@ -51,11 +51,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import io.nekohasekai.sfa.R
-import io.nekohasekai.sfa.compat.WindowSizeClassCompat
-import io.nekohasekai.sfa.compat.isWidthAtLeastBreakpointCompat
-import io.nekohasekai.sfa.qrs.QRSConstants
-import io.nekohasekai.sfa.qrs.QRSEncoder
+import ru.ravel.ultunnel.R
+import ru.ravel.ultunnel.compat.WindowSizeClassCompat
+import ru.ravel.ultunnel.compat.isWidthAtLeastBreakpointCompat
+import ru.ravel.ultunnel.qrs.QRSConstants
+import ru.ravel.ultunnel.qrs.QRSEncoder
 import kotlinx.coroutines.delay
 
 @Composable

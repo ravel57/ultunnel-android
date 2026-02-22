@@ -1,4 +1,4 @@
-package io.nekohasekai.sfa.qrs
+package ru.ravel.ultunnel.qrs
 
 fun ByteArray.readIntLE(offset: Int): Int = (this[offset].toInt() and 0xFF) or
     ((this[offset + 1].toInt() and 0xFF) shl 8) or

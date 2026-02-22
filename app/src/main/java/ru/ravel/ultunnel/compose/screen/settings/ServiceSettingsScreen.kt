@@ -1,4 +1,4 @@
-package io.nekohasekai.sfa.compose.screen.settings
+package ru.ravel.ultunnel.compose.screen.settings
 
 import android.content.Intent
 import android.net.Uri
@@ -51,15 +51,15 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import io.nekohasekai.sfa.R
-import io.nekohasekai.sfa.bg.ServiceConnection
-import io.nekohasekai.sfa.compose.base.GlobalEventBus
-import io.nekohasekai.sfa.compose.base.UiEvent
-import io.nekohasekai.sfa.compose.topbar.OverrideTopBar
-import io.nekohasekai.sfa.database.Settings
-import io.nekohasekai.sfa.ktx.launchCustomTab
+import ru.ravel.ultunnel.R
+import ru.ravel.ultunnel.compose.base.GlobalEventBus
+import ru.ravel.ultunnel.compose.base.UiEvent
+import ru.ravel.ultunnel.compose.topbar.OverrideTopBar
+import ru.ravel.ultunnel.database.Settings
+import ru.ravel.ultunnel.ktx.launchCustomTab
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import ru.ravel.ultunnel.bg.ServiceConnection
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

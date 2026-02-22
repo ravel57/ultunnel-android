@@ -1,4 +1,4 @@
-package io.nekohasekai.sfa.compose.screen.profile
+package ru.ravel.ultunnel.compose.screen.profile
 
 import android.app.Application
 import android.content.Context
@@ -7,13 +7,11 @@ import android.widget.Toast
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import io.nekohasekai.libbox.Libbox
-import io.nekohasekai.sfa.R
-import io.nekohasekai.sfa.bg.UpdateProfileWork
-import io.nekohasekai.sfa.database.Profile
-import io.nekohasekai.sfa.database.ProfileManager
-import io.nekohasekai.sfa.database.Settings
-import io.nekohasekai.sfa.database.TypedProfile
-import io.nekohasekai.sfa.utils.HTTPClient
+import ru.ravel.ultunnel.R
+import ru.ravel.ultunnel.database.Profile
+import ru.ravel.ultunnel.database.ProfileManager
+import ru.ravel.ultunnel.database.Settings
+import ru.ravel.ultunnel.database.TypedProfile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -21,6 +19,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import ru.ravel.ultunnel.bg.UpdateProfileWork
+import ru.ravel.ultunnel.utils.HTTPClient
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -332,7 +332,7 @@ class EditProfileViewModel(application: Application) : AndroidViewModel(applicat
             Toast.makeText(
                 context,
                 context.getString(
-                    io.nekohasekai.sfa.R.string.failed_read_configuration,
+                    ru.ravel.ultunnel.R.string.failed_read_configuration,
                     e.message,
                 ),
                 Toast.LENGTH_SHORT,

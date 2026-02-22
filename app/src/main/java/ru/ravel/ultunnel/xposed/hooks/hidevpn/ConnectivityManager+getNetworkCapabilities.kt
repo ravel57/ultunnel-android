@@ -1,12 +1,12 @@
-package io.nekohasekai.sfa.xposed.hooks.hidevpn
+package ru.ravel.ultunnel.xposed.hooks.hidevpn
 
 import android.net.Network
 import android.net.NetworkCapabilities
 import android.os.Binder
 import de.robv.android.xposed.XposedHelpers
-import io.nekohasekai.sfa.xposed.HookErrorStore
-import io.nekohasekai.sfa.xposed.VpnSanitizer
-import io.nekohasekai.sfa.xposed.hooks.SafeMethodHook
+import ru.ravel.ultunnel.xposed.HookErrorStore
+import ru.ravel.ultunnel.xposed.VpnSanitizer
+import ru.ravel.ultunnel.xposed.hooks.SafeMethodHook
 
 class HookConnectivityManagerGetNetworkCapabilities(private val helper: ConnectivityServiceHookHelper) {
     private companion object {

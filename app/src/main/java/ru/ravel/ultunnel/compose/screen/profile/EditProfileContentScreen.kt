@@ -1,4 +1,4 @@
-package io.nekohasekai.sfa.compose.screen.profile
+package ru.ravel.ultunnel.compose.screen.profile
 
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
@@ -81,8 +81,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.blacksquircle.ui.language.json.JsonLanguage
-import io.nekohasekai.sfa.R
-import io.nekohasekai.sfa.compose.topbar.OverrideTopBar
+import ru.ravel.ultunnel.R
+import ru.ravel.ultunnel.compose.topbar.OverrideTopBar
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 

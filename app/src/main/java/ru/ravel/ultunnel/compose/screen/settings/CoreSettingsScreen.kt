@@ -1,4 +1,4 @@
-package io.nekohasekai.sfa.compose.screen.settings
+package ru.ravel.ultunnel.compose.screen.settings
 
 import android.content.ActivityNotFoundException
 import android.content.Context
@@ -49,9 +49,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import io.nekohasekai.libbox.Libbox
-import io.nekohasekai.sfa.R
-import io.nekohasekai.sfa.compose.topbar.OverrideTopBar
-import io.nekohasekai.sfa.database.Settings
+import ru.ravel.ultunnel.R
+import ru.ravel.ultunnel.compose.topbar.OverrideTopBar
+import ru.ravel.ultunnel.database.Settings
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext

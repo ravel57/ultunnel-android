@@ -1,4 +1,4 @@
-package io.nekohasekai.sfa.update
+package ru.ravel.ultunnel.update
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString

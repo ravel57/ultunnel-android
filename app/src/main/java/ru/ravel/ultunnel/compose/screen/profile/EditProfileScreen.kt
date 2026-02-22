@@ -1,4 +1,4 @@
-package io.nekohasekai.sfa.compose.screen.profile
+package ru.ravel.ultunnel.compose.screen.profile
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
@@ -65,13 +65,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import io.nekohasekai.sfa.R
-import io.nekohasekai.sfa.compose.base.SelectableMessageDialog
-import io.nekohasekai.sfa.compose.topbar.OverrideTopBar
-import io.nekohasekai.sfa.compose.util.ProfileIcons
-import io.nekohasekai.sfa.compose.util.RelativeTimeFormatter
-import io.nekohasekai.sfa.compose.util.icons.MaterialIconsLibrary
-import io.nekohasekai.sfa.database.TypedProfile
+import ru.ravel.ultunnel.R
+import ru.ravel.ultunnel.compose.base.SelectableMessageDialog
+import ru.ravel.ultunnel.compose.topbar.OverrideTopBar
+import ru.ravel.ultunnel.compose.util.ProfileIcons
+import ru.ravel.ultunnel.compose.util.RelativeTimeFormatter
+import ru.ravel.ultunnel.compose.util.icons.MaterialIconsLibrary
+import ru.ravel.ultunnel.database.TypedProfile
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

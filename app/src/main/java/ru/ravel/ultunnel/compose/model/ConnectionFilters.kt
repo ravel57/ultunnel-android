@@ -1,4 +1,4 @@
-package io.nekohasekai.sfa.compose.model
+package ru.ravel.ultunnel.compose.model
 
 import io.nekohasekai.libbox.Libbox
 

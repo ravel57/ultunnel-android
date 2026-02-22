@@ -1,4 +1,4 @@
-package io.nekohasekai.sfa.bg
+package ru.ravel.ultunnel.bg
 
 import android.content.ComponentName
 import android.content.Intent
@@ -8,8 +8,8 @@ import android.os.IBinder
 import android.os.RemoteException
 import com.topjohnwu.superuser.Shell
 import com.topjohnwu.superuser.ipc.RootService
-import io.nekohasekai.sfa.Application
-import io.nekohasekai.sfa.BuildConfig
+import ru.ravel.ultunnel.bg.IRootService
+import ru.ravel.ultunnel.BuildConfig
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -17,6 +17,7 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import ru.ravel.ultunnel.Application
 import kotlin.coroutines.resume
 
 object RootClient {

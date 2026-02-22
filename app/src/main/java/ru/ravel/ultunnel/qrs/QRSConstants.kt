@@ -1,4 +1,4 @@
-package io.nekohasekai.sfa.qrs
+package ru.ravel.ultunnel.qrs
 
 object QRSConstants {
     const val OFFICIAL_URL_PREFIX = "https://qrss.netlify.app/#"

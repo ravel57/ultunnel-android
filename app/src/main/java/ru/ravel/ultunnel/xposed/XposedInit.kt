@@ -1,14 +1,14 @@
-package io.nekohasekai.sfa.xposed
+package ru.ravel.ultunnel.xposed
 
 import android.content.Context
 import io.github.libxposed.api.XposedInterface
 import io.github.libxposed.api.XposedModule
 import io.github.libxposed.api.XposedModuleInterface
-import io.nekohasekai.sfa.xposed.hooks.HookIConnectivityManagerOnTransact
-import io.nekohasekai.sfa.xposed.hooks.hidevpn.ConnectivityServiceHookHelper
-import io.nekohasekai.sfa.xposed.hooks.hidevpn.HookNetworkCapabilitiesWriteToParcel
-import io.nekohasekai.sfa.xposed.hooks.hidevpn.HookNetworkInterfaceGetName
-import io.nekohasekai.sfa.xposed.hooks.hidevpnapp.HookPackageManagerGetInstalledPackages
+import ru.ravel.ultunnel.xposed.hooks.HookIConnectivityManagerOnTransact
+import ru.ravel.ultunnel.xposed.hooks.hidevpn.ConnectivityServiceHookHelper
+import ru.ravel.ultunnel.xposed.hooks.hidevpn.HookNetworkCapabilitiesWriteToParcel
+import ru.ravel.ultunnel.xposed.hooks.hidevpn.HookNetworkInterfaceGetName
+import ru.ravel.ultunnel.xposed.hooks.hidevpnapp.HookPackageManagerGetInstalledPackages
 
 class XposedInit(base: XposedInterface, param: XposedModuleInterface.ModuleLoadedParam) : XposedModule(base, param) {
 

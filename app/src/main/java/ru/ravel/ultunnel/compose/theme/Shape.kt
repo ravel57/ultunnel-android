@@ -1,4 +1,4 @@
-package io.nekohasekai.sfa.compose.theme
+package ru.ravel.ultunnel.compose.theme
 
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Shapes

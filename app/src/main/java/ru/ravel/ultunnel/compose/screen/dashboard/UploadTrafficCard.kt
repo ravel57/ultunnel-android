@@ -1,4 +1,4 @@
-package io.nekohasekai.sfa.compose.screen.dashboard
+package ru.ravel.ultunnel.compose.screen.dashboard
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -20,8 +20,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import io.nekohasekai.sfa.R
-import io.nekohasekai.sfa.compose.LineChart
+import ru.ravel.ultunnel.R
+import ru.ravel.ultunnel.compose.LineChart
 
 @Composable
 fun UploadTrafficCard(uplink: String, uplinkTotal: String, uplinkHistory: List<Float>, modifier: Modifier = Modifier) {
