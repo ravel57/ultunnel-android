@@ -16,18 +16,18 @@
     <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
-<!--    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />-->
-<!--    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />-->
-<!--    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />-->
-<!--    <uses-permission android:name="android.permission.CAMERA" />-->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+    <uses-permission android:name="android.permission.CAMERA" />
 
     <!-- For saving images to gallery on older Android versions -->
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
         android:maxSdkVersion="28" />
 
-<!--    <uses-permission-->
-<!--        android:name="android.permission.QUERY_ALL_PACKAGES"-->
-<!--        tools:ignore="QueryAllPackagesPermission" />-->
+    <uses-permission
+        android:name="android.permission.QUERY_ALL_PACKAGES"
+        tools:ignore="QueryAllPackagesPermission" />
 
     <application
         android:name=".Application"
@@ -109,31 +109,31 @@
             </intent-filter>
 
         </activity>
-        <activity
-            android:name="ru.ravel.ultunnel.ui.profile.NewProfileActivity"
-            android:exported="false" />
-        <activity
-            android:name="ru.ravel.ultunnel.ui.profile.EditProfileActivity"
-            android:exported="false" />
-        <activity
-            android:name="ru.ravel.ultunnel.ui.profile.EditProfileContentActivity"
-            android:exported="false" />
-        <activity
-            android:name="ru.ravel.ultunnel.ui.profileoverride.ProfileOverrideActivity"
-            android:exported="false" />
-        <activity
-            android:name="ru.ravel.ultunnel.ui.profileoverride.PerAppProxyActivity"
-            android:exported="false" />
-        <activity
-            android:name="ru.ravel.ultunnel.ui.debug.DebugActivity"
-            android:exported="false" />
-        <activity
-            android:name="ru.ravel.ultunnel.ui.debug.VPNScanActivity"
-            android:exported="false" />
+<!--        <activity-->
+<!--            android:name="ru.ravel.ultunnel.ui.profile.NewProfileActivity"-->
+<!--            android:exported="false" />-->
+<!--        <activity-->
+<!--            android:name="ru.ravel.ultunnel.ui.profile.EditProfileActivity"-->
+<!--            android:exported="false" />-->
+<!--        <activity-->
+<!--            android:name="ru.ravel.ultunnel.ui.profile.EditProfileContentActivity"-->
+<!--            android:exported="false" />-->
+<!--        <activity-->
+<!--            android:name="ru.ravel.ultunnel.ui.profileoverride.ProfileOverrideActivity"-->
+<!--            android:exported="false" />-->
+<!--        <activity-->
+<!--            android:name="ru.ravel.ultunnel.ui.profileoverride.PerAppProxyActivity"-->
+<!--            android:exported="false" />-->
+<!--        <activity-->
+<!--            android:name="ru.ravel.ultunnel.ui.debug.DebugActivity"-->
+<!--            android:exported="false" />-->
+<!--        <activity-->
+<!--            android:name="ru.ravel.ultunnel.ui.debug.VPNScanActivity"-->
+<!--            android:exported="false" />-->
 
-        <activity
-            android:name="ru.ravel.ultunnel.ui.profile.QRScanActivity"
-            android:exported="false" />
+<!--        <activity-->
+<!--            android:name="ru.ravel.ultunnel.ui.profile.QRScanActivity"-->
+<!--            android:exported="false" />-->
 
         <service
             android:name=".bg.TileService"

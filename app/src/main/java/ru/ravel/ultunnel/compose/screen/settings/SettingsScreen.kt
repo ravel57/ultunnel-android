@@ -1,6 +1,5 @@
 package ru.ravel.ultunnel.compose.screen.settings
 
-import android.os.Build
 import android.os.PowerManager
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -24,6 +23,7 @@ import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material3.Badge
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -31,6 +31,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -50,316 +51,231 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import ru.ravel.ultunnel.R
 import ru.ravel.ultunnel.compose.topbar.OverrideTopBar
+import ru.ravel.ultunnel.database.Settings
 import ru.ravel.ultunnel.update.UpdateState
 import ru.ravel.ultunnel.utils.HookModuleUpdateNotifier
 import ru.ravel.ultunnel.utils.HookStatusClient
+import androidx.compose.material3.Button
+import androidx.navigation.NavGraph.Companion.findStartDestination
+import kotlinx.coroutines.launch
+import ru.ravel.ultunnel.compose.navigation.Screen
+import ru.ravel.ultunnel.utils.ProfileConfigsUpdater
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(navController: NavController) {
-    OverrideTopBar {
-        TopAppBar(
-            title = { Text(stringResource(R.string.title_settings)) },
-        )
-    }
+	OverrideTopBar {
+		TopAppBar(
+			title = { Text(stringResource(R.string.title_settings)) },
+		)
+	}
 
-    val context = LocalContext.current
-    val scope = rememberCoroutineScope()
-    val hasUpdate by UpdateState.hasUpdate
-    val hookStatus by HookStatusClient.status.collectAsState()
-    val hasPendingPrivilegeDowngrade = HookModuleUpdateNotifier.isDowngrade(hookStatus)
-    val hasPendingPrivilegeUpdate = HookModuleUpdateNotifier.isUpgrade(hookStatus)
-    var isBatteryOptimizationIgnored by remember { mutableStateOf(true) }
+	val context = LocalContext.current
+	val scope = rememberCoroutineScope()
+	val hasUpdate by UpdateState.hasUpdate
+	val hookStatus by HookStatusClient.status.collectAsState()
+	val hasPendingPrivilegeDowngrade = HookModuleUpdateNotifier.isDowngrade(hookStatus)
+	val hasPendingPrivilegeUpdate = HookModuleUpdateNotifier.isUpgrade(hookStatus)
+	var isBatteryOptimizationIgnored by remember { mutableStateOf(true) }
 
-    LaunchedEffect(Unit) {
-        HookStatusClient.refresh()
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            val pm = context.getSystemService(PowerManager::class.java)
-            isBatteryOptimizationIgnored =
-                pm?.isIgnoringBatteryOptimizations(context.packageName) == true
-        }
-    }
+	// Ключ доступа (как в старом коде: хранится в Settings.accessKey)
+	var accessKey by remember { mutableStateOf(Settings.accessKey) }
 
-    Column(
-        modifier =
-        Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.surface)
-            .verticalScroll(rememberScrollState())
-            .padding(vertical = 8.dp),
-    ) {
-        // General Settings Group
-        Card(
-            modifier =
-            Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            colors =
-            CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainer,
-            ),
-        ) {
-            Column {
-                ListItem(
-                    headlineContent = {
-                        Text(
-                            stringResource(R.string.title_app_settings),
-                            style = MaterialTheme.typography.bodyLarge,
-                        )
-                    },
-                    leadingContent = {
-                        Icon(
-                            imageVector = Icons.Outlined.Info,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                        )
-                    },
-                    trailingContent = {
-                        if (hasUpdate) {
-                            Badge(containerColor = MaterialTheme.colorScheme.primary)
-                        }
-                    },
-                    modifier =
-                    Modifier
-                        .clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp))
-                        .clickable { navController.navigate("settings/app") },
-                    colors =
-                    ListItemDefaults.colors(
-                        containerColor = Color.Transparent,
-                    ),
-                )
+	LaunchedEffect(Unit) {
+		HookStatusClient.refresh()
+		val pm = context.getSystemService(PowerManager::class.java)
+		isBatteryOptimizationIgnored = pm?.isIgnoringBatteryOptimizations(context.packageName) == true
+	}
 
-                ListItem(
-                    headlineContent = {
-                        Text(
-                            stringResource(R.string.core),
-                            style = MaterialTheme.typography.bodyLarge,
-                        )
-                    },
-                    leadingContent = {
-                        Icon(
-                            imageVector = Icons.Outlined.Settings,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                        )
-                    },
-                    modifier =
-                    Modifier
-                        .clickable { navController.navigate("settings/core") },
-                    colors =
-                    ListItemDefaults.colors(
-                        containerColor = Color.Transparent,
-                    ),
-                )
+	Column(
+		modifier =
+			Modifier
+				.fillMaxSize()
+				.background(MaterialTheme.colorScheme.surface)
+				.verticalScroll(rememberScrollState())
+				.padding(vertical = 8.dp),
+	) {
+		// General Settings Group
+		Card(
+			modifier =
+				Modifier
+					.fillMaxWidth()
+					.padding(horizontal = 16.dp, vertical = 8.dp),
+			colors =
+				CardDefaults.cardColors(
+					containerColor = MaterialTheme.colorScheme.surfaceContainer,
+				),
+		) {
+			Column {
+				// Access key
+				Text(text = "Ключ доступа", style = MaterialTheme.typography.bodyLarge)
+				Spacer(Modifier.height(8.dp))
 
-                ListItem(
-                    headlineContent = {
-                        Text(
-                            stringResource(R.string.service),
-                            style = MaterialTheme.typography.bodyLarge,
-                        )
-                    },
-                    leadingContent = {
-                        Icon(
-                            imageVector = Icons.Outlined.Tune,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                        )
-                    },
-                    trailingContent = {
-                        if (!isBatteryOptimizationIgnored) {
-                            Badge(containerColor = MaterialTheme.colorScheme.primary)
-                        }
-                    },
-                    modifier = Modifier.clickable { navController.navigate("settings/service") },
-                    colors =
-                    ListItemDefaults.colors(
-                        containerColor = Color.Transparent,
-                    ),
-                )
+				OutlinedTextField(
+					value = accessKey,
+					onValueChange = {
+						accessKey = it
+						Settings.accessKey = it.trim()
+					},
+					singleLine = true,
+					label = { Text("Введите ключ") },
+					modifier = Modifier.fillMaxWidth(),
+				)
 
-                ListItem(
-                    headlineContent = {
-                        Text(
-                            stringResource(R.string.profile_override),
-                            style = MaterialTheme.typography.bodyLarge,
-                        )
-                    },
-                    leadingContent = {
-                        Icon(
-                            imageVector = Icons.Outlined.FilterAlt,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                        )
-                    },
-                    modifier =
-                    Modifier
-                        .clickable { navController.navigate("settings/profile_override") },
-                    colors =
-                    ListItemDefaults.colors(
-                        containerColor = Color.Transparent,
-                    ),
-                )
+				Spacer(Modifier.height(12.dp))
 
-                ListItem(
-                    headlineContent = {
-                        Text(
-                            stringResource(R.string.privilege_settings),
-                            style = MaterialTheme.typography.bodyLarge,
-                        )
-                    },
-                    leadingContent = {
-                        Icon(
-                            imageVector = Icons.Outlined.AdminPanelSettings,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                        )
-                    },
-                    trailingContent = {
-                        if (hasPendingPrivilegeDowngrade) {
-                            Badge(containerColor = MaterialTheme.colorScheme.error)
-                        } else if (hasPendingPrivilegeUpdate) {
-                            Badge(containerColor = Color(0xFFFFC107))
-                        }
-                    },
-                    modifier =
-                    Modifier
-                        .clip(RoundedCornerShape(bottomStart = 12.dp, bottomEnd = 12.dp))
-                        .clickable { navController.navigate("settings/privilege") },
-                    colors =
-                    ListItemDefaults.colors(
-                        containerColor = Color.Transparent,
-                    ),
-                )
-            }
-        }
+				Button(
+				onClick = {
+					scope.launch {
+						if (Settings.accessKey.isBlank()) return@launch
+						ProfileConfigsUpdater.refreshProfiles(context)
+						navController.navigate(Screen.Dashboard.route) {
+							popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+							launchSingleTop = true
+							restoreState = true
+						}
+					}
+				},
+				modifier = Modifier.fillMaxWidth(),
+				) {
+					Text("Обновить конфиги")
+				}
 
-        // About Section
-        Text(
-            text = stringResource(R.string.about),
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.padding(horizontal = 32.dp, vertical = 8.dp),
-        )
+				ListItem(
+					headlineContent = {
+						Text(
+							stringResource(R.string.title_app_settings),
+							style = MaterialTheme.typography.bodyLarge,
+						)
+					},
+					leadingContent = {
+						Icon(
+							imageVector = Icons.Outlined.Info,
+							contentDescription = null,
+							tint = MaterialTheme.colorScheme.primary,
+						)
+					},
+					trailingContent = {
+						if (hasUpdate) {
+							Badge(containerColor = MaterialTheme.colorScheme.primary)
+						}
+					},
+					modifier =
+						Modifier
+							.clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp))
+							.clickable { navController.navigate("settings/app") },
+					colors =
+						ListItemDefaults.colors(
+							containerColor = Color.Transparent,
+						),
+				)
 
-        Card(
-            modifier =
-            Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp),
-            colors =
-            CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainer,
-            ),
-        ) {
-            Column {
-                ListItem(
-                    headlineContent = {
-                        Text(
-                            stringResource(R.string.error_deprecated_documentation),
-                            style = MaterialTheme.typography.bodyLarge,
-                        )
-                    },
-                    leadingContent = {
-                        Icon(
-                            imageVector = Icons.Outlined.Description,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                        )
-                    },
-                    trailingContent = {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Outlined.OpenInNew,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    },
-                    modifier =
-                    Modifier
-                        .clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp))
-                        .clickable {
-                            val intent = android.content.Intent(android.content.Intent.ACTION_VIEW)
-                            intent.data = android.net.Uri.parse("https://sing-box.sagernet.org/")
-                            context.startActivity(intent)
-                        },
-                    colors =
-                    ListItemDefaults.colors(
-                        containerColor = Color.Transparent,
-                    ),
-                )
+				ListItem(
+					headlineContent = {
+						Text(
+							stringResource(R.string.core),
+							style = MaterialTheme.typography.bodyLarge,
+						)
+					},
+					leadingContent = {
+						Icon(
+							imageVector = Icons.Outlined.Settings,
+							contentDescription = null,
+							tint = MaterialTheme.colorScheme.primary,
+						)
+					},
+					modifier =
+						Modifier
+							.clickable { navController.navigate("settings/core") },
+					colors =
+						ListItemDefaults.colors(
+							containerColor = Color.Transparent,
+						),
+				)
 
-                ListItem(
-                    headlineContent = {
-                        Text(
-                            stringResource(R.string.source_code),
-                            style = MaterialTheme.typography.bodyLarge,
-                        )
-                    },
-                    leadingContent = {
-                        Icon(
-                            imageVector = Icons.Outlined.Code,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                        )
-                    },
-                    trailingContent = {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Outlined.OpenInNew,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    },
-                    modifier =
-                    Modifier
-                        .clickable {
-                            val intent = android.content.Intent(android.content.Intent.ACTION_VIEW)
-                            intent.data =
-                                android.net.Uri.parse("https://github.com/SagerNet/sing-box-for-android")
-                            context.startActivity(intent)
-                        },
-                    colors =
-                    ListItemDefaults.colors(
-                        containerColor = Color.Transparent,
-                    ),
-                )
+				ListItem(
+					headlineContent = {
+						Text(
+							stringResource(R.string.service),
+							style = MaterialTheme.typography.bodyLarge,
+						)
+					},
+					leadingContent = {
+						Icon(
+							imageVector = Icons.Outlined.Tune,
+							contentDescription = null,
+							tint = MaterialTheme.colorScheme.primary,
+						)
+					},
+					trailingContent = {
+						if (!isBatteryOptimizationIgnored) {
+							Badge(containerColor = MaterialTheme.colorScheme.primary)
+						}
+					},
+					modifier = Modifier.clickable { navController.navigate("settings/service") },
+					colors =
+						ListItemDefaults.colors(
+							containerColor = Color.Transparent,
+						),
+				)
 
-                ListItem(
-                    headlineContent = {
-                        Text(
-                            stringResource(R.string.sponsor),
-                            style = MaterialTheme.typography.bodyLarge,
-                        )
-                    },
-                    leadingContent = {
-                        Icon(
-                            imageVector = Icons.Outlined.Favorite,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                        )
-                    },
-                    trailingContent = {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Outlined.OpenInNew,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    },
-                    modifier =
-                    Modifier
-                        .clip(RoundedCornerShape(bottomStart = 12.dp, bottomEnd = 12.dp))
-                        .clickable {
-                            val intent = android.content.Intent(android.content.Intent.ACTION_VIEW)
-                            intent.data = android.net.Uri.parse("https://sekai.icu/sponsors/")
-                            context.startActivity(intent)
-                        },
-                    colors =
-                    ListItemDefaults.colors(
-                        containerColor = Color.Transparent,
-                    ),
-                )
-            }
-        }
+				ListItem(
+					headlineContent = {
+						Text(
+							stringResource(R.string.profile_override),
+							style = MaterialTheme.typography.bodyLarge,
+						)
+					},
+					leadingContent = {
+						Icon(
+							imageVector = Icons.Outlined.FilterAlt,
+							contentDescription = null,
+							tint = MaterialTheme.colorScheme.primary,
+						)
+					},
+					modifier =
+						Modifier
+							.clickable { navController.navigate("settings/profile_override") },
+					colors =
+						ListItemDefaults.colors(
+							containerColor = Color.Transparent,
+						),
+				)
 
-        Spacer(modifier = Modifier.height(16.dp))
-    }
+				ListItem(
+					headlineContent = {
+						Text(
+							stringResource(R.string.privilege_settings),
+							style = MaterialTheme.typography.bodyLarge,
+						)
+					},
+					leadingContent = {
+						Icon(
+							imageVector = Icons.Outlined.AdminPanelSettings,
+							contentDescription = null,
+							tint = MaterialTheme.colorScheme.primary,
+						)
+					},
+					trailingContent = {
+						if (hasPendingPrivilegeDowngrade) {
+							Badge(containerColor = MaterialTheme.colorScheme.error)
+						} else if (hasPendingPrivilegeUpdate) {
+							Badge(containerColor = Color(0xFFFFC107))
+						}
+					},
+					modifier =
+						Modifier
+							.clip(RoundedCornerShape(bottomStart = 12.dp, bottomEnd = 12.dp))
+							.clickable { navController.navigate("settings/privilege") },
+					colors =
+						ListItemDefaults.colors(
+							containerColor = Color.Transparent,
+						),
+				)
+			}
+		}
+
+		Spacer(modifier = Modifier.height(16.dp))
+	}
 }

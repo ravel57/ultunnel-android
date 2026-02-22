@@ -1,9 +1,14 @@
 [versions]
+api = "82"
+apiVersion = "82"
 composeMarkdown = "0.5.8"
 core = "3.5.4"
 coreKtx = "1.17.0"
 emojiKt = "2.3.0"
+gson = "2.13.2"
 guava = "33.5.0-android"
+jacksonCore = "3.0.4"
+jacksonDatabind = "3.0.4"
 kotlinxSerializationJson = "1.10.0"
 kotlinxCoroutinesAndroid = "1.10.2"
 material = "1.13.0"
@@ -16,7 +21,9 @@ ktlint = "1.7.1"
 swiperefreshlayout = "1.2.0"
 composeMaterial = "1.5.6"
 [libraries]
+androidx-compose-bom = { module = "androidx.compose:compose-bom" }
 androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "coreKtx" }
+androidx-material = { module = "androidx.compose.material:material" }
 androidx-navigation-fragment-ktx = { module = "androidx.navigation:navigation-fragment-ktx", version.ref = "navigationFragmentKtx" }
 androidx-navigation-ui-ktx = { module = "androidx.navigation:navigation-ui-ktx", version.ref = "navigationUiKtx" }
 androidx-preference-ktx = { module = "androidx.preference:preference-ktx", version.ref = "preferenceKtx" }
@@ -24,10 +31,14 @@ androidx-swiperefreshlayout = { group = "androidx.swiperefreshlayout", name = "s
 androidx-ui-test-junit4 = { module = "androidx.compose.ui:ui-test-junit4" }
 androidx-ui-tooling = { module = "androidx.compose.ui:ui-tooling" }
 androidx-ui-test-manifest = { module = "androidx.compose.ui:ui-test-manifest" }
+api = { module = "de.robv.android.xposed:api", version.ref = "apiVersion" }
 compose-markdown = { module = "com.github.jeziellago:compose-markdown", version.ref = "composeMarkdown" }
 core = { module = "com.google.zxing:core", version.ref = "core" }
 emoji-kt = { module = "org.kodein.emoji:emoji-kt", version.ref = "emojiKt" }
+gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
 guava = { module = "com.google.guava:guava", version.ref = "guava" }
+jackson-core = { module = "tools.jackson.core:jackson-core", version.ref = "jacksonCore" }
+jackson-databind = { module = "tools.jackson.core:jackson-databind", version.ref = "jacksonDatabind" }
 kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "kotlinxCoroutinesAndroid" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
 material = { module = "com.google.android.material:material", version.ref = "material" }

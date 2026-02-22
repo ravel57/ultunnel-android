@@ -17,11 +17,11 @@ sealed class Screen(val route: String, @StringRes val titleRes: Int, val icon: I
         icon = Icons.Default.Dashboard,
     )
 
-    object Log : Screen(
-        route = "log",
-        titleRes = R.string.title_log,
-        icon = Icons.AutoMirrored.Default.TextSnippet,
-    )
+//    object Log : Screen(
+//        route = "log",
+//        titleRes = R.string.title_log,
+//        icon = Icons.AutoMirrored.Default.TextSnippet,
+//    )
 
     object Groups : Screen(
         route = "groups",
@@ -45,6 +45,6 @@ sealed class Screen(val route: String, @StringRes val titleRes: Int, val icon: I
 val bottomNavigationScreens =
     listOf(
         Screen.Dashboard,
-        Screen.Log,
+//        Screen.Log,
         Screen.Settings,
     )

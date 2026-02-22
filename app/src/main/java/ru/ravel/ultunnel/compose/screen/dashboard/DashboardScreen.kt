@@ -9,8 +9,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.pullrefresh.PullRefreshIndicator
+import androidx.compose.material.pullrefresh.pullRefresh
+import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -23,6 +27,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -34,11 +40,42 @@ import ru.ravel.ultunnel.R
 import ru.ravel.ultunnel.compose.base.UiEvent
 import ru.ravel.ultunnel.compose.navigation.NewProfileArgs
 import ru.ravel.ultunnel.compose.topbar.OverrideTopBar
+import kotlinx.coroutines.launch
 import ru.ravel.ultunnel.constant.Status
+import android.util.Log
+import android.widget.Toast
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.zIndex
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import com.google.gson.Gson
+import com.google.gson.JsonObject
+import com.google.gson.JsonParser
+import java.io.File
+import java.net.HttpURLConnection
+import java.net.URL
+import ru.ravel.ultunnel.bg.BoxService
+import ru.ravel.ultunnel.database.Profile
+import ru.ravel.ultunnel.database.ProfileManager
+import ru.ravel.ultunnel.database.Settings
+import ru.ravel.ultunnel.database.TypedProfile
+import ru.ravel.ultunnel.model.Config
+import ru.ravel.ultunnel.model.ConfigFileFromServer
+import ru.ravel.ultunnel.model.ConfigWithServerName
+import androidx.compose.material.pullrefresh.PullRefreshIndicator
+import androidx.compose.material.pullrefresh.pullRefresh
+import androidx.compose.material.pullrefresh.rememberPullRefreshState
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import ru.ravel.ultunnel.utils.ProfileConfigsUpdater
 
 data class CardRenderItem(val cards: List<CardGroup>, val isRow: Boolean)
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
 @Composable
 fun DashboardScreen(
 	serviceStatus: Status = Status.Stopped,
@@ -47,7 +84,24 @@ fun DashboardScreen(
 	onOpenNewProfile: (NewProfileArgs) -> Unit = {},
 	viewModel: DashboardViewModel = viewModel(),
 ) {
+	val sheetState = rememberModalBottomSheetState()
+	val scope = rememberCoroutineScope()
+	val context = LocalContext.current
+
 	val uiState by viewModel.uiState.collectAsState()
+
+	var refreshTick by remember { mutableIntStateOf(0) }
+	var isRefreshing by remember { mutableStateOf(false) }
+
+	val pullRefreshState = rememberPullRefreshState(
+		refreshing = isRefreshing,
+		onRefresh = {
+			if (!isRefreshing) {
+				isRefreshing = true
+				refreshTick++
+			}
+		},
+	)
 
 	OverrideTopBar {
 		TopAppBar(
@@ -66,6 +120,18 @@ fun DashboardScreen(
 	// Update service status in ViewModel
 	LaunchedEffect(serviceStatus) {
 		viewModel.updateServiceStatus(serviceStatus)
+	}
+
+	LaunchedEffect(refreshTick) {
+		if (isRefreshing) {
+			try {
+				ProfileConfigsUpdater.refreshProfiles(context)
+			} catch (e: Exception) {
+				Toast.makeText(context, e.message ?: "Ошибка обновления профилей", Toast.LENGTH_LONG).show()
+			} finally {
+				isRefreshing = false
+			}
+		}
 	}
 
 	// Events are now handled globally in ComposeActivity via GlobalEventBus
@@ -98,10 +164,6 @@ fun DashboardScreen(
 		)
 	}
 
-	val sheetState = rememberModalBottomSheetState()
-	val scope = rememberCoroutineScope()
-	val context = LocalContext.current
-
 	// Show dashboard settings bottom sheet
 	if (uiState.showCardSettingsDialog) {
 		DashboardSettingsBottomSheet(
@@ -121,13 +183,24 @@ fun DashboardScreen(
 	}
 
 	Box(
-		modifier = Modifier.fillMaxSize(),
+		modifier = Modifier
+			.fillMaxSize()
+			.pullRefresh(pullRefreshState),
 	) {
 		val bottomPadding = when {
 			showStartFab -> 88.dp
 			showStatusBar -> 74.dp
 			else -> 0.dp
 		}
+
+		PullRefreshIndicator(
+			refreshing = isRefreshing,
+			state = pullRefreshState,
+			modifier = Modifier
+				.align(Alignment.TopCenter)
+				.zIndex(10f),
+		)
+
 		LazyColumn(
 			modifier =
 				Modifier
@@ -182,7 +255,7 @@ fun DashboardScreen(
 								updatingProfileId = uiState.updatingProfileId,
 								updatedProfileId = uiState.updatedProfileId,
 								onProfileSelected = viewModel::selectProfile,
-								onProfileEdit = viewModel::editProfile,
+//								onProfileEdit = viewModel::editProfile,
 								onProfileDelete = viewModel::deleteProfile,
 								onProfileShare = viewModel::shareProfile,
 								onProfileShareURL = viewModel::shareProfileURL,
@@ -222,7 +295,7 @@ fun DashboardScreen(
 							updatingProfileId = uiState.updatingProfileId,
 							updatedProfileId = uiState.updatedProfileId,
 							onProfileSelected = viewModel::selectProfile,
-							onProfileEdit = viewModel::editProfile,
+//							onProfileEdit = viewModel::editProfile,
 							onProfileDelete = viewModel::deleteProfile,
 							onProfileShare = viewModel::shareProfile,
 							onProfileShareURL = viewModel::shareProfileURL,

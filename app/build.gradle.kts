@@ -324,12 +324,15 @@ dependencies {
     implementation(libs.emoji.kt)
 
     // Xposed API for self-hooking VPN hide module
-    compileOnly("de.robv.android.xposed:api:82")
+    compileOnly(libs.api)
     compileOnly(project(":libxposed-api"))
 
-    implementation("tools.jackson.core:jackson-core:3.0.4")
-    implementation("tools.jackson.core:jackson-databind:3.0.4")
-    implementation("com.google.code.gson:gson:2.13.2")
+    implementation(libs.jackson.core)
+    implementation(libs.jackson.databind)
+    implementation(libs.gson)
+
+    implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.androidx.material)
 }
 
 val playCredentialsJSON = rootProject.file("service-account-credentials.json")

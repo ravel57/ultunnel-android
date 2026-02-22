@@ -20,9 +20,6 @@ import ru.ravel.ultunnel.compose.screen.dashboard.DashboardScreen
 import ru.ravel.ultunnel.compose.screen.dashboard.DashboardViewModel
 import ru.ravel.ultunnel.compose.screen.dashboard.GroupsCard
 import ru.ravel.ultunnel.compose.screen.dashboard.groups.GroupsViewModel
-import ru.ravel.ultunnel.compose.screen.log.HookLogScreen
-import ru.ravel.ultunnel.compose.screen.log.LogScreen
-import ru.ravel.ultunnel.compose.screen.log.LogViewModel
 import ru.ravel.ultunnel.compose.screen.privilegesettings.PrivilegeSettingsManageScreen
 import ru.ravel.ultunnel.compose.screen.profile.EditProfileRoute
 import ru.ravel.ultunnel.compose.screen.profileoverride.PerAppProxyScreen
@@ -60,7 +57,7 @@ fun SFANavHost(
     onClearNewProfileArgs: () -> Unit = {},
     onOpenNewProfile: (NewProfileArgs) -> Unit = {},
     dashboardViewModel: DashboardViewModel? = null,
-    logViewModel: LogViewModel? = null,
+//    logViewModel: LogViewModel? = null,
     groupsViewModel: GroupsViewModel? = null,
     connectionsViewModel: ConnectionsViewModel? = null,
     modifier: Modifier = Modifier,
@@ -89,22 +86,22 @@ fun SFANavHost(
             }
         }
 
-        composable(Screen.Log.route) {
-            if (logViewModel != null) {
-                LogScreen(
-                    serviceStatus = serviceStatus,
-                    showStartFab = showStartFab,
-                    showStatusBar = showStatusBar,
-                    viewModel = logViewModel,
-                )
-            } else {
-                LogScreen(
-                    serviceStatus = serviceStatus,
-                    showStartFab = showStartFab,
-                    showStatusBar = showStatusBar,
-                )
-            }
-        }
+//        composable(Screen.Log.route) {
+//            if (logViewModel != null) {
+//                LogScreen(
+//                    serviceStatus = serviceStatus,
+//                    showStartFab = showStartFab,
+//                    showStatusBar = showStatusBar,
+//                    viewModel = logViewModel,
+//                )
+//            } else {
+//                LogScreen(
+//                    serviceStatus = serviceStatus,
+//                    showStartFab = showStartFab,
+//                    showStatusBar = showStatusBar,
+//                )
+//            }
+//        }
 
         composable(Screen.Groups.route) {
             if (groupsViewModel != null) {
@@ -284,14 +281,14 @@ fun SFANavHost(
             PrivilegeSettingsManageScreen(onBack = { navController.navigateUp() })
         }
 
-        composable(
-            route = "settings/privilege/logs",
-            enterTransition = slideInFromRight,
-            exitTransition = slideOutToLeft,
-            popEnterTransition = slideInFromLeft,
-            popExitTransition = slideOutToRight,
-        ) {
-            HookLogScreen(onBack = { navController.navigateUp() })
-        }
+//        composable(
+//            route = "settings/privilege/logs",
+//            enterTransition = slideInFromRight,
+//            exitTransition = slideOutToLeft,
+//            popEnterTransition = slideInFromLeft,
+//            popExitTransition = slideOutToRight,
+//        ) {
+//            HookLogScreen(onBack = { navController.navigateUp() })
+//        }
     }
 }

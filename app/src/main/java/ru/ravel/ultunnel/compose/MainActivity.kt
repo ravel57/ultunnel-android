@@ -80,8 +80,15 @@ import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import dev.jeziellago.compose.markdowntext.MarkdownText
 import io.nekohasekai.libbox.Libbox
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import ru.ravel.ultunnel.Application
+import ru.ravel.ultunnel.R
+import ru.ravel.ultunnel.bg.ServiceConnection
+import ru.ravel.ultunnel.bg.ServiceNotification
 import ru.ravel.ultunnel.compat.WindowSizeClassCompat
 import ru.ravel.ultunnel.compat.isWidthAtLeastBreakpointCompat
 import ru.ravel.ultunnel.compose.base.GlobalEventBus
@@ -103,27 +110,17 @@ import ru.ravel.ultunnel.compose.screen.connections.ConnectionsViewModel
 import ru.ravel.ultunnel.compose.screen.dashboard.DashboardViewModel
 import ru.ravel.ultunnel.compose.screen.dashboard.GroupsCard
 import ru.ravel.ultunnel.compose.screen.dashboard.groups.GroupsViewModel
-import ru.ravel.ultunnel.compose.screen.log.LogViewModel
 import ru.ravel.ultunnel.compose.theme.SFATheme
 import ru.ravel.ultunnel.compose.topbar.LocalTopBarController
 import ru.ravel.ultunnel.compose.topbar.TopBarController
 import ru.ravel.ultunnel.compose.topbar.TopBarEntry
-import ru.ravel.ultunnel.ktx.launchCustomTab
-import ru.ravel.ultunnel.update.UpdateState
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import ru.ravel.ultunnel.Application
-import ru.ravel.ultunnel.BuildConfig
-import ru.ravel.ultunnel.R
-import ru.ravel.ultunnel.database.Settings
-import ru.ravel.ultunnel.ktx.hasPermission
-import ru.ravel.ultunnel.bg.ServiceConnection
-import ru.ravel.ultunnel.bg.ServiceNotification
 import ru.ravel.ultunnel.constant.Alert
 import ru.ravel.ultunnel.constant.ServiceMode
 import ru.ravel.ultunnel.constant.Status
+import ru.ravel.ultunnel.database.Settings
+import ru.ravel.ultunnel.ktx.hasPermission
+import ru.ravel.ultunnel.ktx.launchCustomTab
+import ru.ravel.ultunnel.update.UpdateState
 
 
 class MainActivity :
@@ -311,6 +308,17 @@ class MainActivity :
 		val navBackStackEntry by navController.currentBackStackEntryAsState()
 		val currentDestination = navBackStackEntry?.destination
 		val currentRoute = currentDestination?.route
+
+		LaunchedEffect(currentRoute) {
+			val inSettings = currentRoute?.startsWith(Screen.Settings.route) == true
+			if (Settings.accessKey.isBlank() && !inSettings) {
+				navController.navigate(Screen.Settings.route) {
+					popUpTo(navController.graph.findStartDestination().id) { inclusive = true }
+					launchSingleTop = true
+				}
+			}
+		}
+
 		val scope = rememberCoroutineScope()
 		val importHandler = remember { ProfileImportHandler(this@MainActivity) }
 
@@ -603,22 +611,22 @@ class MainActivity :
 			when {
 				isSettingsSubScreen -> Screen.Settings.route
 				currentRoute?.startsWith(Screen.Connections.route) == true -> Screen.Connections.route
-				currentRoute?.startsWith(Screen.Log.route) == true -> Screen.Log.route
+//				currentRoute?.startsWith(Screen.Log.route) == true -> Screen.Log.route
 				isProfileRoute -> Screen.Dashboard.route
 				else -> currentRoute
 			}
 		val isConnectionsRoute = currentRootRoute == Screen.Connections.route
 		val isGroupsRoute = currentRootRoute == Screen.Groups.route
-		val isLogRoute = currentRootRoute == Screen.Log.route
+//		val isLogRoute = currentRootRoute == Screen.Log.route
 
 		val isSubScreen = isSettingsSubScreen || isConnectionsDetail || isProfileRoute
 		// Get LogViewModel instance if we're on the Log screen
-		val logViewModel: LogViewModel? =
-			if (isLogRoute) {
-				viewModel()
-			} else {
-				null
-			}
+//		val logViewModel: LogViewModel? =
+//			if (isLogRoute) {
+//				viewModel()
+//			} else {
+//				null
+//			}
 
 		val groupsViewModel: GroupsViewModel? =
 			if (isGroupsRoute) {
@@ -654,14 +662,14 @@ class MainActivity :
 				if (showConnectionsInNav) {
 					add(Screen.Connections)
 				}
-				add(Screen.Log)
+//				add(Screen.Log)
 				add(Screen.Settings)
 			}
 
 		val allowedRoutes =
 			buildSet {
 				add(Screen.Dashboard.route)
-				add(Screen.Log.route)
+//				add(Screen.Log.route)
 				add(Screen.Settings.route)
 				if (useNavigationRail && showGroupsInNav) {
 					add(Screen.Groups.route)
@@ -767,7 +775,7 @@ class MainActivity :
 					onClearNewProfileArgs = { newProfileArgs = NewProfileArgs() },
 					onOpenNewProfile = openNewProfile,
 					dashboardViewModel = dashboardViewModel,
-					logViewModel = logViewModel,
+//					logViewModel = logViewModel,
 					groupsViewModel = groupsViewModel,
 					connectionsViewModel = connectionsViewModel,
 					modifier = Modifier.fillMaxSize(),
@@ -975,17 +983,18 @@ class MainActivity :
 												it.route == screen.route
 											} == true,
 										onClick = {
-											navController.navigate(screen.route) {
-												// Pop up to the start destination of the graph to
-												// avoid building up a large stack of destinations
-												popUpTo(navController.graph.findStartDestination().id) {
-													saveState = true
+												if (Settings.accessKey.isBlank() && screen != Screen.Settings) {
+													navController.navigate(Screen.Settings.route) {
+														popUpTo(navController.graph.findStartDestination().id) { inclusive = true }
+														launchSingleTop = true
+													}
+													return@NavigationBarItem
 												}
-												// Avoid multiple copies of the same destination
-												launchSingleTop = true
-												// Restore state when reselecting a previously selected item
-												restoreState = true
-											}
+												navController.navigate(screen.route) {
+													popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+													launchSingleTop = true
+													restoreState = true
+												}
 										},
 									)
 								}
