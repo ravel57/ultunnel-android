@@ -91,10 +91,12 @@ android {
             }
         }
         release {
-            isMinifyEnabled = true
+//            isMinifyEnabled = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
             signingConfig = signingConfigs.getByName("release")
             vcsInfo.include = false
+            isMinifyEnabled = false
+            isShrinkResources = false
         }
     }
 
