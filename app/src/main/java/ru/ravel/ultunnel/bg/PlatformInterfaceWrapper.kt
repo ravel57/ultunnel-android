@@ -47,24 +47,53 @@ interface PlatformInterfaceWrapper : PlatformInterface {
 		destinationAddress: String,
 		destinationPort: Int,
 	): ConnectionOwner {
-		try {
+		return try {
 			val uid =
 				Application.connectivity.getConnectionOwnerUid(
 					ipProtocol,
 					InetSocketAddress(sourceAddress, sourcePort),
 					InetSocketAddress(destinationAddress, destinationPort),
 				)
-			if (uid == Process.INVALID_UID) error("android: connection owner not found")
-			val packages = Application.packageManager.getPackagesForUid(uid)
+
 			val owner = ConnectionOwner()
+
+			if (uid == Process.INVALID_UID) {
+				Log.w(
+					"PlatformInterface",
+					"getConnectionOwnerUid: owner not found for $sourceAddress:$sourcePort -> $destinationAddress:$destinationPort, protocol=$ipProtocol",
+				)
+				owner.userId = Process.INVALID_UID
+				owner.userName = ""
+				owner.androidPackageName = ""
+				return owner
+			}
+
+			val packages = Application.packageManager.getPackagesForUid(uid)
 			owner.userId = uid
 			owner.userName = packages?.firstOrNull() ?: ""
 			owner.androidPackageName = packages?.firstOrNull() ?: ""
-			return owner
+			owner
+		} catch (e: SecurityException) {
+			Log.e("PlatformInterface", "getConnectionOwnerUid security error", e)
+			ConnectionOwner().apply {
+				userId = Process.INVALID_UID
+				userName = ""
+				androidPackageName = ""
+			}
+		} catch (e: IllegalArgumentException) {
+			Log.e("PlatformInterface", "getConnectionOwnerUid bad arguments", e)
+			ConnectionOwner().apply {
+				userId = Process.INVALID_UID
+				userName = ""
+				androidPackageName = ""
+			}
 		} catch (e: Exception) {
 			Log.e("PlatformInterface", "getConnectionOwnerUid", e)
-			e.printStackTrace(System.err)
-			throw e
+			ConnectionOwner().apply {
+				userId = Process.INVALID_UID
+				userName = ""
+				androidPackageName = ""
+			}
 		}
 	}
 

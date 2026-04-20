@@ -20,34 +20,39 @@ object PrivilegeSettingsClient {
 
     fun register(context: Context) {
         appContext = context.applicationContext
-        sync()
+        runCatching {
+            sync()
+        }.onFailure {
+            Log.w(TAG, "Privilege settings sync skipped", it)
+        }
     }
 
     fun sync(): Throwable? {
-        val context = appContext ?: return null
         if (isVersionMismatch()) return null
-        val binder = ConnectivityBinderUtils.getBinder(context) ?: return null
+        val binder = ConnectivityBinderUtils.getBinder() ?: return null
+
         return ConnectivityBinderUtils.withParcel { data, reply ->
             data.writeInterfaceToken(HookStatusKeys.DESCRIPTOR)
             data.writeInt(if (Settings.privilegeSettingsEnabled) 1 else 0)
             ParceledListSlice(Settings.privilegeSettingsList.map { PackageEntry(it) }).writeToParcel(data, 0)
             data.writeInt(if (Settings.privilegeSettingsInterfaceRenameEnabled) 1 else 0)
             data.writeString(Settings.privilegeSettingsInterfacePrefix)
+
             try {
                 val ok = binder.transact(HookStatusKeys.TRANSACTION_UPDATE_PRIVILEGE_SETTINGS, data, reply, 0)
-                reply.readException()
                 if (!ok) {
-                    val error = RemoteException()
-                    Log.w(TAG, "Privilege settings sync failed: transaction not handled", error)
+                    val error = RemoteException("transaction not handled")
+                    Log.w(TAG, "Privilege settings sync failed", error)
                     return@withParcel error
                 }
-                return@withParcel null
+                reply.readException()
+                null
             } catch (e: RemoteException) {
                 Log.w(TAG, "Privilege settings sync failed: remote exception", e)
-                return@withParcel e
+                e
             } catch (e: RuntimeException) {
                 Log.w(TAG, "Privilege settings sync failed: bad reply", e)
-                return@withParcel e
+                e
             }
         }
     }

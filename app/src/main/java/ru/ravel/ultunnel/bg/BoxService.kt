@@ -137,16 +137,16 @@ class BoxService(private val service: Service, private val platformInterface: Pl
 					content,
 					OverrideOptions().apply {
 						autoRedirect = Settings.autoRedirect
-//                        if (Vendor.isPerAppProxyAvailable() && Settings.perAppProxyEnabled) {
-//                            val appList = Settings.getEffectivePerAppProxyList()
-//                            if (Settings.getEffectivePerAppProxyMode() == Settings.PER_APP_PROXY_INCLUDE) {
-//                                includePackage =
-//                                    PlatformInterfaceWrapper.StringArray(appList.iterator())
-//                            } else {
-//                                excludePackage =
-//                                    PlatformInterfaceWrapper.StringArray(appList.iterator())
-//                            }
-//                        }
+						if (Settings.perAppProxyEnabled) {
+							val appList = Settings.getEffectivePerAppProxyList()
+							if (appList.isNotEmpty()) {
+								if (Settings.getEffectivePerAppProxyMode() == Settings.PER_APP_PROXY_INCLUDE) {
+									includePackage = PlatformInterfaceWrapper.StringArray(appList.iterator())
+								} else {
+									excludePackage = PlatformInterfaceWrapper.StringArray(appList.iterator())
+								}
+							}
+						}
 					},
 				)
 			} catch (e: Exception) {
@@ -220,14 +220,16 @@ class BoxService(private val service: Service, private val platformInterface: Pl
 				content,
 				OverrideOptions().apply {
 					autoRedirect = Settings.autoRedirect
-//                    if (Vendor.isPerAppProxyAvailable() && Settings.perAppProxyEnabled) {
-//                        val appList = Settings.getEffectivePerAppProxyList()
-//                        if (Settings.getEffectivePerAppProxyMode() == Settings.PER_APP_PROXY_INCLUDE) {
-//                            includePackage = PlatformInterfaceWrapper.StringArray(appList.iterator())
-//                        } else {
-//                            excludePackage = PlatformInterfaceWrapper.StringArray(appList.iterator())
-//                        }
-//                    }
+					if (Settings.perAppProxyEnabled) {
+						val appList = Settings.getEffectivePerAppProxyList()
+						if (appList.isNotEmpty()) {
+							if (Settings.getEffectivePerAppProxyMode() == Settings.PER_APP_PROXY_INCLUDE) {
+								includePackage = PlatformInterfaceWrapper.StringArray(appList.iterator())
+							} else {
+								excludePackage = PlatformInterfaceWrapper.StringArray(appList.iterator())
+							}
+						}
+					}
 				},
 			)
 		} catch (e: Exception) {

@@ -34,30 +34,32 @@ class Application : Application() {
 		super.onCreate()
 		AppLifecycleObserver.register(this)
 
-//        Seq.setContext(this)
 		Libbox.setLocale(Locale.getDefault().toLanguageTag().replace("-", "_"))
-		HookStatusClient.register(this)
-		PrivilegeSettingsClient.register(this)
+
+		runCatching {
+			HookStatusClient.register(this)
+		}.onFailure {
+			android.util.Log.w("Application", "HookStatusClient disabled", it)
+		}
+
+		runCatching {
+			PrivilegeSettingsClient.register(this)
+		}.onFailure {
+			android.util.Log.w("Application", "PrivilegeSettingsClient disabled", it)
+		}
 
 		@Suppress("OPT_IN_USAGE")
 		GlobalScope.launch(Dispatchers.IO) {
 			initialize()
 			UpdateProfileWork.reconfigureUpdater()
-			HookModuleUpdateNotifier.sync(this@Application)
+
+			runCatching {
+				HookModuleUpdateNotifier.sync(this@Application)
+			}.onFailure {
+				android.util.Log.w("Application", "HookModuleUpdateNotifier failed", it)
+			}
 		}
-
-//        if (Vendor.isPerAppProxyAvailable()) {
-//            registerReceiver(
-//                AppChangeReceiver(),
-//                IntentFilter().apply {
-//                    addAction(Intent.ACTION_PACKAGE_ADDED)
-//                    addAction(Intent.ACTION_PACKAGE_REPLACED)
-//                    addDataScheme("package")
-//                },
-//            )
-//        }
 	}
-
 	private fun initialize() {
 		val baseDir = filesDir
 		baseDir.mkdirs()

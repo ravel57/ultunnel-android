@@ -109,32 +109,6 @@
             </intent-filter>
 
         </activity>
-<!--        <activity-->
-<!--            android:name="ru.ravel.ultunnel.ui.profile.NewProfileActivity"-->
-<!--            android:exported="false" />-->
-<!--        <activity-->
-<!--            android:name="ru.ravel.ultunnel.ui.profile.EditProfileActivity"-->
-<!--            android:exported="false" />-->
-<!--        <activity-->
-<!--            android:name="ru.ravel.ultunnel.ui.profile.EditProfileContentActivity"-->
-<!--            android:exported="false" />-->
-<!--        <activity-->
-<!--            android:name="ru.ravel.ultunnel.ui.profileoverride.ProfileOverrideActivity"-->
-<!--            android:exported="false" />-->
-<!--        <activity-->
-<!--            android:name="ru.ravel.ultunnel.ui.profileoverride.PerAppProxyActivity"-->
-<!--            android:exported="false" />-->
-<!--        <activity-->
-<!--            android:name="ru.ravel.ultunnel.ui.debug.DebugActivity"-->
-<!--            android:exported="false" />-->
-<!--        <activity-->
-<!--            android:name="ru.ravel.ultunnel.ui.debug.VPNScanActivity"-->
-<!--            android:exported="false" />-->
-
-<!--        <activity-->
-<!--            android:name="ru.ravel.ultunnel.ui.profile.QRScanActivity"-->
-<!--            android:exported="false" />-->
-
         <service
             android:name=".bg.TileService"
             android:directBootAware="true"

@@ -65,6 +65,7 @@ class VPNService :
 		val builder = Builder()
 			.setSession("ultunnel")
 			.setMtu(options.mtu)
+		Log.d(TAG, "openTun: autoRoute=${options.autoRoute}, mtu=${options.mtu}")
 
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
 			builder.setMetered(false)
@@ -130,33 +131,53 @@ class VPNService :
 					}
 				}
 			}
+		}
 
-			val includePackage = options.includePackage
-			if (includePackage.hasNext()) {
-				while (includePackage.hasNext()) {
-					try {
-						val nextPackage = includePackage.next()
-						builder.addAllowedApplication(nextPackage)
-						Log.d("VPNService", "addAllowedApplication: $nextPackage")
-					} catch (e: NameNotFoundException) {
-						Log.e("VPNService", "addAllowedApplication failed", e)
-					}
-				}
-			}
+	val includePackage = options.includePackage
+	val excludePackage = options.excludePackage
 
-			val excludePackage = options.excludePackage
-			if (excludePackage.hasNext()) {
-				while (excludePackage.hasNext()) {
-					try {
-						val nextPackage = excludePackage.next()
-						builder.addDisallowedApplication(nextPackage)
-						Log.d("VPNService", "addDisallowedApplication: $nextPackage")
-					} catch (e: NameNotFoundException) {
-						Log.e("VPNService", "addDisallowedApplication failed", e)
-					}
+	val hasInclude = includePackage.hasNext()
+	val hasExclude = excludePackage.hasNext()
+
+	Log.d(TAG, "openTun: hasInclude=$hasInclude, hasExclude=$hasExclude")
+
+	when {
+		hasInclude && hasExclude -> {
+			Log.e(TAG, "Both includePackage and excludePackage are set. Only one mode is allowed.")
+		}
+
+		hasInclude -> {
+			while (includePackage.hasNext()) {
+				try {
+					val nextPackage = includePackage.next()
+					Log.d(TAG, "addAllowedApplication: $nextPackage")
+					builder.addAllowedApplication(nextPackage)
+				} catch (e: NameNotFoundException) {
+					Log.e(TAG, "addAllowedApplication failed", e)
+				} catch (e: Exception) {
+					Log.e(TAG, "addAllowedApplication unexpected error", e)
 				}
 			}
 		}
+
+		hasExclude -> {
+			while (excludePackage.hasNext()) {
+				try {
+					val nextPackage = excludePackage.next()
+					Log.d(TAG, "addDisallowedApplication: $nextPackage")
+					builder.addDisallowedApplication(nextPackage)
+				} catch (e: NameNotFoundException) {
+					Log.e(TAG, "addDisallowedApplication failed", e)
+				} catch (e: Exception) {
+					Log.e(TAG, "addDisallowedApplication unexpected error", e)
+				}
+			}
+		}
+
+		else -> {
+			Log.w(TAG, "No per-app package filters passed to TunOptions")
+		}
+	}
 
 		if (options.isHTTPProxyEnabled && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
 			systemProxyAvailable = true
@@ -175,8 +196,16 @@ class VPNService :
 			systemProxyEnabled = false
 		}
 
-		val pfd =
-			builder.establish() ?: error("android: the application is not prepared or is revoked")
+		Log.d(TAG, "openTun: establishing VPN")
+
+		val pfd = try {
+			builder.establish()
+		} catch (e: Exception) {
+			Log.e(TAG, "builder.establish() failed", e)
+			throw e
+		} ?: error("android: the application is not prepared or is revoked")
+
+		Log.d(TAG, "openTun: VPN established, fd=${pfd.fd}")
 		service.fileDescriptor = pfd
 		return pfd.fd
 	}

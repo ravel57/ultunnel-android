@@ -24,7 +24,7 @@ object HookErrorClient {
     )
 
     fun query(context: Context): Result {
-        val binder = ConnectivityBinderUtils.getBinder(context)
+        val binder = ConnectivityBinderUtils.getBinder()
             ?: return failureResult(Failure.SERVICE_UNAVAILABLE)
         return ConnectivityBinderUtils.withParcel { data, reply ->
             data.writeInterfaceToken(HookStatusKeys.DESCRIPTOR)
