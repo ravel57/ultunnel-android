@@ -47,6 +47,8 @@ class BoxService(private val service: Service, private val platformInterface: Pl
 	companion object {
 		private const val PROFILE_UPDATE_INTERVAL = 15L * 60 * 1000 // 15 minutes in milliseconds
 		private const val TAG = "BoxService"
+		@Volatile
+		var configCheckMode: Boolean = false
 
 		fun start() {
 			val intent =
@@ -100,6 +102,25 @@ class BoxService(private val service: Service, private val platformInterface: Pl
 
 	private var lastProfileName = ""
 
+
+	private fun buildOverrideOptions(): OverrideOptions {
+		return OverrideOptions().apply {
+			autoRedirect = Settings.autoRedirect
+
+			if (!configCheckMode && Settings.perAppProxyEnabled) {
+				val appList = Settings.getEffectivePerAppProxyList()
+
+				if (appList.isNotEmpty()) {
+					if (Settings.getEffectivePerAppProxyMode() == Settings.PER_APP_PROXY_INCLUDE) {
+						includePackage = PlatformInterfaceWrapper.StringArray(appList.iterator())
+					} else {
+						excludePackage = PlatformInterfaceWrapper.StringArray(appList.iterator())
+					}
+				}
+			}
+		}
+	}
+
 	private suspend fun startService() {
 		try {
 			withContext(Dispatchers.Main) {
@@ -135,19 +156,7 @@ class BoxService(private val service: Service, private val platformInterface: Pl
 			try {
 				commandServer.startOrReloadService(
 					content,
-					OverrideOptions().apply {
-						autoRedirect = Settings.autoRedirect
-						if (Settings.perAppProxyEnabled) {
-							val appList = Settings.getEffectivePerAppProxyList()
-							if (appList.isNotEmpty()) {
-								if (Settings.getEffectivePerAppProxyMode() == Settings.PER_APP_PROXY_INCLUDE) {
-									includePackage = PlatformInterfaceWrapper.StringArray(appList.iterator())
-								} else {
-									excludePackage = PlatformInterfaceWrapper.StringArray(appList.iterator())
-								}
-							}
-						}
-					},
+					buildOverrideOptions(),
 				)
 			} catch (e: Exception) {
 				stopAndAlert(Alert.CreateService, e.message)
@@ -218,19 +227,7 @@ class BoxService(private val service: Service, private val platformInterface: Pl
 		try {
 			commandServer.startOrReloadService(
 				content,
-				OverrideOptions().apply {
-					autoRedirect = Settings.autoRedirect
-					if (Settings.perAppProxyEnabled) {
-						val appList = Settings.getEffectivePerAppProxyList()
-						if (appList.isNotEmpty()) {
-							if (Settings.getEffectivePerAppProxyMode() == Settings.PER_APP_PROXY_INCLUDE) {
-								includePackage = PlatformInterfaceWrapper.StringArray(appList.iterator())
-							} else {
-								excludePackage = PlatformInterfaceWrapper.StringArray(appList.iterator())
-							}
-						}
-					}
-				},
+				buildOverrideOptions(),
 			)
 		} catch (e: Exception) {
 			stopAndAlert(Alert.CreateService, e.message)
