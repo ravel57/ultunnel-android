@@ -1,4 +1,4 @@
-package ru.ravel.ultunnel
+package ru.ravel.ultunnel.compat
 
 import androidx.compose.animation.core.FiniteAnimationSpec
 import androidx.compose.foundation.lazy.LazyItemScope

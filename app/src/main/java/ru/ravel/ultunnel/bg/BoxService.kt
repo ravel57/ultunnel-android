@@ -22,10 +22,12 @@ import go.Seq
 import io.nekohasekai.libbox.CommandServer
 import io.nekohasekai.libbox.CommandServerHandler
 import io.nekohasekai.libbox.Libbox
+import io.nekohasekai.libbox.LogEntry
 import io.nekohasekai.libbox.Notification
 import io.nekohasekai.libbox.OverrideOptions
 import io.nekohasekai.libbox.PlatformInterface
 import io.nekohasekai.libbox.SystemProxyStatus
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -41,6 +43,7 @@ import ru.ravel.ultunnel.database.ProfileManager
 import ru.ravel.ultunnel.database.Settings
 import ru.ravel.ultunnel.ktx.hasPermission
 //import ru.ravel.ultunnel.ui.MainActivity
+import ru.ravel.ultunnel.utils.CommandClient
 import java.io.File
 
 class BoxService(private val service: Service, private val platformInterface: PlatformInterface) : CommandServerHandler {
@@ -94,10 +97,40 @@ class BoxService(private val service: Service, private val platformInterface: Pl
 			}
 		}
 
+	private var logcatClient: CommandClient? = null
+
 	private fun startCommandServer() {
 		val commandServer = CommandServer(this, platformInterface)
 		commandServer.start()
 		this.commandServer = commandServer
+	}
+
+	private fun startLogcatForwarder() {
+		if (logcatClient != null) return
+		val client = CommandClient(
+			scope = CoroutineScope(Dispatchers.IO),
+			connectionType = CommandClient.ConnectionType.Log,
+			handler = object : CommandClient.Handler {
+				override fun appendLogs(message: List<LogEntry>) {
+					message.forEach { entry ->
+						val priority = when (entry.level) {
+							0, 1, 2 -> Log.ERROR
+							3 -> Log.WARN
+							4 -> Log.INFO
+							else -> Log.DEBUG
+						}
+						Log.println(priority, "singbox", entry.message)
+					}
+				}
+			},
+		)
+		logcatClient = client
+		client.connect()
+	}
+
+	private fun stopLogcatForwarder() {
+		logcatClient?.disconnect()
+		logcatClient = null
 	}
 
 	private var lastProfileName = ""
@@ -151,13 +184,14 @@ class BoxService(private val service: Service, private val platformInterface: Pl
 			}
 
 			DefaultNetworkMonitor.start()
-			Libbox.setMemoryLimit(!Settings.disableMemoryLimit)
+			Application.application.reloadSetupOptions()
 
 			try {
 				commandServer.startOrReloadService(
 					content,
 					buildOverrideOptions(),
 				)
+				startLogcatForwarder()
 			} catch (e: Exception) {
 				stopAndAlert(Alert.CreateService, e.message)
 				return
@@ -288,6 +322,7 @@ class BoxService(private val service: Service, private val platformInterface: Pl
 			}
 			DefaultNetworkMonitor.stop()
 			closeService()
+			stopLogcatForwarder()
 			commandServer.apply {
 				close()
 //                Seq.destroyRef(refnum)
@@ -409,5 +444,20 @@ class BoxService(private val service: Service, private val platformInterface: Pl
 
 	override fun writeDebugMessage(message: String?) {
 		Log.d("sing-box", message!!)
+	}
+
+	override fun connectSSHAgent(): Int = -1
+
+	override fun triggerNativeCrash() {
+		Thread {
+			Thread.sleep(200)
+			throw RuntimeException("debug native crash")
+		}.start()
+	}
+
+	internal fun cancelNotification(identifier: String, typeID: Int) {
+		GlobalScope.launch(Dispatchers.Main) {
+			Application.notification.cancel(identifier, typeID)
+		}
 	}
 }

@@ -1,4 +1,4 @@
-package ru.ravel.ultunnel
+package ru.ravel.ultunnel.compat
 
 import androidx.window.core.layout.WindowSizeClass
 import androidx.window.core.layout.WindowWidthSizeClass

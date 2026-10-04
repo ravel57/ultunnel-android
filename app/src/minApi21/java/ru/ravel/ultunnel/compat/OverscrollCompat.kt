@@ -1,4 +1,4 @@
-package ru.ravel.ultunnel
+package ru.ravel.ultunnel.compat
 
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.gestures.FlingBehavior

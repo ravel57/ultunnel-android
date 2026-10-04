@@ -55,7 +55,7 @@ object RootInstaller {
                 }
 
                 try {
-                    val intent = Intent(Application.application, Class.forName("ru.ravel.ultuunel.bg.RootServer"))
+                    val intent = Intent(Application.application, Class.forName("ru.ravel.ultunnel.bg.RootServer"))
                     RootService.bind(intent, conn)
                 } catch (e: Throwable) {
                     continuation.resumeWithException(e)

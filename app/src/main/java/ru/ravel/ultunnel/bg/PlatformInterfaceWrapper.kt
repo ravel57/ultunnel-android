@@ -8,12 +8,17 @@ import android.os.Process
 import android.system.OsConstants
 import android.util.Log
 import androidx.annotation.RequiresApi
+import io.nekohasekai.libbox.BridgeOptions
+import io.nekohasekai.libbox.BridgeSession
 import io.nekohasekai.libbox.ConnectionOwner
 import io.nekohasekai.libbox.InterfaceUpdateListener
 import io.nekohasekai.libbox.Libbox
 import io.nekohasekai.libbox.LocalDNSTransport
 import io.nekohasekai.libbox.NetworkInterfaceIterator
+import io.nekohasekai.libbox.NeighborUpdateListener
 import io.nekohasekai.libbox.PlatformInterface
+import io.nekohasekai.libbox.PlatformUser
+import io.nekohasekai.libbox.ShellSession
 import io.nekohasekai.libbox.StringIterator
 import io.nekohasekai.libbox.TunOptions
 import io.nekohasekai.libbox.WIFIState
@@ -22,9 +27,6 @@ import java.net.Inet6Address
 import java.net.InetSocketAddress
 import java.net.InterfaceAddress
 import java.net.NetworkInterface
-import java.security.KeyStore
-import kotlin.io.encoding.Base64
-import kotlin.io.encoding.ExperimentalEncodingApi
 import io.nekohasekai.libbox.NetworkInterface as LibboxNetworkInterface
 
 interface PlatformInterfaceWrapper : PlatformInterface {
@@ -64,35 +66,35 @@ interface PlatformInterfaceWrapper : PlatformInterface {
 				)
 				owner.userId = Process.INVALID_UID
 				owner.userName = ""
-				owner.androidPackageName = ""
+				owner.setAndroidPackageNames(StringArray(emptyList<String>().iterator()))
 				return owner
 			}
 
 			val packages = Application.packageManager.getPackagesForUid(uid)
 			owner.userId = uid
 			owner.userName = packages?.firstOrNull() ?: ""
-			owner.androidPackageName = packages?.firstOrNull() ?: ""
+			owner.setAndroidPackageNames(StringArray((packages?.toList() ?: emptyList()).iterator()))
 			owner
 		} catch (e: SecurityException) {
 			Log.e("PlatformInterface", "getConnectionOwnerUid security error", e)
 			ConnectionOwner().apply {
 				userId = Process.INVALID_UID
 				userName = ""
-				androidPackageName = ""
+				setAndroidPackageNames(StringArray(emptyList<String>().iterator()))
 			}
 		} catch (e: IllegalArgumentException) {
 			Log.e("PlatformInterface", "getConnectionOwnerUid bad arguments", e)
 			ConnectionOwner().apply {
 				userId = Process.INVALID_UID
 				userName = ""
-				androidPackageName = ""
+				setAndroidPackageNames(StringArray(emptyList<String>().iterator()))
 			}
 		} catch (e: Exception) {
 			Log.e("PlatformInterface", "getConnectionOwnerUid", e)
 			ConnectionOwner().apply {
 				userId = Process.INVALID_UID
 				userName = ""
-				androidPackageName = ""
+				setAndroidPackageNames(StringArray(emptyList<String>().iterator()))
 			}
 		}
 	}
@@ -185,21 +187,50 @@ interface PlatformInterfaceWrapper : PlatformInterface {
 
 	override fun localDNSTransport(): LocalDNSTransport? = LocalResolver
 
-	@OptIn(ExperimentalEncodingApi::class)
-	override fun systemCertificates(): StringIterator {
-		val certificates = mutableListOf<String>()
-		val keyStore = KeyStore.getInstance("AndroidCAStore")
-		if (keyStore != null) {
-			keyStore.load(null, null)
-			val aliases = keyStore.aliases()
-			while (aliases.hasMoreElements()) {
-				val cert = keyStore.getCertificate(aliases.nextElement())
-				certificates.add(
-					"-----BEGIN CERTIFICATE-----\n" + Base64.encode(cert.encoded) + "\n-----END CERTIFICATE-----",
-				)
-			}
-		}
-		return StringArray(certificates.iterator())
+	override fun usePlatformShell(): Boolean = false
+
+	override fun checkPlatformShell() {
+		error("not supported")
+	}
+
+	override fun openShellSession(
+		user: PlatformUser?,
+		command: String?,
+		environ: StringIterator?,
+		term: String?,
+		rows: Int,
+		cols: Int,
+	): ShellSession {
+		error("not supported")
+	}
+
+	override fun readSystemSSHHostKey(): String {
+		error("not supported")
+	}
+
+	override fun lookupSFTPServer(): String {
+		error("not supported")
+	}
+
+	override fun tailscaleHostname(): String = "${Build.MANUFACTURER} ${Build.MODEL}"
+
+	override fun usePlatformBridge(): Boolean = false
+
+	override fun createBridge(options: BridgeOptions?): BridgeSession {
+		error("not supported")
+	}
+
+	override fun lookupUser(username: String?): PlatformUser {
+		error("not supported")
+	}
+
+	override fun registerMyInterface(name: String?) {
+	}
+
+	override fun startNeighborMonitor(listener: NeighborUpdateListener?) {
+	}
+
+	override fun closeNeighborMonitor(listener: NeighborUpdateListener?) {
 	}
 
 	private class InterfaceArray(private val iterator: Iterator<LibboxNetworkInterface>) : NetworkInterfaceIterator {

@@ -3,11 +3,11 @@ package ru.ravel.ultunnel.vendor
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.os.Build
-import ru.ravel.ultuunel.Application
+import ru.ravel.ultunnel.Application
 import ru.ravel.ultunnel.BuildConfig
-import ru.ravel.ultuunel.bg.RootClient
-import ru.ravel.ultuunel.database.Settings
-import ru.ravel.ultuunel.utils.HookStatusClient
+import ru.ravel.ultunnel.bg.RootClient
+import ru.ravel.ultunnel.database.Settings
+import ru.ravel.ultunnel.utils.HookStatusClient
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 

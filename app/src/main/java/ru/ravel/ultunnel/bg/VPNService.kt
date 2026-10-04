@@ -8,6 +8,7 @@ import android.net.VpnService
 import android.os.Build
 import android.os.IBinder
 import android.util.Log
+import io.nekohasekai.libbox.Libbox
 import io.nekohasekai.libbox.Notification
 import io.nekohasekai.libbox.TunOptions
 import ru.ravel.ultunnel.database.Settings
@@ -84,7 +85,12 @@ class VPNService :
 		}
 
 		if (options.autoRoute) {
-			builder.addDnsServer(options.dnsServerAddress.value)
+			if (options.dnsMode.value != Libbox.DNSModeDisabled) {
+				val dnsServerAddress = options.dnsServerAddress
+				while (dnsServerAddress.hasNext()) {
+					builder.addDnsServer(dnsServerAddress.next())
+				}
+			}
 
 			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
 				val inet4RouteAddress = options.inet4RouteAddress
@@ -211,4 +217,6 @@ class VPNService :
 	}
 
 	override fun sendNotification(notification: Notification) = service.sendNotification(notification)
+
+	override fun cancelNotification(identifier: String, typeID: Int) = service.cancelNotification(identifier, typeID)
 }

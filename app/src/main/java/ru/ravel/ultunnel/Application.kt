@@ -16,12 +16,14 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import ru.ravel.ultunnel.bg.UpdateProfileWork
 import ru.ravel.ultunnel.constant.Bugs
+import ru.ravel.ultunnel.database.Settings
 import ru.ravel.ultunnel.utils.AppLifecycleObserver
 import ru.ravel.ultunnel.utils.HookModuleUpdateNotifier
 import ru.ravel.ultunnel.utils.HookStatusClient
 import ru.ravel.ultunnel.utils.PrivilegeSettingsClient
 import java.io.File
 import java.util.Locale
+import ru.ravel.ultunnel.Application as BoxApplication
 
 class Application : Application() {
 
@@ -67,21 +69,28 @@ class Application : Application() {
 		workingDir.mkdirs()
 		val tempDir = cacheDir
 		tempDir.mkdirs()
-		Libbox.setup(
-			SetupOptions().also {
-				it.basePath = baseDir.path
-				it.workingPath = workingDir.path
-				it.tempPath = tempDir.path
-				it.fixAndroidStack = Bugs.fixAndroidStack
-				it.logMaxLines = 3000
-				it.debug = false
-			},
-		)
-		Libbox.redirectStderr(File(workingDir, "stderr.log").path)
+		Libbox.setup(createSetupOptions(baseDir, workingDir, tempDir))
+	}
+
+	fun reloadSetupOptions() {
+		val baseDir = filesDir
+		val workingDir = getExternalFilesDir(null) ?: return
+		val tempDir = cacheDir
+		Libbox.reloadSetupOptions(createSetupOptions(baseDir, workingDir, tempDir))
+	}
+
+	private fun createSetupOptions(baseDir: File, workingDir: File, tempDir: File): SetupOptions = SetupOptions().also {
+		it.basePath = baseDir.path
+		it.workingPath = workingDir.path
+		it.tempPath = tempDir.path
+		it.fixAndroidStack = Bugs.fixAndroidStack
+		it.logMaxLines = 3000
+		it.debug = false
+		it.oomKillerEnabled = !Settings.disableMemoryLimit
 	}
 
 	companion object {
-		lateinit var application: Application
+		lateinit var application: BoxApplication
 		val notification by lazy { application.getSystemService<NotificationManager>()!! }
 		val connectivity by lazy { application.getSystemService<ConnectivityManager>()!! }
 		val packageManager by lazy { application.packageManager }

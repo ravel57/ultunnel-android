@@ -9,7 +9,7 @@
             android:name=".vendor.InstallResultReceiver"
             android:exported="false">
             <intent-filter>
-                <action android:name="ru.ravel.ultuunel.INSTALL_COMPLETE" />
+                <action android:name="ru.ravel.ultunnel.INSTALL_COMPLETE" />
             </intent-filter>
         </receiver>
     </application>
