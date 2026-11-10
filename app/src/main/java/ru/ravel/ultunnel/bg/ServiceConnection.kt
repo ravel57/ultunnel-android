@@ -11,36 +11,49 @@ import androidx.appcompat.app.AppCompatActivity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import androidx.preference.PreferenceDataStore
 import ru.ravel.ultunnel.aidl.IService
 import ru.ravel.ultunnel.aidl.IServiceCallback
 import ru.ravel.ultunnel.constant.Action
 import ru.ravel.ultunnel.constant.Alert
+import ru.ravel.ultunnel.constant.SettingsKey
 import ru.ravel.ultunnel.constant.Status
 import ru.ravel.ultunnel.database.Settings
+import ru.ravel.ultunnel.database.preference.OnPreferenceDataStoreChangeListener
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 
 class ServiceConnection(private val context: Context, callback: Callback, private val register: Boolean = true) :
-	ServiceConnection {
+	ServiceConnection,
+	OnPreferenceDataStoreChangeListener {
 	companion object {
 		private const val TAG = "ServiceConnection"
 	}
 
 	private val callback = ServiceCallback(callback)
 	private var service: IService? = null
+	private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+	private var connectJob: Job? = null
 
 	val status get() = service?.status?.let { Status.values()[it] } ?: Status.Stopped
 
 	fun connect() {
-		val intent =
-			runBlocking {
-				withContext(Dispatchers.IO) {
-					Intent(context, Settings.serviceClass()).setAction(Action.SERVICE)
-				}
-			}
-		context.bindService(intent, this, AppCompatActivity.BIND_AUTO_CREATE)
+		connectJob?.cancel()
+		connectJob = scope.launch {
+			Settings.dataStore.initialize()
+			Settings.dataStore.registerChangeListener(this@ServiceConnection)
+			val intent = Intent(context, Settings.serviceClass()).setAction(Action.SERVICE)
+			context.bindService(intent, this@ServiceConnection, AppCompatActivity.BIND_AUTO_CREATE)
 		Log.d(TAG, "request connect")
+	}
 	}
 
 	fun disconnect() {
+		connectJob?.cancel()
+		connectJob = null
+		Settings.dataStore.unregisterChangeListener(this)
 		try {
 			context.unbindService(this)
 		} catch (_: IllegalArgumentException) {
@@ -49,19 +62,16 @@ class ServiceConnection(private val context: Context, callback: Callback, privat
 	}
 
 	fun reconnect() {
-		try {
-			context.unbindService(this)
-		} catch (_: IllegalArgumentException) {
+		disconnect()
+		connect()
 		}
-		val intent =
-			runBlocking {
-				withContext(Dispatchers.IO) {
-					Intent(context, Settings.serviceClass()).setAction(Action.SERVICE)
+
+	override fun onPreferenceDataStoreChanged(store: PreferenceDataStore, key: String) {
+		if (key != SettingsKey.SERVICE_MODE) return
+		scope.launch {
+			if (connectJob != null) reconnect()
 				}
 			}
-		context.bindService(intent, this, AppCompatActivity.BIND_AUTO_CREATE)
-		Log.d(TAG, "request reconnect")
-	}
 
 	override fun onServiceConnected(name: ComponentName, binder: IBinder) {
 		val service = IService.Stub.asInterface(binder)

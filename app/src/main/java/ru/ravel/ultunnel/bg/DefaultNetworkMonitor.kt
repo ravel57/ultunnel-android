@@ -44,37 +44,37 @@ object DefaultNetworkMonitor {
 		checkDefaultInterfaceUpdate(defaultNetwork)
 	}
 
-	private fun checkDefaultInterfaceUpdate(
-        newNetwork: Network?,
-    ) {
+	private fun checkDefaultInterfaceUpdate(newNetwork: Network?) {
 		val listener = listener ?: return
 		if (newNetwork != null) {
-			val interfaceName = (Application.connectivity.getLinkProperties(newNetwork) ?: return).interfaceName
 			for (times in 0 until 10) {
+				val linkProperties = Application.connectivity.getLinkProperties(newNetwork)
+				if (linkProperties == null) {
+					Thread.sleep(100)
+					continue
+				}
 				var interfaceIndex: Int
 				try {
-					interfaceIndex = NetworkInterface.getByName(interfaceName).index
+					interfaceIndex = NetworkInterface.getByName(linkProperties.interfaceName).index
 				} catch (e: Exception) {
 					Thread.sleep(100)
 					continue
 				}
-				if (Bugs.fixAndroidStack) {
-					GlobalScope.launch(Dispatchers.IO) {
-						listener.updateDefaultInterface(interfaceName, interfaceIndex, false, false)
-					}
-				} else {
-					listener.updateDefaultInterface(interfaceName, interfaceIndex, false, false)
-				}
+				updateDefaultInterface(listener, linkProperties.interfaceName ?: "", interfaceIndex)
+				return
 			}
 		} else {
-			if (Bugs.fixAndroidStack) {
-				GlobalScope.launch(Dispatchers.IO) {
-					listener.updateDefaultInterface("", -1, false, false)
-				}
-			} else {
-				listener.updateDefaultInterface("", -1, false, false)
-			}
+			updateDefaultInterface(listener, "", -1)
 		}
 	}
 
+	private fun updateDefaultInterface(listener: InterfaceUpdateListener, interfaceName: String, interfaceIndex: Int) {
+		if (Bugs.fixAndroidStack) {
+			GlobalScope.launch(Dispatchers.IO) {
+				listener.updateDefaultInterface(interfaceName, interfaceIndex, false, false)
+			}
+		} else {
+			listener.updateDefaultInterface(interfaceName, interfaceIndex, false, false)
+		}
+	}
 }

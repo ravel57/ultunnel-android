@@ -3,7 +3,6 @@ package ru.ravel.ultunnel.compose.screen.connections
 import androidx.lifecycle.viewModelScope
 import io.nekohasekai.libbox.ConnectionEvents
 import io.nekohasekai.libbox.Connections
-import io.nekohasekai.libbox.Libbox
 import ru.ravel.ultunnel.compose.base.BaseViewModel
 import ru.ravel.ultunnel.compose.base.ScreenEvent
 import ru.ravel.ultunnel.compose.model.Connection
@@ -11,16 +10,19 @@ import ru.ravel.ultunnel.compose.model.ConnectionSort
 import ru.ravel.ultunnel.compose.model.ConnectionStateFilter
 import ru.ravel.ultunnel.ktx.toList
 import ru.ravel.ultunnel.utils.AppLifecycleObserver
+import ru.ravel.ultunnel.utils.CommandClient
+import ru.ravel.ultunnel.utils.CommandTarget
+import ru.ravel.ultunnel.utils.RemoteControlManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import ru.ravel.ultunnel.constant.Status
-import ru.ravel.ultunnel.utils.CommandClient
 import java.util.concurrent.atomic.AtomicLong
 
 data class ConnectionsUiState(
@@ -59,13 +61,6 @@ class ConnectionsViewModel :
 
     override fun createInitialState() = ConnectionsUiState()
 
-    private data class ConnectionState(
-        val foreground: Boolean,
-        val screenOn: Boolean,
-        val visibleCount: Int,
-        val status: Status,
-    )
-
     init {
         viewModelScope.launch {
             combine(
@@ -73,11 +68,15 @@ class ConnectionsViewModel :
                 AppLifecycleObserver.isScreenOn,
                 _visibleCount,
                 _serviceStatus,
-            ) { foreground, screenOn, visibleCount, status ->
-                ConnectionState(foreground, screenOn, visibleCount, status)
-            }.collect { state ->
-                val shouldConnect = state.foreground && state.screenOn &&
-                    state.visibleCount > 0 && state.status == Status.Started
+                combine(
+                    RemoteControlManager.remoteServer,
+                    RemoteControlManager.isConnected,
+                ) { remoteServer, remoteConnected -> remoteServer?.id to remoteConnected },
+            ) { foreground, screenOn, visibleCount, status, (remoteServerId, remoteConnected) ->
+                val serviceReady = if (remoteServerId != null) remoteConnected else status == Status.Started
+                val shouldConnect = foreground && screenOn && visibleCount > 0 && serviceReady
+                shouldConnect to remoteServerId
+            }.distinctUntilChanged().collect { (shouldConnect, _) ->
                 if (shouldConnect) {
                     updateState { copy(isLoading = true) }
                     commandClient.connect()
@@ -98,6 +97,9 @@ class ConnectionsViewModel :
     }
 
     private suspend fun handleServiceStatusChange(status: Status) {
+        if (RemoteControlManager.remoteServer.value != null) {
+            return
+        }
         if (status != Status.Started) {
             withContext(Dispatchers.Default) {
                 connectionsMutex.withLock {
@@ -151,7 +153,7 @@ class ConnectionsViewModel :
     fun closeConnection(connectionId: String) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                Libbox.newStandaloneCommandClient().closeConnection(connectionId)
+                CommandTarget.standaloneClient().closeConnection(connectionId)
                 withContext(Dispatchers.Main) {
                     sendEvent(ConnectionsEvent.ConnectionClosed(connectionId))
                 }
@@ -164,19 +166,13 @@ class ConnectionsViewModel :
     fun closeAllConnections() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                Libbox.newStandaloneCommandClient().closeConnections()
+                CommandTarget.standaloneClient().closeConnections()
                 withContext(Dispatchers.Main) {
                     sendEvent(ConnectionsEvent.AllConnectionsClosed)
                 }
             } catch (e: Exception) {
                 sendError(e)
             }
-        }
-    }
-
-    override fun onConnected() {
-        viewModelScope.launch(Dispatchers.Main) {
-            updateState { copy(isLoading = false) }
         }
     }
 

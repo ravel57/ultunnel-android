@@ -83,6 +83,7 @@ fun ServiceStatusBar(
                 )
 
                 // Connections button
+                if (serviceStatus == Status.Started) {
                 Row(
                     modifier =
                     Modifier
@@ -106,6 +107,7 @@ fun ServiceStatusBar(
                         modifier = Modifier.size(18.dp),
                         tint = MaterialTheme.colorScheme.onSecondaryContainer,
                     )
+                }
                 }
 
                 // Groups button (only show if hasGroups)

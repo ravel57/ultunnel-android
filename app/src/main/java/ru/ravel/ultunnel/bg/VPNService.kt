@@ -17,8 +17,6 @@ import ru.ravel.ultunnel.ktx.toList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
-import ru.ravel.ultunnel.ktx.toIpPrefix
-import ru.ravel.ultunnel.ktx.toList
 import ru.ravel.ultunnel.bg.PlatformInterfaceWrapper
 
 @SuppressLint("VpnServicePolicy")
@@ -70,6 +68,10 @@ class VPNService :
 
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
 			builder.setMetered(false)
+		}
+
+		if (Settings.allowBypass) {
+			builder.allowBypass()
 		}
 
 		val inet4Address = options.inet4Address

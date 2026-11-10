@@ -1,6 +1,8 @@
 package ru.ravel.ultunnel.compose.screen.settings
 
-import android.os.PowerManager
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -21,6 +23,7 @@ import androidx.compose.material.icons.outlined.Favorite
 import androidx.compose.material.icons.outlined.FilterAlt
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.outlined.SettingsRemote
 import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material3.Badge
 import androidx.compose.material3.Button
@@ -38,10 +41,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -50,12 +50,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import ru.ravel.ultunnel.R
+import ru.ravel.ultunnel.compose.theme.LocalStatusColors
+import ru.ravel.ultunnel.compose.topbar.LocalScaffoldPadding
 import ru.ravel.ultunnel.compose.topbar.OverrideTopBar
 import ru.ravel.ultunnel.database.Settings
 import ru.ravel.ultunnel.update.UpdateState
 import ru.ravel.ultunnel.utils.HookModuleUpdateNotifier
 import ru.ravel.ultunnel.utils.HookStatusClient
-import androidx.compose.material3.Button
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import kotlinx.coroutines.launch
 import ru.ravel.ultunnel.compose.navigation.Screen
@@ -77,16 +78,14 @@ fun SettingsScreen(navController: NavController) {
 	val hookStatus by HookStatusClient.status.collectAsState()
 	val hasPendingPrivilegeDowngrade = HookModuleUpdateNotifier.isDowngrade(hookStatus)
 	val hasPendingPrivilegeUpdate = HookModuleUpdateNotifier.isUpgrade(hookStatus)
-	var isBatteryOptimizationIgnored by remember { mutableStateOf(true) }
-
 	// Ключ доступа (как в старом коде: хранится в Settings.accessKey)
 	var accessKey by remember { mutableStateOf(Settings.accessKey) }
 
 	LaunchedEffect(Unit) {
 		HookStatusClient.refresh()
-		val pm = context.getSystemService(PowerManager::class.java)
-		isBatteryOptimizationIgnored = pm?.isIgnoringBatteryOptimizations(context.packageName) == true
 	}
+
+	val scaffoldPadding = LocalScaffoldPadding.current
 
 	Column(
 		modifier =
@@ -94,7 +93,10 @@ fun SettingsScreen(navController: NavController) {
 				.fillMaxSize()
 				.background(MaterialTheme.colorScheme.surface)
 				.verticalScroll(rememberScrollState())
-				.padding(vertical = 8.dp),
+			.padding(
+				top = scaffoldPadding.calculateTopPadding() + 8.dp,
+				bottom = scaffoldPadding.calculateBottomPadding() + 8.dp,
+			),
 	) {
 		// General Settings Group
 		Card(
@@ -208,11 +210,6 @@ fun SettingsScreen(navController: NavController) {
 							tint = MaterialTheme.colorScheme.primary,
 						)
 					},
-					trailingContent = {
-						if (!isBatteryOptimizationIgnored) {
-							Badge(containerColor = MaterialTheme.colorScheme.primary)
-						}
-					},
 					modifier = Modifier.clickable { navController.navigate("settings/service") },
 					colors =
 						ListItemDefaults.colors(
@@ -246,6 +243,29 @@ fun SettingsScreen(navController: NavController) {
 				ListItem(
 					headlineContent = {
 						Text(
+							stringResource(R.string.remote_control),
+							style = MaterialTheme.typography.bodyLarge,
+						)
+					},
+					leadingContent = {
+						Icon(
+							imageVector = Icons.Outlined.SettingsRemote,
+							contentDescription = null,
+							tint = MaterialTheme.colorScheme.primary,
+						)
+					},
+					modifier =
+					Modifier
+						.clickable { navController.navigate("settings/remote_control") },
+					colors =
+					ListItemDefaults.colors(
+						containerColor = Color.Transparent,
+					),
+				)
+
+				ListItem(
+					headlineContent = {
+						Text(
 							stringResource(R.string.privilege_settings),
 							style = MaterialTheme.typography.bodyLarge,
 						)
@@ -261,7 +281,7 @@ fun SettingsScreen(navController: NavController) {
 						if (hasPendingPrivilegeDowngrade) {
 							Badge(containerColor = MaterialTheme.colorScheme.error)
 						} else if (hasPendingPrivilegeUpdate) {
-							Badge(containerColor = Color(0xFFFFC107))
+							Badge(containerColor = LocalStatusColors.current.medium)
 						}
 					},
 					modifier =

@@ -28,6 +28,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -45,6 +46,7 @@ import androidx.compose.ui.unit.dp
 import io.nekohasekai.libbox.Libbox
 import ru.ravel.ultunnel.R
 import ru.ravel.ultunnel.compose.model.Connection
+import ru.ravel.ultunnel.utils.RemoteControlManager
 
 private fun Drawable.toBitmap(): Bitmap {
     if (this is BitmapDrawable) return bitmap
@@ -82,7 +84,16 @@ private fun rememberAppInfo(packageName: String): AppInfo? {
 @Composable
 fun ConnectionItem(connection: Connection, onClick: () -> Unit, onClose: () -> Unit, modifier: Modifier = Modifier) {
     var showContextMenu by remember { mutableStateOf(false) }
-    val packageName = connection.processInfo?.packageNames?.firstOrNull()
+    // In remote control mode the reported packages belong to the remote device,
+    // so resolving them against the local package manager would be wrong.
+    val remoteServer by RemoteControlManager.remoteServer.collectAsState()
+    val isRemote = remoteServer != null
+    val packageName =
+        if (isRemote) {
+            null
+        } else {
+            connection.processInfo?.packageNames?.firstOrNull()
+        }
     val appInfo = packageName?.let { rememberAppInfo(it) }
 
     Box(modifier = modifier) {
@@ -101,6 +112,7 @@ fun ConnectionItem(connection: Connection, onClick: () -> Unit, onClose: () -> U
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 // Column 1: App icon
+                if (!isRemote) {
                 if (appInfo != null) {
                     Image(
                         bitmap = appInfo.icon,
@@ -114,6 +126,7 @@ fun ConnectionItem(connection: Connection, onClick: () -> Unit, onClose: () -> U
                         modifier = Modifier.size(32.dp),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
+                }
                 }
 
                 // Content column

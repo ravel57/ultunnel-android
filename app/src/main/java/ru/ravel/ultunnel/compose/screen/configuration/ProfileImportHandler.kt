@@ -63,10 +63,6 @@ class ProfileImportHandler(private val context: Context) {
 				try {
 					Libbox.decodeProfileContent(data)
 				} catch (e: Exception) {
-					// If it fails, try one more time as JSON
-					if (dataString.trimStart().startsWith("{") || dataString.trimStart().startsWith("[")) {
-						return@withContext importJsonConfiguration(dataString, filename)
-					}
 					return@withContext ImportResult.Error(
 						context.getString(R.string.error_decode_profile, e.message),
 					)
@@ -95,9 +91,6 @@ class ProfileImportHandler(private val context: Context) {
 				try {
 					Libbox.decodeProfileContent(data)
 				} catch (e: Exception) {
-					if (dataString.trimStart().startsWith("{") || dataString.trimStart().startsWith("[")) {
-						return@withContext UriParseResult.Success(name = filename)
-					}
 					return@withContext UriParseResult.Error(
 						context.getString(R.string.error_decode_profile, e.message),
 					)
@@ -243,8 +236,9 @@ class ProfileImportHandler(private val context: Context) {
 		}
 
 		// Save config file
+		val fileID = ProfileManager.nextFileID()
 		val configDirectory = File(context.filesDir, "configs").also { it.mkdirs() }
-		val configFile = File(configDirectory, "${profile.userOrder}.json")
+		val configFile = File(configDirectory, "$fileID.json")
 		configFile.writeText(content.config)
 		typedProfile.path = configFile.path
 
@@ -270,8 +264,9 @@ class ProfileImportHandler(private val context: Context) {
 			}
 
 		// Create empty config file for remote profile
+		val fileID = ProfileManager.nextFileID()
 		val configDirectory = File(context.filesDir, "configs").also { it.mkdirs() }
-		val configFile = File(configDirectory, "${profile.userOrder}.json")
+		val configFile = File(configDirectory, "$fileID.json")
 		configFile.writeText("{}")
 		typedProfile.path = configFile.path
 
@@ -324,24 +319,8 @@ class ProfileImportHandler(private val context: Context) {
 	}
 
 	private fun isJsonConfiguration(content: String): Boolean {
-		val trimmed = content.trim()
-		if (!trimmed.startsWith("{") && !trimmed.startsWith("[")) {
-			return false
-		}
-
-		return try {
-			// Try to parse as JSON and check for sing-box configuration fields
-			val json = JSONObject(content)
-			// Check for common sing-box configuration fields
-			json.has("inbounds") ||
-					json.has("outbounds") ||
-					json.has("route") ||
-					json.has("dns") ||
-					json.has("experimental")
-		} catch (e: Exception) {
-			// If it's an array, it might still be valid
-			trimmed.startsWith("[") && trimmed.endsWith("]")
-		}
+		val trimmed = content.trimStart()
+		return trimmed.startsWith("{") || trimmed.startsWith("[")
 	}
 
 	private suspend fun importJsonConfiguration(jsonContent: String, profileName: String): ImportResult {
@@ -372,8 +351,9 @@ class ProfileImportHandler(private val context: Context) {
 				}
 
 			// Save the configuration file
+			val fileID = ProfileManager.nextFileID()
 			val configDirectory = File(context.filesDir, "configs").also { it.mkdirs() }
-			val configFile = File(configDirectory, "${profile.userOrder}.json")
+			val configFile = File(configDirectory, "$fileID.json")
 			configFile.writeText(jsonContent)
 			typedProfile.path = configFile.path
 

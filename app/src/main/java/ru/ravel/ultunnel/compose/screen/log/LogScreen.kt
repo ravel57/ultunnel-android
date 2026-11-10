@@ -1,6 +1,5 @@
 package ru.ravel.ultunnel.compose.screen.log
 
-import android.annotation.SuppressLint
 import android.content.ClipData
 import android.content.Intent
 import android.os.Build
@@ -82,9 +81,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.compositeOver
+import androidx.compose.ui.graphics.isSpecified
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
@@ -95,14 +97,22 @@ import ru.ravel.ultunnel.Application
 import ru.ravel.ultunnel.R
 import ru.ravel.ultunnel.compat.WindowSizeClassCompat
 import ru.ravel.ultunnel.compat.isWidthAtLeastBreakpointCompat
+import ru.ravel.ultunnel.compose.component.RemoteControlMenuItems
+import ru.ravel.ultunnel.compose.component.rememberRemoteServers
+import ru.ravel.ultunnel.compose.topbar.LocalScaffoldPadding
 import ru.ravel.ultunnel.compose.topbar.OverrideTopBar
+import ru.ravel.ultunnel.compose.util.ensureContrast
 import ru.ravel.ultunnel.constant.Status
+import ru.ravel.ultunnel.utils.RemoteControlManager
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-@SuppressLint("LocalContextGetResourceValueCall")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LogScreen(
@@ -126,17 +136,10 @@ fun LogScreen(
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
     val resolvedTitle = title ?: stringResource(R.string.title_log)
+    val remoteServer by RemoteControlManager.remoteServer.collectAsState()
+    val remoteServers by rememberRemoteServers()
     val emptyStateMessage = emptyMessage ?: stringResource(R.string.privilege_settings_hook_logs_empty)
 
-    val copiedToClipboardText = stringResource(R.string.copied_to_clipboard)
-    val successLogsSavedText = stringResource(R.string.success_logs_saved)
-    val logsCopiedText = stringResource(R.string.logs_copied_to_clipboard)
-    val noLogsToCopyText = stringResource(R.string.no_logs_to_copy)
-    val intentShareLogsTitle = stringResource(R.string.intent_share_logs)
-    val noLogsToShareText = stringResource(R.string.no_logs_to_share)
-    val failedShareLogs: (Exception) -> String = remember(context) {
-        { e -> context.getString(R.string.failed_share_logs, e.message.orEmpty()) }
-    }
     OverrideTopBar {
         TopAppBar(
             title = { Text(resolvedTitle) },
@@ -277,11 +280,15 @@ fun LogScreen(
         }
     }
 
+    val scaffoldPadding = LocalScaffoldPadding.current
+
     Box(
         modifier = Modifier.fillMaxSize(),
     ) {
         Column(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(scaffoldPadding),
         ) {
             // Show selection mode bar
             if (uiState.isSelectionMode) {
@@ -323,9 +330,14 @@ fun LogScreen(
                                 onClick = {
                                     val selectedText = resolvedViewModel.getSelectedLogsText()
                                     if (selectedText.isNotEmpty()) {
-                                        val clip = ClipData.newPlainText(resolvedTitle, selectedText)
+                                        val clipLabel = resolvedTitle
+                                        val clip = ClipData.newPlainText(clipLabel, selectedText)
                                         Application.clipboard.setPrimaryClip(clip)
-                                        Toast.makeText(context, copiedToClipboardText, Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(
+                                            context,
+                                            context.getString(R.string.copied_to_clipboard),
+                                            Toast.LENGTH_SHORT,
+                                        ).show()
                                         resolvedViewModel.clearSelection()
                                     }
                                 },
@@ -477,10 +489,14 @@ fun LogScreen(
                     ) {
                         Text(
                             text = if (showStatusInfo) {
-                                when (serviceStatus) {
-                                    Status.Started -> stringResource(R.string.status_started)
-                                    Status.Starting -> stringResource(R.string.status_starting)
-                                    Status.Stopping -> stringResource(R.string.status_stopping)
+                                when {
+                                    remoteServer != null && !uiState.isConnected ->
+                                        stringResource(R.string.remote_connecting)
+
+                                    remoteServer != null -> stringResource(R.string.status_started)
+                                    serviceStatus == Status.Started -> stringResource(R.string.status_started)
+                                    serviceStatus == Status.Starting -> stringResource(R.string.status_starting)
+                                    serviceStatus == Status.Stopping -> stringResource(R.string.status_stopping)
                                     else -> stringResource(R.string.status_default)
                                 }
                             } else {
@@ -506,7 +522,7 @@ fun LogScreen(
                         start = 8.dp,
                         end = 8.dp,
                         top = 8.dp,
-                        bottom = bottomPadding,
+                        bottom = scaffoldPadding.calculateBottomPadding() + bottomPadding + 8.dp,
                     ),
                     verticalArrangement = Arrangement.spacedBy(2.dp),
                 ) {
@@ -551,16 +567,28 @@ fun LogScreen(
                 rememberLauncherForActivityResult(
                     contract = ActivityResultContracts.CreateDocument("text/plain"),
                     onResult = { uri ->
-                        uri?.let {
-                            try {
-                                context.contentResolver.openOutputStream(it)?.use { outputStream ->
-                                    val logsText = resolvedViewModel.getAllLogsText()
-                                    outputStream.write(logsText.toByteArray())
-                                    outputStream.flush()
-                                    Toast.makeText(context, successLogsSavedText, Toast.LENGTH_SHORT).show()
+                        if (uri != null) {
+                            val logsText = resolvedViewModel.getAllLogsText()
+                            coroutineScope.launch {
+                                try {
+                                    withContext(Dispatchers.IO) {
+                                        val output = checkNotNull(context.contentResolver.openOutputStream(uri))
+                                        output.use { it.write(logsText.toByteArray()) }
+                                    }
+                                    Toast.makeText(
+                                        context,
+                                        context.getString(R.string.success_logs_saved),
+                                        Toast.LENGTH_SHORT,
+                                    ).show()
+                                } catch (exception: CancellationException) {
+                                    throw exception
+                                } catch (exception: Exception) {
+                                    Toast.makeText(
+                                        context,
+                                        context.getString(R.string.failed_save_logs, exception.message),
+                                        Toast.LENGTH_SHORT,
+                                    ).show()
                                 }
-                            } catch (e: Exception) {
-                                Toast.makeText(context, logsCopiedText, Toast.LENGTH_SHORT).show()
                             }
                         }
                     },
@@ -687,9 +715,17 @@ fun LogScreen(
                                 val clip =
                                     ClipData.newPlainText(resolvedTitle, logsText)
                                 Application.clipboard.setPrimaryClip(clip)
-                                Toast.makeText(context, logsCopiedText, Toast.LENGTH_SHORT).show()
+                                Toast.makeText(
+                                    context,
+                                    context.getString(R.string.logs_copied_to_clipboard),
+                                    Toast.LENGTH_SHORT,
+                                ).show()
                             } else {
-                                Toast.makeText(context, noLogsToCopyText, Toast.LENGTH_SHORT).show()
+                                Toast.makeText(
+                                    context,
+                                    context.getString(R.string.no_logs_to_copy),
+                                    Toast.LENGTH_SHORT,
+                                ).show()
                             }
                             resolvedViewModel.toggleOptionsMenu()
                             expandedSave = false
@@ -737,40 +773,39 @@ fun LogScreen(
                         onClick = {
                             val logsText = resolvedViewModel.getAllLogsText()
                             if (logsText.isNotEmpty()) {
-                                try {
-                                    val logsDir =
-                                        File(context.cacheDir, "logs").also { it.mkdirs() }
-                                    val timestamp =
-                                        SimpleDateFormat(
-                                            "yyyyMMdd_HHmmss",
-                                            Locale.getDefault(),
-                                        ).format(Date())
-                                    val logFile = File(logsDir, "${saveFilePrefix}_$timestamp.txt")
-                                    logFile.writeText(logsText)
-
-                                    val uri =
-                                        FileProvider.getUriForFile(
-                                            context,
-                                            "${context.packageName}.cache",
-                                            logFile,
-                                        )
-                                    val shareIntent =
-                                        Intent(Intent.ACTION_SEND).apply {
+                                coroutineScope.launch {
+                                    try {
+                                        val uri = withContext(Dispatchers.IO) {
+                                            val logsDir = File(context.cacheDir, "logs").also { it.mkdirs() }
+                                            val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+                                            val logFile = File(logsDir, "${saveFilePrefix}_$timestamp.txt")
+                                            logFile.writeText(logsText)
+                                            FileProvider.getUriForFile(context, "${context.packageName}.cache", logFile)
+                                        }
+                                        val shareIntent = Intent(Intent.ACTION_SEND).apply {
                                             type = "text/plain"
                                             putExtra(Intent.EXTRA_STREAM, uri)
                                             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                                         }
-                                    context.startActivity(
-                                        Intent.createChooser(
-                                            shareIntent,
-                                            intentShareLogsTitle,
-                                        ),
-                                    )
-                                } catch (e: Exception) {
-                                    Toast.makeText(context, failedShareLogs(e), Toast.LENGTH_SHORT).show()
+                                        context.startActivity(
+                                            Intent.createChooser(shareIntent, context.getString(R.string.intent_share_logs)),
+                                        )
+                                    } catch (exception: CancellationException) {
+                                        throw exception
+                                    } catch (exception: Exception) {
+                                        Toast.makeText(
+                                            context,
+                                            context.getString(R.string.failed_share_logs, exception.message),
+                                            Toast.LENGTH_SHORT,
+                                        ).show()
+                                    }
                                 }
                             } else {
-                                Toast.makeText(context, noLogsToShareText, Toast.LENGTH_SHORT).show()
+                                Toast.makeText(
+                                    context,
+                                    context.getString(R.string.no_logs_to_share),
+                                    Toast.LENGTH_SHORT,
+                                ).show()
                             }
                             resolvedViewModel.toggleOptionsMenu()
                             expandedSave = false
@@ -810,6 +845,13 @@ fun LogScreen(
                         },
                     )
                 }
+
+                if (showStatusInfo) {
+                    RemoteControlMenuItems(
+                        servers = remoteServers,
+                        onAction = { resolvedViewModel.toggleOptionsMenu() },
+                    )
+                }
             }
         }
 
@@ -826,7 +868,7 @@ fun LogScreen(
             modifier =
             Modifier
                 .align(Alignment.BottomEnd)
-                .padding(bottom = fabBottomPadding, end = fabEndPadding, top = 16.dp),
+                .padding(bottom = scaffoldPadding.calculateBottomPadding() + fabBottomPadding, end = fabEndPadding, top = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             // Scroll to bottom FAB
@@ -854,13 +896,32 @@ fun LogScreen(
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun LogItem(
-    annotatedString: androidx.compose.ui.text.AnnotatedString,
+    annotatedString: AnnotatedString,
     index: Int,
     isSelected: Boolean,
     isSelectionMode: Boolean,
     onLongClick: () -> Unit,
     onClick: () -> Unit,
 ) {
+    val containerColor =
+        if (isSelected) {
+            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+        } else {
+            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+        }
+    val background = containerColor.compositeOver(MaterialTheme.colorScheme.background)
+    val text = remember(annotatedString, background) {
+        AnnotatedString(
+            annotatedString.text,
+            annotatedString.spanStyles.map { range ->
+                if (range.item.color.isSpecified) {
+                    range.copy(item = range.item.copy(color = range.item.color.ensureContrast(background)))
+                } else {
+                    range
+                }
+            },
+        )
+    }
     Card(
         modifier =
         Modifier
@@ -870,15 +931,7 @@ fun LogItem(
                 onLongClick = onLongClick,
             ),
         shape = RoundedCornerShape(4.dp),
-        colors =
-        CardDefaults.cardColors(
-            containerColor =
-            if (isSelected) {
-                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
-            } else {
-                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
-            },
-        ),
+        colors = CardDefaults.cardColors(containerColor = containerColor),
         border =
         if (isSelected) {
             CardDefaults.outlinedCardBorder().copy(
@@ -912,7 +965,7 @@ fun LogItem(
                 )
             }
             Text(
-                text = annotatedString,
+                text = text,
                 modifier =
                 Modifier
                     .weight(1f)

@@ -9,7 +9,11 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
@@ -29,8 +33,34 @@ private val LightColorScheme =
         tertiary = LogBlue,
     )
 
+@Immutable
+data class StatusColors(
+    val good: Color,
+    val medium: Color,
+    val bad: Color,
+    val info: Color,
+)
+
+private val DarkStatusColors =
+    StatusColors(
+        good = Color(0xFF7CB89E),
+        medium = Color(0xFFD3A45E),
+        bad = Color(0xFFDB8A62),
+        info = Color(0xFF8FB4D6),
+    )
+
+private val LightStatusColors =
+    StatusColors(
+        good = Color(0xFF3D8168),
+        medium = Color(0xFFA8742F),
+        bad = Color(0xFFC25E32),
+        info = Color(0xFF4A7BA6),
+    )
+
+val LocalStatusColors = staticCompositionLocalOf { LightStatusColors }
+
 @Composable
-fun SFATheme(
+fun Theme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     // Dynamic color is available on Android 12+
     dynamicColor: Boolean = true,
@@ -51,8 +81,6 @@ fun SFATheme(
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as? Activity)?.window ?: return@SideEffect
-            window.statusBarColor = colorScheme.surface.toArgb()
-            window.navigationBarColor = colorScheme.background.toArgb()
             WindowCompat.getInsetsController(window, view).apply {
                 isAppearanceLightStatusBars = !darkTheme
                 isAppearanceLightNavigationBars = !darkTheme
@@ -60,10 +88,12 @@ fun SFATheme(
         }
     }
 
-    MaterialTheme(
-        colorScheme = colorScheme,
-        typography = Typography,
-        shapes = Shapes,
-        content = content,
-    )
+    CompositionLocalProvider(LocalStatusColors provides if (darkTheme) DarkStatusColors else LightStatusColors) {
+        MaterialTheme(
+            colorScheme = colorScheme,
+            typography = Typography,
+            shapes = Shapes,
+            content = content,
+        )
+    }
 }

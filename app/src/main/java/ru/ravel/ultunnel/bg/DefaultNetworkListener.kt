@@ -1,4 +1,4 @@
-/*******************************************************************************
+/*
  *                                                                             *
  *  Copyright (C) 2019 by Max Lv <max.c.lv@gmail.com>                          *
  *  Copyright (C) 2019 by Mygod Studio <contact-shadowsocks-android@mygod.be>  *
@@ -22,13 +22,16 @@ package ru.ravel.ultunnel.bg
 
 import android.annotation.TargetApi
 import android.net.ConnectivityManager
+import android.net.LinkProperties
 import android.net.Network
 import android.net.NetworkCapabilities
 import android.net.NetworkRequest
 import android.os.Build
 import android.os.Handler
+import android.os.HandlerThread
 import android.os.Looper
 import androidx.annotation.RequiresApi
+import ru.ravel.ultunnel.Application
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
@@ -36,7 +39,6 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.ObsoleteCoroutinesApi
 import kotlinx.coroutines.channels.actor
 import kotlinx.coroutines.runBlocking
-import ru.ravel.ultunnel.Application
 
 object DefaultNetworkListener {
 	private sealed class NetworkMessage {
@@ -134,7 +136,9 @@ object DefaultNetworkListener {
 
 	suspend fun stop(key: Any) = networkActor.send(NetworkMessage.Stop(key))
 
-	// NB: this runs in ConnectivityThread, and this behavior cannot be changed until API 26
+	// NB: this runs on callbackHandler's thread, or in ConnectivityThread below API 26 where
+	// no handler can be passed. The actor is unconfined, so its listeners run here too: they
+	// probe the new interface with retries and must never reach the main thread.
 	private object Callback : ConnectivityManager.NetworkCallback() {
 		override fun onAvailable(network: Network) = runBlocking {
 			networkActor.send(
@@ -146,6 +150,10 @@ object DefaultNetworkListener {
 
 		override fun onCapabilitiesChanged(network: Network, networkCapabilities: NetworkCapabilities) {
 			// it's a good idea to refresh capabilities
+			runBlocking { networkActor.send(NetworkMessage.Update(network)) }
+		}
+
+		override fun onLinkPropertiesChanged(network: Network, linkProperties: LinkProperties) {
 			runBlocking { networkActor.send(NetworkMessage.Update(network)) }
 		}
 
@@ -168,7 +176,9 @@ object DefaultNetworkListener {
 				removeCapability(NetworkCapabilities.NET_CAPABILITY_CAPTIVE_PORTAL)
 			}
 		}.build()
-	private val mainHandler = Handler(Looper.getMainLooper())
+	private val callbackHandler by lazy {
+		Handler(HandlerThread("network-callback").apply { start() }.looper)
+	}
 
 	/**
 	 * Unfortunately registerDefaultNetworkCallback is going to return VPN interface since Android P DP1:
@@ -188,19 +198,19 @@ object DefaultNetworkListener {
 					Application.connectivity.registerBestMatchingNetworkCallback(
 						request,
 						Callback,
-						mainHandler,
+						callbackHandler,
 					)
 				}
 
 			in 28 until 31 ->
 				@RequiresApi(28)
 				{ // we want REQUEST here instead of LISTEN
-					Application.connectivity.requestNetwork(request, Callback, mainHandler)
+					Application.connectivity.requestNetwork(request, Callback, callbackHandler)
 				}
 
 			in 26 until 28 ->
 				{
-					Application.connectivity.registerDefaultNetworkCallback(Callback, mainHandler)
+					Application.connectivity.registerDefaultNetworkCallback(Callback, callbackHandler)
 				}
 
 			in 24 until 26 ->

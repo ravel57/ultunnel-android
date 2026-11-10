@@ -31,6 +31,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -53,13 +56,13 @@ class BoxService(private val service: Service, private val platformInterface: Pl
 		@Volatile
 		var configCheckMode: Boolean = false
 
-		fun start() {
-			val intent =
-				runBlocking {
+		@OptIn(DelicateCoroutinesApi::class)
+		fun start() = GlobalScope.launch(Dispatchers.Main.immediate) {
+			Settings.dataStore.initialize()
 					withContext(Dispatchers.IO) {
-						Intent(Application.application, Settings.serviceClass())
-					}
+				Settings.rebuildServiceMode()
 				}
+			val intent = Intent(Application.application, Settings.serviceClass())
 			ContextCompat.startForegroundService(Application.application, intent)
 		}
 
@@ -78,6 +81,20 @@ class BoxService(private val service: Service, private val platformInterface: Pl
 	private val binder = ServiceBinder(status)
 	private val notification = ServiceNotification(status, service)
 	private lateinit var commandServer: CommandServer
+	private val idleModeScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+	private val idleModeUpdates = Channel<Boolean>(Channel.UNLIMITED)
+
+	init {
+		idleModeScope.launch {
+			for (idle in idleModeUpdates) {
+				if (idle) {
+					commandServer.pause()
+				} else {
+					commandServer.wake()
+				}
+			}
+		}
+	}
 
 	private var receiverRegistered = false
 	private val receiver =
@@ -100,6 +117,8 @@ class BoxService(private val service: Service, private val platformInterface: Pl
 	private var logcatClient: CommandClient? = null
 
 	private fun startCommandServer() {
+		Libbox.promoteOOMDraft()
+		Libbox.discardPowerReportDraft()
 		val commandServer = CommandServer(this, platformInterface)
 		commandServer.start()
 		this.commandServer = commandServer
@@ -145,9 +164,9 @@ class BoxService(private val service: Service, private val platformInterface: Pl
 
 				if (appList.isNotEmpty()) {
 					if (Settings.getEffectivePerAppProxyMode() == Settings.PER_APP_PROXY_INCLUDE) {
-						includePackage = PlatformInterfaceWrapper.StringArray(appList.iterator())
+						includePackage = PlatformInterfaceWrapper.StringArray((appList + Application.application.packageName).iterator())
 					} else {
-						excludePackage = PlatformInterfaceWrapper.StringArray(appList.iterator())
+						excludePackage = PlatformInterfaceWrapper.StringArray((appList - Application.application.packageName).iterator())
 					}
 				}
 			}
@@ -156,10 +175,6 @@ class BoxService(private val service: Service, private val platformInterface: Pl
 
 	private suspend fun startService() {
 		try {
-			withContext(Dispatchers.Main) {
-				notification.show(lastProfileName, R.string.status_starting)
-			}
-
 			val selectedProfileId = Settings.selectedProfile
 			if (selectedProfileId == -1L) {
 				stopAndAlert(Alert.EmptyConfiguration)
@@ -205,7 +220,6 @@ class BoxService(private val service: Service, private val platformInterface: Pl
 						android.Manifest.permission.ACCESS_BACKGROUND_LOCATION
 					}
 				if (!service.hasPermission(wifiPermission)) {
-					closeService()
 					stopAndAlert(Alert.RequestLocationPermission)
 					return
 				}
@@ -276,7 +290,6 @@ class BoxService(private val service: Service, private val platformInterface: Pl
 					android.Manifest.permission.ACCESS_BACKGROUND_LOCATION
 				}
 			if (!service.hasPermission(wifiPermission)) {
-				closeService()
 				stopAndAlert(Alert.RequestLocationPermission)
 				return
 			}
@@ -298,10 +311,8 @@ class BoxService(private val service: Service, private val platformInterface: Pl
 
 	@RequiresApi(Build.VERSION_CODES.M)
 	private fun serviceUpdateIdleMode() {
-		if (Application.powerManager.isDeviceIdleMode) {
-			commandServer.pause()
-		} else {
-			commandServer.wake()
+		if (::commandServer.isInitialized) {
+			idleModeUpdates.trySend(Application.powerManager.isDeviceIdleMode)
 		}
 	}
 
@@ -327,7 +338,10 @@ class BoxService(private val service: Service, private val platformInterface: Pl
 				close()
 //                Seq.destroyRef(refnum)
 			}
+			Libbox.discardPowerReportDraft()
+			PowerReportManager.refresh()
 			Settings.startedByUser = false
+			Settings.dataStore.flush()
 			withContext(Dispatchers.Main) {
 				status.value = Status.Stopped
 				service.stopSelf()
@@ -345,6 +359,17 @@ class BoxService(private val service: Service, private val platformInterface: Pl
 
 	private suspend fun stopAndAlert(type: Alert, message: String? = null) {
 		Settings.startedByUser = false
+		Settings.dataStore.flush()
+		val pfd = fileDescriptor
+		if (pfd != null) {
+			pfd.close()
+			fileDescriptor = null
+		}
+		DefaultNetworkMonitor.stop()
+		if (::commandServer.isInitialized) {
+			closeService()
+			commandServer.close()
+		}
 		withContext(Dispatchers.Main) {
 			if (receiverRegistered) {
 				service.unregisterReceiver(receiver)
@@ -355,6 +380,7 @@ class BoxService(private val service: Service, private val platformInterface: Pl
 				callback.onServiceAlert(type.ordinal, message)
 			}
 			status.value = Status.Stopped
+			service.stopSelf()
 		}
 	}
 
@@ -363,6 +389,7 @@ class BoxService(private val service: Service, private val platformInterface: Pl
 	internal fun onStartCommand(): Int {
 		if (status.value != Status.Stopped) return Service.START_NOT_STICKY
 		status.value = Status.Starting
+		notification.show(lastProfileName, R.string.status_starting)
 
 		if (!receiverRegistered) {
 			ContextCompat.registerReceiver(
@@ -382,6 +409,7 @@ class BoxService(private val service: Service, private val platformInterface: Pl
 		GlobalScope.launch(Dispatchers.IO) {
 			Settings.startedByUser = true
 			try {
+				Application.application.setupLibbox()
 				startCommandServer()
 			} catch (e: Exception) {
 				stopAndAlert(Alert.StartCommandServer, e.message)
@@ -395,6 +423,8 @@ class BoxService(private val service: Service, private val platformInterface: Pl
 	internal fun onBind(): IBinder = binder
 
 	internal fun onDestroy() {
+		idleModeUpdates.cancel()
+		idleModeScope.cancel()
 		binder.close()
 	}
 
@@ -403,8 +433,9 @@ class BoxService(private val service: Service, private val platformInterface: Pl
 	}
 
 	internal fun sendNotification(notification: Notification) {
+		val channel = "notification-${notification.typeID}"
 		val builder =
-			NotificationCompat.Builder(service, notification.identifier).setShowWhen(false)
+			NotificationCompat.Builder(service, channel).setShowWhen(false)
 				.setContentTitle(notification.title).setContentText(notification.body)
 				.setOnlyAlertOnce(true).setSmallIcon(R.drawable.ic_menu)
 				.setCategory(NotificationCompat.CATEGORY_EVENT)
@@ -432,21 +463,21 @@ class BoxService(private val service: Service, private val platformInterface: Pl
 			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
 				Application.notification.createNotificationChannel(
 					NotificationChannel(
-						notification.identifier,
+						channel,
 						notification.typeName,
 						NotificationManager.IMPORTANCE_HIGH,
 					),
 				)
 			}
-			Application.notification.notify(notification.typeID, builder.build())
+			Application.notification.notify(notification.identifier, notification.typeID, builder.build())
 		}
 	}
 
-	override fun writeDebugMessage(message: String?) {
-		Log.d("sing-box", message!!)
+	internal fun cancelNotification(identifier: String, typeID: Int) {
+		GlobalScope.launch(Dispatchers.Main) {
+			Application.notification.cancel(identifier, typeID)
+		}
 	}
-
-	override fun connectSSHAgent(): Int = -1
 
 	override fun triggerNativeCrash() {
 		Thread {
@@ -455,9 +486,9 @@ class BoxService(private val service: Service, private val platformInterface: Pl
 		}.start()
 	}
 
-	internal fun cancelNotification(identifier: String, typeID: Int) {
-		GlobalScope.launch(Dispatchers.Main) {
-			Application.notification.cancel(identifier, typeID)
-		}
+	override fun writeDebugMessage(message: String?) {
+		Log.d("sing-box", message!!)
 	}
+
+	override fun connectSSHAgent(): Int = -1
 }

@@ -51,7 +51,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -171,8 +171,7 @@ fun ProfilePickerSheet(
                 profile.typed.remoteURL,
             )
         }
-        val surfaceColor = MaterialTheme.colorScheme.surface.toArgb()
-        val qrBitmap = QRCodeGenerator.rememberPrimaryBitmap(link, backgroundColor = surfaceColor)
+        val qrBitmap = QRCodeGenerator.rememberPrimaryBitmap(link, backgroundColor = MaterialTheme.colorScheme.surface)
 
         QRCodeDialog(
             bitmap = qrBitmap,
@@ -252,7 +251,7 @@ private fun ProfilePickerRow(
                     withContext(Dispatchers.Main) {
                         Toast.makeText(
                             context,
-                            "${context.getString(R.string.failed_save_profile)}: ${e.message}",
+                            context.getString(R.string.failed_save_profile, e.message),
                             Toast.LENGTH_SHORT,
                         ).show()
                     }
@@ -268,11 +267,23 @@ private fun ProfilePickerRow(
         color = when {
             isDragging -> MaterialTheme.colorScheme.tertiaryContainer
             isSelected -> if (isSystemInDarkTheme()) {
-                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                lerp(
+                    MaterialTheme.colorScheme.surfaceContainerLow,
+                    MaterialTheme.colorScheme.surfaceContainerHigh,
+                    0.5f,
+                )
             } else {
                 MaterialTheme.colorScheme.surfaceDim
             }
-            else -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+            else -> if (isSystemInDarkTheme()) {
+                lerp(
+                    MaterialTheme.colorScheme.surfaceContainerLow,
+                    MaterialTheme.colorScheme.surfaceContainerHigh,
+                    0.35f,
+                )
+            } else {
+                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+            }
         },
         tonalElevation = animatedElevation.dp,
     ) {

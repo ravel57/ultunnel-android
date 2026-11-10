@@ -1,5 +1,6 @@
 *.iml
 .gradle
+.kotlin/
 /local.properties
 /.idea/
 .DS_Store
@@ -10,10 +11,6 @@ build/
 local.properties
 /app/libs/
 /service-account-credentials.json
-/app/ultunnel.jks
-/app/key.properties
-/CLAUDE.md
-/.claude/
 /app/ultunnel.jks
 /app/key.properties
 /CLAUDE.md

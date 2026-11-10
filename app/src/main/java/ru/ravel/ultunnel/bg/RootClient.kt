@@ -4,8 +4,10 @@ import android.content.ComponentName
 import android.content.Intent
 import android.content.ServiceConnection
 import android.content.pm.PackageInfo
+import android.os.Build
 import android.os.IBinder
 import android.os.RemoteException
+import androidx.core.content.ContextCompat
 import com.topjohnwu.superuser.Shell
 import com.topjohnwu.superuser.ipc.RootService
 import ru.ravel.ultunnel.bg.IRootService
@@ -18,7 +20,9 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import ru.ravel.ultunnel.Application
+import java.io.IOException
 import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 
 object RootClient {
     init {
@@ -54,6 +58,10 @@ object RootClient {
     suspend fun bindService(): IRootService = connectionMutex.withLock {
         service?.let { return it }
 
+        if (Shell.isAppGrantedRoot() == false) {
+            throw IOException("permission denied")
+        }
+
         return withContext(Dispatchers.Main) {
             suspendCancellableCoroutine { continuation ->
                 val conn = object : ServiceConnection {
@@ -73,7 +81,30 @@ object RootClient {
                 }
 
                 val intent = Intent(Application.application, RootServer::class.java)
-                RootService.bind(intent, conn)
+                val task = RootService.bindOrTask(
+                    intent,
+                    ContextCompat.getMainExecutor(Application.application),
+                    conn,
+                )
+
+                if (task == null) {
+                    // Already connected, onServiceConnected will fire
+                } else {
+                    Shell.EXECUTOR.execute {
+                        try {
+                            val shell = Shell.getShell()
+                            if (shell.isRoot) {
+                                shell.execTask(task)
+                            } else {
+                                continuation.resumeWithException(
+                                    IOException("permission denied"),
+                                )
+                            }
+                        } catch (e: Exception) {
+                            continuation.resumeWithException(e)
+                        }
+                    }
+                }
 
                 continuation.invokeOnCancellation {
                     RootService.unbind(conn)
@@ -101,7 +132,71 @@ object RootClient {
             val list = slice.list as List<PackageInfo>
             list
         } catch (e: RemoteException) {
-            throw e.rethrowFromSystemServer()
+            throw e.rethrowAsRuntime()
         }
+    }
+
+    suspend fun registerNeighborTableCallback(callback: INeighborTableCallback) {
+        val svc = bindService()
+        try {
+            svc.registerNeighborTableCallback(callback)
+        } catch (e: RemoteException) {
+            throw e.rethrowAsRuntime()
+        }
+    }
+
+    suspend fun lookupSFTPServer(): String {
+        val svc = bindService()
+        try {
+            return svc.lookupSFTPServer()
+        } catch (e: RemoteException) {
+            throw e.rethrowAsRuntime()
+        }
+    }
+
+    suspend fun openShellSession(
+        user: String,
+        command: String?,
+        env: Array<String>,
+        term: String?,
+        rows: Int,
+        cols: Int,
+    ): IRootShellSession {
+        val svc = bindService()
+        try {
+            return svc.openShellSession(user, command, env, term, rows, cols)
+        } catch (e: RemoteException) {
+            throw e.rethrowAsRuntime()
+        }
+    }
+
+    suspend fun openBridge(
+        bridgeName: String,
+        mtu: Int,
+        inet4Port: String,
+        inet6Port: String,
+        ruleIndex: Int,
+        routeTable: Int,
+    ): IBridgeSession {
+        val svc = bindService()
+        try {
+            return svc.openBridge(bridgeName, mtu, inet4Port, inet6Port, ruleIndex, routeTable)
+        } catch (e: RemoteException) {
+            throw e.rethrowAsRuntime()
+        }
+    }
+
+    suspend fun unregisterNeighborTableCallback(callback: INeighborTableCallback) {
+        try {
+            service?.unregisterNeighborTableCallback(callback)
+        } catch (e: RemoteException) {
+            throw e.rethrowAsRuntime()
+        }
+    }
+
+    private fun RemoteException.rethrowAsRuntime(): RuntimeException = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+        rethrowFromSystemServer()
+    } else {
+        RuntimeException(this)
     }
 }

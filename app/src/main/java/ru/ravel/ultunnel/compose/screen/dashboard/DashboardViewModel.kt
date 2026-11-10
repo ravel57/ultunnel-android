@@ -24,27 +24,30 @@ import ru.ravel.ultunnel.database.Settings
 import ru.ravel.ultunnel.database.TypedProfile
 import ru.ravel.ultunnel.utils.AppLifecycleObserver
 import ru.ravel.ultunnel.utils.CommandClient
+import ru.ravel.ultunnel.utils.CommandTarget
 import ru.ravel.ultunnel.utils.HTTPClient
+import ru.ravel.ultunnel.utils.RemoteControlManager
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import java.io.File
 import java.net.HttpURLConnection
 import java.net.URL
 import java.util.Collections
 import java.util.Date
 
-
-enum class CardGroup {
+enum class CardGroup(val pairGroup: CardPairGroup? = null) {
 	ClashMode,
-	UploadTraffic,
-	DownloadTraffic,
-	Debug,
-	Connections,
+	UploadTraffic(CardPairGroup.Traffic),
+	DownloadTraffic(CardPairGroup.Traffic),
+	Debug(CardPairGroup.Statistics),
+	Connections(CardPairGroup.Statistics),
 	SystemProxy,
 	Profiles,
 }
 
-enum class CardWidth {
-	Half,
-	Full,
+enum class CardPairGroup {
+	Traffic,
+	Statistics,
 }
 
 enum class ProfileCheckState {
@@ -119,16 +122,6 @@ data class DashboardUiState(
 			CardGroup.ClashMode,
 			CardGroup.Profiles,
 		),
-	val cardWidths: Map<CardGroup, CardWidth> =
-		mapOf(
-			CardGroup.ClashMode to CardWidth.Full,
-			CardGroup.UploadTraffic to CardWidth.Half,
-			CardGroup.DownloadTraffic to CardWidth.Half,
-			CardGroup.Debug to CardWidth.Half,
-			CardGroup.Connections to CardWidth.Half,
-			CardGroup.SystemProxy to CardWidth.Full,
-			CardGroup.Profiles to CardWidth.Full,
-		),
 	val showCardSettingsDialog: Boolean = false,
 ) {
 	data class DeprecatedNote(val message: String, val migrationLink: String?)
@@ -173,9 +166,19 @@ class DashboardViewModel :
 		ProfileManager.registerCallback(::onProfilesChanged)
 
 		viewModelScope.launch {
-			AppLifecycleObserver.isForeground.collect { foreground ->
-				if (_serviceStatus.value != Status.Started) return@collect
-				if (foreground) {
+			combine(
+				AppLifecycleObserver.isForeground,
+				RemoteControlManager.remoteServer,
+				RemoteControlManager.isConnected,
+				_serviceStatus,
+			) { foreground, remoteServer, remoteConnected, status ->
+				SessionTarget(
+					connect = foreground &&
+						if (remoteServer != null) remoteConnected else status == Status.Started,
+					remoteServerId = remoteServer?.id,
+				)
+			}.distinctUntilChanged().collect { target ->
+				if (target.connect) {
 					commandClient.connect()
 				} else {
 					commandClient.disconnect()
@@ -183,6 +186,8 @@ class DashboardViewModel :
 			}
 		}
 	}
+
+	private data class SessionTarget(val connect: Boolean, val remoteServerId: Long?)
 
 	override fun onCleared() {
 		super.onCleared()
@@ -217,7 +222,7 @@ class DashboardViewModel :
 
 	private fun checkDeprecatedNotes() {
 		viewModelScope.launch(Dispatchers.IO) {
-			try {
+			runCatching {
 				// Check if deprecated warnings are disabled
 				if (Settings.disableDeprecatedWarnings) {
 					return@launch
@@ -244,8 +249,6 @@ class DashboardViewModel :
 						}
 					}
 				}
-			} catch (e: Exception) {
-				sendError(e)
 			}
 		}
 	}
@@ -291,26 +294,7 @@ class DashboardViewModel :
 				val profile = ProfileManager.get(profileId) ?: return@launch
 
 				Settings.selectedProfile = profileId
-
-				// Check if service is running
-				if (_serviceStatus.value == Status.Started) {
-					val restart = Settings.rebuildServiceMode()
-					if (restart) {
-						// Need full restart
-						BoxService.stop()
-						sendGlobalEvent(UiEvent.RequestReconnectService)
-						for (i in 0 until 30) {
-							if (_serviceStatus.value == Status.Stopped) {
-								break
-							}
-							delay(100L)
-						}
-						sendGlobalEvent(UiEvent.RequestStartService)
-					} else {
-						// Just reload
-						Libbox.newStandaloneCommandClient().serviceReload()
-					}
-				}
+				applySelectedProfile()
 
 				withContext(Dispatchers.Main) {
 					loadProfiles()
@@ -323,7 +307,24 @@ class DashboardViewModel :
 		}
 	}
 
+	private suspend fun applySelectedProfile() {
+		if (_serviceStatus.value != Status.Started) return
+		if (Settings.detectServiceMode() == Settings.serviceMode) {
+			Libbox.newStandaloneCommandClient().serviceReload()
+			return
+		}
+		BoxService.stop()
+		for (i in 0 until 30) {
+			if (_serviceStatus.value == Status.Stopped) {
+				break
+			}
+			delay(100L)
+		}
+		sendGlobalEvent(UiEvent.RequestStartService)
+	}
+
 	fun editProfile(profile: Profile) {
+		updateState { copy(showProfilePickerSheet = false) }
 		sendGlobalEvent(UiEvent.EditProfile(profile.id))
 	}
 
@@ -382,6 +383,14 @@ class DashboardViewModel :
 				profile.typed.lastUpdated = Date()
 				ProfileManager.update(profile)
 
+				if (contentChanged && profile.id == Settings.selectedProfile) {
+					try {
+						applySelectedProfile()
+					} catch (e: Exception) {
+						sendError(e)
+					}
+				}
+
 				// Reload profiles
 				loadProfiles()
 
@@ -394,13 +403,6 @@ class DashboardViewModel :
 				withContext(Dispatchers.Main) {
 					delay(1500)
 					updateState { copy(updatedProfileId = null) }
-				}
-
-				// Restart service if this is the selected profile and content changed
-				if (contentChanged && profile.id == Settings.selectedProfile) {
-					withContext(Dispatchers.Main) {
-						sendGlobalEvent(UiEvent.RequestReconnectService)
-					}
 				}
 			} catch (e: Exception) {
 				sendErrorMessage("Failed to update profile: ${e.message}")
@@ -459,7 +461,12 @@ class DashboardViewModel :
 			updateState {
 				copy(
 					serviceStatus = status,
-					isStatusVisible = status == Status.Starting || status == Status.Started,
+					isStatusVisible =
+					if (RemoteControlManager.remoteServer.value != null) {
+						isStatusVisible
+					} else {
+						status == Status.Starting || status == Status.Started
+					},
 				)
 			}
 			handleServiceStatusChange(status)
@@ -467,18 +474,21 @@ class DashboardViewModel :
 	}
 
 	private fun handleServiceStatusChange(status: Status) {
+		val isRemote = RemoteControlManager.remoteServer.value != null
 		when (status) {
 			Status.Started -> {
 				checkDeprecatedNotes()
-				if (AppLifecycleObserver.isForeground.value) {
-					commandClient.connect()
+				if (isRemote) {
+					return
 				}
 				reloadSystemProxyStatus()
 				reloadStartedAt()
 			}
 
 			Status.Stopped -> {
-				commandClient.disconnect()
+				if (isRemote) {
+					return
+				}
 				updateState {
 					copy(
 						hasGroups = false,
@@ -565,7 +575,7 @@ class DashboardViewModel :
 	fun selectClashMode(mode: String) {
 		viewModelScope.launch(Dispatchers.IO) {
 			try {
-				Libbox.newStandaloneCommandClient().setClashMode(mode)
+				CommandTarget.standaloneClient().setClashMode(mode)
 				// Update UI state directly without reconnecting
 				withContext(Dispatchers.Main) {
 					updateState {
@@ -582,6 +592,12 @@ class DashboardViewModel :
 	override fun onConnected() {
 		viewModelScope.launch(Dispatchers.Main) {
 			updateState { copy(isStatusVisible = true) }
+			// Returning from remote control skipped the local reloads that
+			// normally run when the service starts.
+			if (RemoteControlManager.remoteServer.value == null && _serviceStatus.value == Status.Started) {
+				reloadSystemProxyStatus()
+				reloadStartedAt()
+			}
 		}
 	}
 

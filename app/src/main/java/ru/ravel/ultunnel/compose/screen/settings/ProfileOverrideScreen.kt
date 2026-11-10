@@ -2,6 +2,7 @@ package ru.ravel.ultunnel.compose.screen.settings
 
 import android.content.Intent
 import android.net.Uri
+import android.os.BadParcelableException
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -57,8 +58,12 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.navigation.NavController
 import ru.ravel.ultunnel.R
 import ru.ravel.ultunnel.bg.RootClient
+import ru.ravel.ultunnel.compose.base.UiEvent
+import ru.ravel.ultunnel.compose.base.rememberApplyServiceChangeNotifier
 import ru.ravel.ultunnel.compose.screen.profileoverride.PerAppProxyScanner
+import ru.ravel.ultunnel.compose.topbar.LocalScaffoldPadding
 import ru.ravel.ultunnel.compose.topbar.OverrideTopBar
+import ru.ravel.ultunnel.constant.Status
 import ru.ravel.ultunnel.database.Settings
 import ru.ravel.ultunnel.vendor.PackageQueryManager
 import kotlinx.coroutines.Dispatchers
@@ -67,7 +72,10 @@ import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProfileOverrideScreen(navController: NavController) {
+fun ProfileOverrideScreen(
+    navController: NavController,
+    serviceStatus: Status = Status.Stopped,
+) {
     OverrideTopBar {
         TopAppBar(
             title = { Text(stringResource(R.string.profile_override)) },
@@ -89,15 +97,23 @@ fun ProfileOverrideScreen(navController: NavController) {
     var perAppProxyEnabled by remember { mutableStateOf(Settings.perAppProxyEnabled) }
     var managedModeEnabled by remember { mutableStateOf(Settings.perAppProxyManagedMode) }
     var isScanning by remember { mutableStateOf(false) }
+    val notifyApplyChange = rememberApplyServiceChangeNotifier(serviceStatus)
 
-    fun scanAndSaveManagedList() {
+    fun scanAndSaveManagedList(shouldNotify: Boolean = false) {
         isScanning = true
         scope.launch {
-            val chinaApps = PerAppProxyScanner.scanAllChinaApps()
-            withContext(Dispatchers.IO) {
-                Settings.perAppProxyManagedList = chinaApps
+            try {
+                val chinaApps = PerAppProxyScanner.scanAllChinaApps()
+                withContext(Dispatchers.IO) {
+                    Settings.perAppProxyManagedList = chinaApps
+                }
+            } catch (e: BadParcelableException) {
+                Toast.makeText(context, e.message, Toast.LENGTH_LONG).show()
             }
             isScanning = false
+            if (shouldNotify) {
+                notifyApplyChange(UiEvent.ApplyServiceChange.Mode.Reload)
+            }
         }
     }
 
@@ -169,10 +185,14 @@ fun ProfileOverrideScreen(navController: NavController) {
                 Settings.perAppProxyEnabled = true
             }
             if (managedModeEnabled) {
-                scanAndSaveManagedList()
+                scanAndSaveManagedList(shouldNotify = true)
+            } else {
+                notifyApplyChange(UiEvent.ApplyServiceChange.Mode.Reload)
             }
         }
     }
+
+    val scaffoldPadding = LocalScaffoldPadding.current
 
     Column(
         modifier =
@@ -180,7 +200,10 @@ fun ProfileOverrideScreen(navController: NavController) {
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.surface)
             .verticalScroll(rememberScrollState())
-            .padding(vertical = 8.dp),
+            .padding(
+                top = scaffoldPadding.calculateTopPadding() + 8.dp,
+                bottom = scaffoldPadding.calculateBottomPadding() + 8.dp,
+            ),
     ) {
         // Card 1: Auto Redirect
         Card(
@@ -227,6 +250,7 @@ fun ProfileOverrideScreen(navController: NavController) {
                                         withContext(Dispatchers.IO) {
                                             Settings.autoRedirect = true
                                         }
+                                        notifyApplyChange(UiEvent.ApplyServiceChange.Mode.Reload)
                                     } else {
                                         Toast.makeText(
                                             context,
@@ -239,6 +263,9 @@ fun ProfileOverrideScreen(navController: NavController) {
                                 autoRedirect = false
                                 scope.launch(Dispatchers.IO) {
                                     Settings.autoRedirect = false
+                                    withContext(Dispatchers.Main) {
+                                        notifyApplyChange(UiEvent.ApplyServiceChange.Mode.Reload)
+                                    }
                                 }
                             }
                         },
@@ -364,9 +391,14 @@ fun ProfileOverrideScreen(navController: NavController) {
                                     perAppProxyEnabled = checked
                                     scope.launch(Dispatchers.IO) {
                                         Settings.perAppProxyEnabled = checked
+                                        if (!checked || !managedModeEnabled) {
+                                            withContext(Dispatchers.Main) {
+                                                notifyApplyChange(UiEvent.ApplyServiceChange.Mode.Reload)
+                                            }
+                                        }
                                     }
                                     if (checked && managedModeEnabled) {
-                                        scanAndSaveManagedList()
+                                        scanAndSaveManagedList(shouldNotify = true)
                                     }
                                 }
                             },
@@ -475,11 +507,14 @@ fun ProfileOverrideScreen(navController: NavController) {
                                             scope.launch(Dispatchers.IO) {
                                                 Settings.perAppProxyManagedMode = true
                                             }
-                                            scanAndSaveManagedList()
+                                            scanAndSaveManagedList(shouldNotify = true)
                                         } else {
                                             managedModeEnabled = false
                                             scope.launch(Dispatchers.IO) {
                                                 Settings.perAppProxyManagedMode = false
+                                                withContext(Dispatchers.Main) {
+                                                    notifyApplyChange(UiEvent.ApplyServiceChange.Mode.Reload)
+                                                }
                                             }
                                         }
                                     },
@@ -515,9 +550,14 @@ fun ProfileOverrideScreen(navController: NavController) {
                                     perAppProxyEnabled = true
                                     scope.launch(Dispatchers.IO) {
                                         Settings.perAppProxyEnabled = true
+                                        if (!managedModeEnabled) {
+                                            withContext(Dispatchers.Main) {
+                                                notifyApplyChange(UiEvent.ApplyServiceChange.Mode.Reload)
+                                            }
+                                        }
                                     }
                                     if (managedModeEnabled) {
-                                        scanAndSaveManagedList()
+                                        scanAndSaveManagedList(shouldNotify = true)
                                     }
                                 },
                             ) {
@@ -593,7 +633,9 @@ fun ProfileOverrideScreen(navController: NavController) {
                                         Settings.perAppProxyEnabled = true
                                     }
                                     if (managedModeEnabled) {
-                                        scanAndSaveManagedList()
+                                        scanAndSaveManagedList(shouldNotify = true)
+                                    } else {
+                                        notifyApplyChange(UiEvent.ApplyServiceChange.Mode.Reload)
                                     }
                                 } else {
                                     showRootDialog = false
@@ -652,6 +694,7 @@ fun ProfileOverrideScreen(navController: NavController) {
                                         Settings.perAppProxyEnabled = false
                                     }
                                 }
+                                notifyApplyChange(UiEvent.ApplyServiceChange.Mode.Reload)
                                 showModeDialog = false
                             },
                             colors = ListItemDefaults.colors(
@@ -672,6 +715,7 @@ fun ProfileOverrideScreen(navController: NavController) {
                                 scope.launch(Dispatchers.IO) {
                                     Settings.perAppProxyPackageQueryMode = Settings.PACKAGE_QUERY_MODE_ROOT
                                 }
+                                notifyApplyChange(UiEvent.ApplyServiceChange.Mode.Reload)
                                 showModeDialog = false
                             },
                             colors = ListItemDefaults.colors(

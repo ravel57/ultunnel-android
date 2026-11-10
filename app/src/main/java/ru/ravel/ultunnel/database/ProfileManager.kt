@@ -29,7 +29,7 @@ object ProfileManager {
 				ProfileDatabase::class.java,
 				Path.PROFILES_DATABASE_PATH,
 			)
-			.addMigrations(ProfileDatabase.MIGRATION_1_2)
+			.addMigrations(ProfileDatabase.MIGRATION_1_2, ProfileDatabase.MIGRATION_2_3)
 			.fallbackToDestructiveMigrationOnDowngrade()
 			.enableMultiInstanceInvalidation()
 			.setQueryExecutor { GlobalScope.launch { it.run() } }
@@ -94,4 +94,6 @@ object ProfileManager {
 	}
 
 	suspend fun list(): List<Profile> = instance.profileDao().list()
+
+	fun remoteServerDao(): RemoteServer.Dao = instance.remoteServerDao()
 }

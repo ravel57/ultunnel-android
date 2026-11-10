@@ -7,6 +7,7 @@ import androidx.compose.material.icons.filled.Dashboard
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.SwapVert
+import androidx.compose.material.icons.filled.Terminal
 import androidx.compose.ui.graphics.vector.ImageVector
 import ru.ravel.ultunnel.R
 
@@ -17,11 +18,12 @@ sealed class Screen(val route: String, @StringRes val titleRes: Int, val icon: I
         icon = Icons.Default.Dashboard,
     )
 
-//    object Log : Screen(
-//        route = "log",
-//        titleRes = R.string.title_log,
-//        icon = Icons.AutoMirrored.Default.TextSnippet,
-//    )
+    // Экран логов остаётся доступен по маршруту, но скрыт из нижней навигации
+    object Log : Screen(
+        route = "log",
+        titleRes = R.string.title_log,
+        icon = Icons.AutoMirrored.Default.TextSnippet,
+    )
 
     object Groups : Screen(
         route = "groups",
@@ -35,6 +37,12 @@ sealed class Screen(val route: String, @StringRes val titleRes: Int, val icon: I
         icon = Icons.Default.SwapVert,
     )
 
+    object Tools : Screen(
+        route = "tools",
+        titleRes = R.string.title_tools,
+        icon = Icons.Default.Terminal,
+    )
+
     object Settings : Screen(
         route = "settings",
         titleRes = R.string.title_settings,
@@ -46,5 +54,6 @@ val bottomNavigationScreens =
     listOf(
         Screen.Dashboard,
 //        Screen.Log,
+//        Screen.Tools,
         Screen.Settings,
     )

@@ -10,7 +10,6 @@ import ru.ravel.ultunnel.utils.CommandClient
 @Composable
 fun DashboardCardRenderer(
     cardGroup: CardGroup,
-    cardWidth: CardWidth,
     uiState: DashboardUiState,
     serviceStatus: Status = Status.Stopped,
     onClashModeSelected: (String) -> Unit,

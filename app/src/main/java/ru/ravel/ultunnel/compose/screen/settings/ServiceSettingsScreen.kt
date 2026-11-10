@@ -17,11 +17,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.ClickableText
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.outlined.BatteryChargingFull
-import androidx.compose.material.icons.outlined.Memory
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -48,22 +48,34 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import ru.ravel.ultunnel.R
 import ru.ravel.ultunnel.compose.base.GlobalEventBus
+import ru.ravel.ultunnel.bg.ServiceConnection
 import ru.ravel.ultunnel.compose.base.UiEvent
+import ru.ravel.ultunnel.compose.base.rememberApplyServiceChangeNotifier
+import ru.ravel.ultunnel.compose.topbar.LocalScaffoldPadding
 import ru.ravel.ultunnel.compose.topbar.OverrideTopBar
+import ru.ravel.ultunnel.constant.Status
 import ru.ravel.ultunnel.database.Settings
 import ru.ravel.ultunnel.ktx.launchCustomTab
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import ru.ravel.ultunnel.bg.ServiceConnection
+import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ServiceSettingsScreen(navController: NavController, serviceConnection: ServiceConnection? = null) {
+fun ServiceSettingsScreen(
+    navController: NavController,
+    serviceConnection: ServiceConnection? = null,
+    serviceStatus: Status = Status.Stopped,
+) {
     OverrideTopBar {
         TopAppBar(
             title = { Text(stringResource(R.string.service)) },
@@ -80,16 +92,13 @@ fun ServiceSettingsScreen(navController: NavController, serviceConnection: Servi
 
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    // Check battery optimization status
     var isBatteryOptimizationIgnored by remember { mutableStateOf(false) }
-    var ignoreMemoryLimit by remember { mutableStateOf(Settings.disableMemoryLimit) }
-
-    // Activity result launcher for battery optimization permission
+    var allowBypass by remember { mutableStateOf(Settings.allowBypass) }
+    val notifyApplyChange = rememberApplyServiceChangeNotifier(serviceStatus)
     val requestBatteryOptimizationLauncher =
         rememberLauncherForActivityResult(
             ActivityResultContracts.StartActivityForResult(),
         ) { _ ->
-            // Recheck the status after returning from settings
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 val pm = context.getSystemService(PowerManager::class.java)
                 isBatteryOptimizationIgnored =
@@ -97,7 +106,6 @@ fun ServiceSettingsScreen(navController: NavController, serviceConnection: Servi
             }
         }
 
-    // Check battery optimization status on launch
     LaunchedEffect(Unit) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             val pm = context.getSystemService(PowerManager::class.java)
@@ -108,15 +116,19 @@ fun ServiceSettingsScreen(navController: NavController, serviceConnection: Servi
         }
     }
 
+    val scaffoldPadding = LocalScaffoldPadding.current
+
     Column(
         modifier =
         Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.surface)
             .verticalScroll(rememberScrollState())
-            .padding(vertical = 8.dp),
+            .padding(
+                top = scaffoldPadding.calculateTopPadding() + 8.dp,
+                bottom = scaffoldPadding.calculateBottomPadding() + 8.dp,
+            ),
     ) {
-        // Background Permission Card (only show if battery optimization is not ignored)
         if (!isBatteryOptimizationIgnored && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             Card(
                 modifier =
@@ -187,7 +199,16 @@ fun ServiceSettingsScreen(navController: NavController, serviceConnection: Servi
             }
         }
 
-        // Options Section
+        // VPN Section
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Text(
+            text = "VPN",
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(horizontal = 32.dp, vertical = 8.dp),
+        )
+
         Card(
             modifier =
             Modifier
@@ -198,36 +219,64 @@ fun ServiceSettingsScreen(navController: NavController, serviceConnection: Servi
                 containerColor = MaterialTheme.colorScheme.surfaceContainer,
             ),
         ) {
+            val descriptionText = stringResource(R.string.allow_bypass_description)
+            val linkText = stringResource(R.string.android_documentation)
+            val linkColor = MaterialTheme.colorScheme.primary
+            val textColor = MaterialTheme.colorScheme.onSurfaceVariant
+            val textStyle = MaterialTheme.typography.bodyMedium
+
             ListItem(
                 headlineContent = {
                     Text(
-                        stringResource(R.string.ignore_memory_limit),
+                        stringResource(R.string.allow_bypass),
                         style = MaterialTheme.typography.bodyLarge,
                     )
                 },
                 supportingContent = {
-                    Text(
-                        stringResource(R.string.ignore_memory_limit_description),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    val annotatedString = buildAnnotatedString {
+                        withStyle(SpanStyle(color = textColor)) {
+                            append(descriptionText)
+                        }
+                        append("\n\n")
+                        pushStringAnnotation(tag = "URL", annotation = ALLOW_BYPASS_DOC_URL)
+                        withStyle(
+                            SpanStyle(
+                                color = linkColor,
+                                textDecoration = TextDecoration.Underline,
+                            ),
+                        ) {
+                            append(linkText)
+                        }
+                        pop()
+                    }
+                    ClickableText(
+                        text = annotatedString,
+                        style = textStyle,
                         modifier = Modifier.padding(top = 4.dp),
-                    )
+                        onClick = { offset ->
+                            annotatedString.getStringAnnotations(
+                                tag = "URL",
+                                start = offset,
+                                end = offset,
+                            ).firstOrNull()?.let {
+                                context.launchCustomTab(it.item)
+                            }
                 },
-                leadingContent = {
-                    Icon(
-                        imageVector = Icons.Outlined.Memory,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
                     )
                 },
                 trailingContent = {
-                    Switch(checked = ignoreMemoryLimit, onCheckedChange = { checked ->
-                        ignoreMemoryLimit = checked
+                    Switch(
+                        checked = allowBypass,
+                        onCheckedChange = { checked ->
+                            allowBypass = checked
                         scope.launch(Dispatchers.IO) {
-                            Settings.disableMemoryLimit = checked
-                            GlobalEventBus.tryEmit(UiEvent.RestartToTakeEffect)
+                                Settings.allowBypass = checked
+                                withContext(Dispatchers.Main) {
+                                    notifyApplyChange(UiEvent.ApplyServiceChange.Mode.Reload)
                         }
-                    })
+                            }
+                        },
+                    )
                 },
                 modifier = Modifier.clip(RoundedCornerShape(12.dp)),
                 colors =
@@ -240,3 +289,6 @@ fun ServiceSettingsScreen(navController: NavController, serviceConnection: Servi
         Spacer(modifier = Modifier.height(16.dp))
     }
 }
+
+private const val ALLOW_BYPASS_DOC_URL =
+    "https://developer.android.com/reference/android/net/VpnService.Builder#allowBypass()"

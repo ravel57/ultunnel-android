@@ -9,6 +9,8 @@ import android.net.Uri
 import android.net.VpnService
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
@@ -21,14 +23,21 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.exclude
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.LinkOff
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.filled.UnfoldLess
@@ -42,6 +51,7 @@ import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.NavigationBar
@@ -49,7 +59,7 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationRail
 import androidx.compose.material3.NavigationRailItem
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -69,9 +79,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.fromHtml
 import androidx.compose.ui.unit.dp
+import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.os.ConfigurationCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
@@ -87,6 +101,10 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import ru.ravel.ultunnel.Application
 import ru.ravel.ultunnel.R
+import ru.ravel.ultunnel.bg.BoxService
+import ru.ravel.ultunnel.bg.CrashReportManager
+import ru.ravel.ultunnel.bg.OOMReportManager
+import ru.ravel.ultunnel.bg.PowerReportManager
 import ru.ravel.ultunnel.bg.ServiceConnection
 import ru.ravel.ultunnel.bg.ServiceNotification
 import ru.ravel.ultunnel.compat.WindowSizeClassCompat
@@ -94,13 +112,15 @@ import ru.ravel.ultunnel.compat.isWidthAtLeastBreakpointCompat
 import ru.ravel.ultunnel.compose.base.GlobalEventBus
 import ru.ravel.ultunnel.compose.base.SelectableMessageDialog
 import ru.ravel.ultunnel.compose.base.UiEvent
+import ru.ravel.ultunnel.compose.component.RemoteStatusBar
 import ru.ravel.ultunnel.compose.component.ServiceStatusBar
+import ru.ravel.ultunnel.compose.component.SnackbarHost
 import ru.ravel.ultunnel.compose.component.UpdateAvailableDialog
 import ru.ravel.ultunnel.compose.component.UptimeText
 import ru.ravel.ultunnel.compose.model.Connection
+import ru.ravel.ultunnel.compose.navigation.NavHost
 import ru.ravel.ultunnel.compose.navigation.NewProfileArgs
 import ru.ravel.ultunnel.compose.navigation.ProfileRoutes
-import ru.ravel.ultunnel.compose.navigation.SFANavHost
 import ru.ravel.ultunnel.compose.navigation.Screen
 import ru.ravel.ultunnel.compose.navigation.bottomNavigationScreens
 import ru.ravel.ultunnel.compose.screen.configuration.ProfileImportHandler
@@ -110,10 +130,19 @@ import ru.ravel.ultunnel.compose.screen.connections.ConnectionsViewModel
 import ru.ravel.ultunnel.compose.screen.dashboard.DashboardViewModel
 import ru.ravel.ultunnel.compose.screen.dashboard.GroupsCard
 import ru.ravel.ultunnel.compose.screen.dashboard.groups.GroupsViewModel
-import ru.ravel.ultunnel.compose.theme.SFATheme
+import ru.ravel.ultunnel.compose.screen.log.LogViewModel
+import ru.ravel.ultunnel.compose.screen.tools.OpenConnectStatusViewModel
+import ru.ravel.ultunnel.compose.screen.tools.OpenVPNStatusViewModel
+import ru.ravel.ultunnel.compose.screen.tools.TaildropSendManager
+import ru.ravel.ultunnel.compose.screen.tools.TailscaleSSHSharedViewModel
+import ru.ravel.ultunnel.compose.screen.tools.TailscaleStatusViewModel
+import ru.ravel.ultunnel.compose.screen.usbip.USBIPStatusViewModel
+import ru.ravel.ultunnel.compose.theme.Theme
+import ru.ravel.ultunnel.compose.topbar.LocalScaffoldPadding
 import ru.ravel.ultunnel.compose.topbar.LocalTopBarController
 import ru.ravel.ultunnel.compose.topbar.TopBarController
 import ru.ravel.ultunnel.compose.topbar.TopBarEntry
+import ru.ravel.ultunnel.constant.Action
 import ru.ravel.ultunnel.constant.Alert
 import ru.ravel.ultunnel.constant.ServiceMode
 import ru.ravel.ultunnel.constant.Status
@@ -121,7 +150,8 @@ import ru.ravel.ultunnel.database.Settings
 import ru.ravel.ultunnel.ktx.hasPermission
 import ru.ravel.ultunnel.ktx.launchCustomTab
 import ru.ravel.ultunnel.update.UpdateState
-
+import ru.ravel.ultunnel.utils.RemoteControlManager
+import kotlinx.coroutines.delay
 
 class MainActivity :
 	AppCompatActivity(),
@@ -132,6 +162,9 @@ class MainActivity :
 	private var currentAlert by mutableStateOf<Pair<Alert, String?>?>(null)
 	private var showLocationPermissionDialog by mutableStateOf(false)
 	private var showBackgroundLocationDialog by mutableStateOf(false)
+	private var showLocalNetworkPermissionDialog by mutableStateOf(false)
+	private var notificationPermissionRequested = false
+	private var localNetworkPermissionRequested = false
 	private var showImportProfileDialog by mutableStateOf(false)
 	private var pendingImportProfile by mutableStateOf<Triple<String, String, String>?>(null)
 	private var showImportLocalProfileDialog by mutableStateOf(false)
@@ -144,12 +177,8 @@ class MainActivity :
 	private val notificationPermissionLauncher =
 		registerForActivityResult(
 			ActivityResultContracts.RequestPermission(),
-		) { isGranted ->
-			if (Settings.dynamicNotification && !isGranted) {
-				onServiceAlert(Alert.RequestNotificationPermission, null)
-			} else {
-				startService0()
-			}
+		) {
+			startService()
 		}
 
 	private val locationPermissionLauncher =
@@ -170,6 +199,11 @@ class MainActivity :
 			}
 		}
 
+	private val localNetworkPermissionLauncher =
+		registerForActivityResult(ActivityResultContracts.RequestPermission()) {
+			startService()
+		}
+
 	private val prepareLauncher =
 		registerForActivityResult(
 			ActivityResultContracts.StartActivityForResult(),
@@ -184,9 +218,19 @@ class MainActivity :
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
+		ConfigurationCompat.getLocales(resources.configuration)[0]?.let { locale ->
+			runCatching {
+				Libbox.setLocale(locale.toLanguageTag())
+			}.onFailure {
+				Log.d("MainActivity", "set locale: ${it.message}")
+			}
+		}
 		enableEdgeToEdge()
 
+		lifecycleScope.launch {
+			Settings.dataStore.initialize()
 		connection.reconnect()
+			RemoteControlManager.restore()
 
 		UpdateState.loadFromCache()
 //        if (Settings.checkUpdateEnabled) {
@@ -203,8 +247,9 @@ class MainActivity :
 		handleIntent(intent)
 
 		setContent {
-			SFATheme {
-				SFAApp()
+				Theme {
+					App()
+				}
 			}
 		}
 	}
@@ -222,6 +267,20 @@ class MainActivity :
 			pendingNavigationRoute.value = "settings/privilege"
 		}
 		val uri = intent.data ?: return
+		if (uri.scheme == "sing-box") {
+			val target = if (uri.isOpaque) Uri.parse("sing-box://" + uri.schemeSpecificPart) else uri
+			if (target.host == "taildrop") {
+				val endpointTag = target.getQueryParameter("endpoint")
+				if (!endpointTag.isNullOrEmpty()) {
+					pendingNavigationRoute.value = "tools/tailscale/${Uri.encode(endpointTag)}/taildrop"
+				}
+				return
+			}
+		}
+		if (intent.action == Action.OPEN_URL) {
+			launchCustomTab(uri.toString())
+			return
+		}
 		if (uri.scheme == "sing-box" && uri.host == "import-remote-profile") {
 			try {
 				val profile = Libbox.parseRemoteProfileImportLink(uri.toString())
@@ -261,18 +320,38 @@ class MainActivity :
 
 	@SuppressLint("NewApi")
 	fun startService() {
+		lifecycleScope.launch {
+			Settings.dataStore.initialize()
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !ServiceNotification.checkPermission()) {
+				if (!notificationPermissionRequested) {
+					notificationPermissionRequested = true
 			notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-			return
+					return@launch
+				}
+				if (Settings.dynamicNotification) {
+					onServiceAlert(Alert.RequestNotificationPermission, null)
+					return@launch
+				}
+			}
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.CINNAMON_BUN &&
+				!hasPermission(Manifest.permission.ACCESS_LOCAL_NETWORK) &&
+				!localNetworkPermissionRequested
+			) {
+				localNetworkPermissionRequested = true
+				if (ActivityCompat.shouldShowRequestPermissionRationale(this@MainActivity, Manifest.permission.ACCESS_LOCAL_NETWORK)) {
+					showLocalNetworkPermissionDialog = true
+				} else {
+					localNetworkPermissionLauncher.launch(Manifest.permission.ACCESS_LOCAL_NETWORK)
+				}
+				return@launch
 		}
 		startService0()
+	}
 	}
 
 	private fun startService0() {
 		lifecycleScope.launch(Dispatchers.IO) {
-			if (Settings.rebuildServiceMode()) {
-				connection.reconnect()
-			}
+			Settings.rebuildServiceMode()
 			if (Settings.serviceMode == ServiceMode.VPN) {
 				if (prepare()) {
 					return@launch
@@ -303,7 +382,7 @@ class MainActivity :
 
 	@OptIn(ExperimentalMaterial3Api::class)
 	@Composable
-	fun SFAApp() {
+	fun App() {
 		val navController = rememberNavController()
 		val navBackStackEntry by navController.currentBackStackEntryAsState()
 		val currentDestination = navBackStackEntry?.destination
@@ -328,6 +407,89 @@ class MainActivity :
 
 		// Snackbar state
 		val snackbarHostState = remember { SnackbarHostState() }
+		// Error dialog state for UiEvent.ShowError
+		var showErrorDialog by remember { mutableStateOf(false) }
+		var errorMessage by remember { mutableStateOf("") }
+		var pendingApplyServiceChangeMode by remember { mutableStateOf<UiEvent.ApplyServiceChange.Mode?>(null) }
+		var activeApplyServiceChangeMode by remember { mutableStateOf<UiEvent.ApplyServiceChange.Mode?>(null) }
+		var applyServiceChangeJob by remember { mutableStateOf<Job?>(null) }
+
+		fun mergeApplyServiceChangeMode(
+			current: UiEvent.ApplyServiceChange.Mode?,
+			incoming: UiEvent.ApplyServiceChange.Mode,
+		): UiEvent.ApplyServiceChange.Mode = when {
+			current == UiEvent.ApplyServiceChange.Mode.Restart ||
+				incoming == UiEvent.ApplyServiceChange.Mode.Restart -> {
+				UiEvent.ApplyServiceChange.Mode.Restart
+			}
+
+			else -> incoming
+		}
+
+		fun enqueueApplyServiceChange(mode: UiEvent.ApplyServiceChange.Mode) {
+			if (currentServiceStatus != Status.Started) {
+				return
+			}
+
+			pendingApplyServiceChangeMode = mergeApplyServiceChangeMode(pendingApplyServiceChangeMode, mode)
+
+			val activeMode = activeApplyServiceChangeMode
+			if (activeMode != null &&
+				mergeApplyServiceChangeMode(activeMode, mode) != activeMode
+			) {
+				snackbarHostState.currentSnackbarData?.dismiss()
+			}
+
+			if (applyServiceChangeJob?.isActive == true) {
+				return
+			}
+
+			applyServiceChangeJob =
+				scope.launch {
+					while (true) {
+						val modeToShow = pendingApplyServiceChangeMode ?: break
+						pendingApplyServiceChangeMode = null
+						activeApplyServiceChangeMode = modeToShow
+						val (message, actionLabel) =
+							when (modeToShow) {
+								UiEvent.ApplyServiceChange.Mode.Reload -> {
+									getString(R.string.service_reload_required) to
+										getString(R.string.action_reload)
+								}
+
+								UiEvent.ApplyServiceChange.Mode.Restart -> {
+									getString(R.string.service_restart_required) to
+										getString(R.string.action_restart)
+								}
+							}
+						val result =
+							snackbarHostState.showSnackbar(
+								message = message,
+								actionLabel = actionLabel,
+								duration = androidx.compose.material3.SnackbarDuration.Short,
+							)
+						activeApplyServiceChangeMode = null
+						if (result == androidx.compose.material3.SnackbarResult.ActionPerformed) {
+							try {
+								when (modeToShow) {
+									UiEvent.ApplyServiceChange.Mode.Reload -> {
+										withContext(Dispatchers.IO) {
+											Libbox.newStandaloneCommandClient().serviceReload()
+										}
+									}
+
+									UiEvent.ApplyServiceChange.Mode.Restart -> {
+										restartServiceForApplyChange()
+									}
+								}
+							} catch (e: Exception) {
+								errorMessage = e.message ?: e.toString()
+								showErrorDialog = true
+							}
+						}
+					}
+				}
+		}
 
 		// Groups Sheet state
 		var showGroupsSheet by remember { mutableStateOf(false) }
@@ -336,8 +498,6 @@ class MainActivity :
 		var showConnectionsSheet by remember { mutableStateOf(false) }
 
 		// Error dialog state for UiEvent.ShowError
-		var showErrorDialog by remember { mutableStateOf(false) }
-		var errorMessage by remember { mutableStateOf("") }
 		val pendingIntentError = pendingIntentErrorMessage
 		LaunchedEffect(pendingIntentError) {
 			if (pendingIntentError != null) {
@@ -391,6 +551,16 @@ class MainActivity :
 					backgroundLocationPermissionLauncher.launch(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
 				}
 			}, onDismiss = { showBackgroundLocationDialog = false })
+		}
+
+		if (showLocalNetworkPermissionDialog) {
+			LocalNetworkPermissionDialog(onConfirm = {
+				showLocalNetworkPermissionDialog = false
+				localNetworkPermissionLauncher.launch(Manifest.permission.ACCESS_LOCAL_NETWORK)
+			}, onDismiss = {
+				showLocalNetworkPermissionDialog = false
+				startService()
+			})
 		}
 
 		// Handle import remote profile dialog
@@ -574,10 +744,23 @@ class MainActivity :
 								color = MaterialTheme.colorScheme.error,
 							)
 						} else {
-							Row(verticalAlignment = Alignment.CenterVertically) {
-								CircularProgressIndicator(modifier = Modifier.size(24.dp))
-								Spacer(modifier = Modifier.width(12.dp))
+							val progress by UpdateState.downloadProgress
+							val progressValue = progress
+							Column {
+								if (progressValue != null) {
+									Text("${stringResource(R.string.downloading)} ${(progressValue * 100).toInt()}%")
+								} else {
 								Text(stringResource(R.string.downloading))
+							}
+								Spacer(modifier = Modifier.height(8.dp))
+								if (progressValue != null) {
+									LinearProgressIndicator(
+										progress = { progressValue },
+										modifier = Modifier.fillMaxWidth(),
+									)
+								} else {
+									LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+								}
 							}
 						}
 					}
@@ -589,6 +772,7 @@ class MainActivity :
 							downloadJob = null
 							showDownloadDialog = false
 							downloadError = null
+							UpdateState.downloadProgress.value = null
 						},
 					) {
 						Text(stringResource(if (downloadError != null) R.string.ok else android.R.string.cancel))
@@ -597,6 +781,11 @@ class MainActivity :
 			)
 		}
 
+		val remoteServer by RemoteControlManager.remoteServer.collectAsState()
+		val remoteConnected by RemoteControlManager.isConnected.collectAsState()
+		val remoteStartedAt by RemoteControlManager.startedAt.collectAsState()
+		val isRemote = remoteServer != null
+
 		// Initialize the dashboard view model and store reference
 		val dashboardViewModel: DashboardViewModel = viewModel()
 		if (!::dashboardViewModel.isInitialized) {
@@ -604,12 +793,45 @@ class MainActivity :
 		}
 		val dashboardUiState by dashboardViewModel.uiState.collectAsState()
 
+		LaunchedEffect(currentServiceStatus) {
+			dashboardViewModel.updateServiceStatus(currentServiceStatus)
+		}
+
+		if (dashboardUiState.showDeprecatedDialog && dashboardUiState.deprecatedNotes.isNotEmpty()) {
+			val note = dashboardUiState.deprecatedNotes.first()
+			AlertDialog(
+				onDismissRequest = { },
+				title = { Text(stringResource(R.string.error_deprecated_warning)) },
+				text = { Text(note.message) },
+				confirmButton = {
+					TextButton(onClick = { dashboardViewModel.dismissDeprecatedNote() }) {
+						Text(stringResource(R.string.ok))
+					}
+				},
+				dismissButton =
+				if (!note.migrationLink.isNullOrBlank()) {
+					{
+						TextButton(onClick = {
+							dashboardViewModel.sendGlobalEvent(UiEvent.OpenUrl(note.migrationLink))
+							dashboardViewModel.dismissDeprecatedNote()
+						}) {
+							Text(stringResource(R.string.error_deprecated_documentation))
+						}
+					}
+				} else {
+					null
+				},
+			)
+		}
+
 		val isSettingsSubScreen = currentRoute?.startsWith("settings/") == true
+		val isToolsSubScreen = currentRoute?.startsWith("tools/") == true
 		val isConnectionsDetail = currentRoute?.startsWith("connections/detail") == true
 		val isProfileRoute = currentRoute?.startsWith("profile/") == true
 		val currentRootRoute =
 			when {
 				isSettingsSubScreen -> Screen.Settings.route
+				isToolsSubScreen -> Screen.Tools.route
 				currentRoute?.startsWith(Screen.Connections.route) == true -> Screen.Connections.route
 //				currentRoute?.startsWith(Screen.Log.route) == true -> Screen.Log.route
 				isProfileRoute -> Screen.Dashboard.route
@@ -619,7 +841,7 @@ class MainActivity :
 		val isGroupsRoute = currentRootRoute == Screen.Groups.route
 //		val isLogRoute = currentRootRoute == Screen.Log.route
 
-		val isSubScreen = isSettingsSubScreen || isConnectionsDetail || isProfileRoute
+		val isSubScreen = isSettingsSubScreen || isToolsSubScreen || isConnectionsDetail || isProfileRoute
 		// Get LogViewModel instance if we're on the Log screen
 //		val logViewModel: LogViewModel? =
 //			if (isLogRoute) {
@@ -649,9 +871,70 @@ class MainActivity :
 				null
 			}
 
+		val tailscaleSSHSharedViewModel: TailscaleSSHSharedViewModel = viewModel()
+
+		val isToolsRoute = currentRootRoute == Screen.Tools.route
+
+		val tailscaleStatusViewModel: TailscaleStatusViewModel = viewModel()
+		val tailscaleState by tailscaleStatusViewModel.uiState.collectAsState()
+		val taildropUnreadCount = tailscaleState.endpoints.sumOf { it.unreadFileCount }
+		val taildropSendSessions by TaildropSendManager.sessions.collectAsState()
+		val taildropFailedCount = taildropSendSessions.count { it.errorMessage != null }
+
+		val usbIPStatusViewModel: USBIPStatusViewModel? =
+			if (isToolsRoute) {
+				viewModel()
+			} else {
+				null
+			}
+
+		val openConnectStatusViewModel: OpenConnectStatusViewModel? =
+			if (isToolsRoute) {
+				viewModel()
+			} else {
+				null
+			}
+
+		val openVPNStatusViewModel: OpenVPNStatusViewModel? =
+			if (isToolsRoute) {
+				viewModel()
+			} else {
+				null
+			}
+
+		val statusTargetActive = remoteServer != null || currentServiceStatus == Status.Started
+		val subscribeStatus = {
+			tailscaleStatusViewModel.subscribe()
+			usbIPStatusViewModel?.subscribe()
+			openConnectStatusViewModel?.subscribe()
+			openVPNStatusViewModel?.subscribe()
+		}
+		val cancelStatus = {
+			tailscaleStatusViewModel.cancel()
+			usbIPStatusViewModel?.cancel()
+			openConnectStatusViewModel?.cancel()
+			openVPNStatusViewModel?.cancel()
+		}
+		LaunchedEffect(remoteServer?.id) {
+			cancelStatus()
+			if (statusTargetActive) {
+				subscribeStatus()
+			}
+		}
+		LaunchedEffect(
+			statusTargetActive,
+			usbIPStatusViewModel,
+			openConnectStatusViewModel,
+			openVPNStatusViewModel,
+		) {
+			if (statusTargetActive) {
+				subscribeStatus()
+			} else {
+				cancelStatus()
+			}
+		}
 		val showGroupsInNav = dashboardUiState.hasGroups
-		val showConnectionsInNav =
-			currentServiceStatus == Status.Started || currentServiceStatus == Status.Starting
+		val connectionsAvailable = if (isRemote) remoteConnected else currentServiceStatus == Status.Started
 
 		val railScreens =
 			buildList {
@@ -659,10 +942,11 @@ class MainActivity :
 				if (showGroupsInNav) {
 					add(Screen.Groups)
 				}
-				if (showConnectionsInNav) {
+				if (connectionsAvailable) {
 					add(Screen.Connections)
 				}
 //				add(Screen.Log)
+//				add(Screen.Tools)
 				add(Screen.Settings)
 			}
 
@@ -670,11 +954,12 @@ class MainActivity :
 			buildSet {
 				add(Screen.Dashboard.route)
 //				add(Screen.Log.route)
+//				add(Screen.Tools.route)
 				add(Screen.Settings.route)
 				if (useNavigationRail && showGroupsInNav) {
 					add(Screen.Groups.route)
 				}
-				if (useNavigationRail && showConnectionsInNav) {
+				if (useNavigationRail && connectionsAvailable) {
 					add(Screen.Connections.route)
 				}
 			}
@@ -718,34 +1003,19 @@ class MainActivity :
 						startService()
 					}
 
-					is UiEvent.RequestReconnectService -> {
-						connection.reconnect()
-					}
-
 					is UiEvent.EditProfile -> {
 						navController.navigate(ProfileRoutes.editProfile(event.profileId)) {
 							launchSingleTop = true
 						}
 					}
 
-					is UiEvent.RestartToTakeEffect -> {
-						if (currentServiceStatus == Status.Started) {
-							scope.launch {
-								snackbarHostState.currentSnackbarData?.dismiss()
-								val result =
-									snackbarHostState.showSnackbar(
-										message = "Restart to take effect",
-										actionLabel = "Restart",
-										duration = androidx.compose.material3.SnackbarDuration.Short,
-									)
-								if (result == androidx.compose.material3.SnackbarResult.ActionPerformed) {
-									withContext(Dispatchers.IO) {
-										Libbox.newStandaloneCommandClient().serviceReload()
-									}
-								}
-							}
+					is UiEvent.Navigate -> {
+						navController.navigate(event.route) {
+							launchSingleTop = true
 						}
 					}
+
+					is UiEvent.ApplyServiceChange -> enqueueApplyServiceChange(event.mode)
 				}
 			}
 		}
@@ -755,18 +1025,19 @@ class MainActivity :
 		}
 
 		val scaffoldContent: @Composable (PaddingValues) -> Unit = { paddingValues ->
+			CompositionLocalProvider(LocalScaffoldPadding provides paddingValues) {
 			Box(
-				modifier = Modifier
-					.fillMaxSize()
-					.padding(paddingValues),
+					modifier = Modifier.fillMaxSize().consumeWindowInsets(paddingValues),
 			) {
-				// Service Status Bar (shown when service is running or stopping)
+					// Service Status Bar (shown when service is running or stopping);
+					// remote control replaces it with the remote session bar.
 				val serviceRunning =
 					currentServiceStatus == Status.Started || currentServiceStatus == Status.Starting
-				val showStatusBar = serviceRunning || currentServiceStatus == Status.Stopping
-				val showStartFab = !serviceRunning && dashboardUiState.selectedProfileId != -1L
+					val showStatusBar = isRemote || serviceRunning || currentServiceStatus == Status.Stopping
+					val showStartFab = !isRemote && !serviceRunning && dashboardUiState.selectedProfileId != -1L
+					val bottomOverlayPadding = paddingValues.calculateBottomPadding()
 
-				SFANavHost(
+					NavHost(
 					navController = navController,
 					serviceStatus = currentServiceStatus,
 					showStartFab = showStartFab,
@@ -778,9 +1049,29 @@ class MainActivity :
 //					logViewModel = logViewModel,
 					groupsViewModel = groupsViewModel,
 					connectionsViewModel = connectionsViewModel,
+						tailscaleStatusViewModel = tailscaleStatusViewModel,
+						tailscaleSSHSharedViewModel = tailscaleSSHSharedViewModel,
+						usbIPStatusViewModel = usbIPStatusViewModel,
+						openConnectStatusViewModel = openConnectStatusViewModel,
+						openVPNStatusViewModel = openVPNStatusViewModel,
 					modifier = Modifier.fillMaxSize(),
 				)
 				if (!useNavigationRail) {
+						if (isRemote) {
+							RemoteStatusBar(
+								visible = !isSubScreen,
+								serverName = remoteServer?.displayName ?: "",
+								isConnected = remoteConnected,
+								startTime = remoteStartedAt,
+								groupsCount = dashboardUiState.groupsCount,
+								hasGroups = dashboardUiState.hasGroups,
+								onGroupsClick = { showGroupsSheet = true },
+								connectionsCount = dashboardUiState.connectionsCount,
+								onConnectionsClick = { showConnectionsSheet = true },
+								onDisconnectClick = { RemoteControlManager.exitRemoteControl() },
+								modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = bottomOverlayPadding),
+							)
+						} else {
 					ServiceStatusBar(
 						visible = showStatusBar && !isSubScreen,
 						serviceStatus = currentServiceStatus,
@@ -791,9 +1082,10 @@ class MainActivity :
 						connectionsCount = dashboardUiState.connectionsCount,
 						onConnectionsClick = { showConnectionsSheet = true },
 						onStopClick = { dashboardViewModel.toggleService() },
-						modifier = Modifier.align(Alignment.BottomCenter),
+								modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = bottomOverlayPadding),
 					)
 				}
+					}
 
 				val showPadFab = useNavigationRail && !isSubScreen && (showStartFab || showStatusBar)
 				if (useNavigationRail) {
@@ -803,12 +1095,41 @@ class MainActivity :
 						exit = scaleOut(),
 						modifier = Modifier
 							.align(Alignment.BottomEnd)
+								.padding(bottom = bottomOverlayPadding)
 							.padding(20.dp),
 					) {
 						val isRunning =
 							currentServiceStatus == Status.Started || currentServiceStatus == Status.Starting
 						val isStopping = currentServiceStatus == Status.Stopping
-						if (currentServiceStatus == Status.Stopped) {
+							if (isRemote) {
+								ExtendedFloatingActionButton(
+									onClick = { RemoteControlManager.exitRemoteControl() },
+									icon = {
+										Icon(
+											imageVector = Icons.Default.LinkOff,
+											contentDescription = stringResource(R.string.remote_disconnect),
+										)
+									},
+									text = {
+										if (remoteConnected && remoteStartedAt != null) {
+											UptimeText(startTime = remoteStartedAt!!)
+										} else {
+											Text(
+												text =
+												if (remoteConnected) {
+													remoteServer?.displayName ?: ""
+												} else {
+													stringResource(R.string.remote_connecting)
+												},
+												style = MaterialTheme.typography.labelLarge,
+											)
+										}
+									},
+									containerColor = MaterialTheme.colorScheme.primaryContainer,
+									contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+									modifier = Modifier.height(64.dp),
+								)
+							} else if (currentServiceStatus == Status.Stopped) {
 							FloatingActionButton(
 								onClick = { startService() },
 								containerColor = MaterialTheme.colorScheme.primaryContainer,
@@ -888,13 +1209,15 @@ class MainActivity :
 				} else {
 					// Start FAB (shown when service is stopped and a profile is selected)
 					androidx.compose.animation.AnimatedVisibility(
-						visible = currentServiceStatus == Status.Stopped &&
+							visible = !isRemote &&
+								currentServiceStatus == Status.Stopped &&
 								dashboardUiState.selectedProfileId != -1L &&
 								!isSubScreen,
 						enter = scaleIn(),
 						exit = scaleOut(),
 						modifier = Modifier
 							.align(Alignment.BottomEnd)
+								.padding(bottom = bottomOverlayPadding)
 							.padding(16.dp),
 					) {
 						FloatingActionButton(
@@ -909,6 +1232,22 @@ class MainActivity :
 						}
 					}
 				}
+			}
+		}
+		}
+
+		val crashReportUnreadCount by CrashReportManager.unreadCount.collectAsState()
+		val oomReportUnreadCount by OOMReportManager.unreadCount.collectAsState()
+		val powerReportUnreadCount by PowerReportManager.unreadCount.collectAsState()
+		// The crash/OOM report entries are hidden in remote control mode.
+		val toolsUnreadCount =
+			(if (isRemote) 0 else crashReportUnreadCount + oomReportUnreadCount + powerReportUnreadCount) + taildropUnreadCount
+
+		LaunchedEffect(Unit) {
+			withContext(Dispatchers.IO) {
+				CrashReportManager.refresh()
+				OOMReportManager.refresh()
+				PowerReportManager.refresh()
 			}
 		}
 
@@ -927,6 +1266,14 @@ class MainActivity :
 									icon = {
 										if (screen == Screen.Settings && hasUpdate) {
 											BadgedBox(badge = { Badge(containerColor = MaterialTheme.colorScheme.primary) }) {
+												Icon(screen.icon, contentDescription = null)
+											}
+										} else if (screen == Screen.Tools && taildropFailedCount > 0) {
+											BadgedBox(badge = { Badge(containerColor = MaterialTheme.colorScheme.error) { Text("!") } }) {
+												Icon(screen.icon, contentDescription = null)
+											}
+										} else if (screen == Screen.Tools && toolsUnreadCount > 0) {
+											BadgedBox(badge = { Badge(containerColor = MaterialTheme.colorScheme.error) { Text("$toolsUnreadCount") } }) {
 												Icon(screen.icon, contentDescription = null)
 											}
 										} else {
@@ -950,7 +1297,12 @@ class MainActivity :
 					}
 
 					Scaffold(
-						modifier = Modifier.weight(1f),
+						modifier = Modifier
+							.weight(1f)
+							.consumeWindowInsets(WindowInsets.safeDrawing.only(WindowInsetsSides.Start)),
+						contentWindowInsets = ScaffoldDefaults.contentWindowInsets.exclude(
+							WindowInsets.safeDrawing.only(WindowInsetsSides.Start),
+						),
 						snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
 						topBar = topBarContent,
 					) { paddingValues ->
@@ -971,6 +1323,14 @@ class MainActivity :
 										icon = {
 											if (screen == Screen.Settings && hasUpdate) {
 												BadgedBox(badge = { Badge(containerColor = MaterialTheme.colorScheme.primary) }) {
+													Icon(screen.icon, contentDescription = null)
+												}
+											} else if (screen == Screen.Tools && taildropFailedCount > 0) {
+												BadgedBox(badge = { Badge(containerColor = MaterialTheme.colorScheme.error) { Text("!") } }) {
+													Icon(screen.icon, contentDescription = null)
+												}
+											} else if (screen == Screen.Tools && toolsUnreadCount > 0) {
+												BadgedBox(badge = { Badge(containerColor = MaterialTheme.colorScheme.error) { Text("$toolsUnreadCount") } }) {
 													Icon(screen.icon, contentDescription = null)
 												}
 											} else {
@@ -1004,6 +1364,17 @@ class MainActivity :
 				) { paddingValues ->
 					scaffoldContent(paddingValues)
 				}
+			}
+		}
+
+		LaunchedEffect(dashboardUiState.hasGroups) {
+			if (!dashboardUiState.hasGroups) {
+				showGroupsSheet = false
+			}
+		}
+		LaunchedEffect(connectionsAvailable) {
+			if (!connectionsAvailable) {
+				showConnectionsSheet = false
 			}
 		}
 
@@ -1102,6 +1473,10 @@ class MainActivity :
 				}
 			}
 
+			BackHandler(enabled = selectedConnectionId != null) {
+				selectedConnectionId = null
+			}
+
 			ModalBottomSheet(
 				onDismissRequest = {
 					showConnectionsSheet = false
@@ -1142,10 +1517,6 @@ class MainActivity :
 
 	override fun onServiceStatusChanged(status: Status) {
 		currentServiceStatus = status
-		// Update service status in ViewModels
-		if (::dashboardViewModel.isInitialized) {
-			dashboardViewModel.updateServiceStatus(status)
-		}
 	}
 
 	fun reconnect() {
@@ -1180,6 +1551,30 @@ class MainActivity :
 	private fun requestBackgroundLocationPermission() {
 		// Show background location permission dialog in Compose UI
 		showBackgroundLocationDialog = true
+	}
+
+	private suspend fun restartServiceForApplyChange() {
+		if (currentServiceStatus != Status.Started) {
+			return
+		}
+
+		BoxService.stop()
+		while (true) {
+			when (currentServiceStatus) {
+				Status.Stopped -> {
+					startService()
+					return
+				}
+
+				Status.Starting -> {
+					return
+				}
+
+				Status.Started, Status.Stopping -> {
+					delay(100L)
+				}
+			}
+		}
 	}
 
 	override fun onDestroy() {
@@ -1223,7 +1618,7 @@ class MainActivity :
 		AlertDialog(
 			onDismissRequest = onDismiss,
 			title = { Text(stringResource(R.string.location_permission_title)) },
-			text = { Text(stringResource(R.string.location_permission_description)) },
+			text = { Text(AnnotatedString.fromHtml(stringResource(R.string.location_permission_description))) },
 			confirmButton = {
 				TextButton(onClick = onConfirm) {
 					Text(stringResource(R.string.ok))
@@ -1242,7 +1637,26 @@ class MainActivity :
 		AlertDialog(
 			onDismissRequest = onDismiss,
 			title = { Text(stringResource(R.string.location_permission_title)) },
-			text = { Text(stringResource(R.string.location_permission_background_description)) },
+			text = { Text(AnnotatedString.fromHtml(stringResource(R.string.location_permission_background_description))) },
+			confirmButton = {
+				TextButton(onClick = onConfirm) {
+					Text(stringResource(R.string.ok))
+				}
+			},
+			dismissButton = {
+				TextButton(onClick = onDismiss) {
+					Text(stringResource(R.string.no_thanks))
+				}
+			},
+		)
+	}
+
+	@Composable
+	private fun LocalNetworkPermissionDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
+		AlertDialog(
+			onDismissRequest = onDismiss,
+			title = { Text(stringResource(R.string.local_network_permission_title)) },
+			text = { Text(stringResource(R.string.local_network_permission_description)) },
 			confirmButton = {
 				TextButton(onClick = onConfirm) {
 					Text(stringResource(R.string.ok))

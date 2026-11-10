@@ -62,9 +62,11 @@ import androidx.core.content.FileProvider
 import androidx.navigation.NavController
 import io.nekohasekai.libbox.Libbox
 import ru.ravel.ultunnel.R
-import ru.ravel.ultunnel.compose.base.GlobalEventBus
 import ru.ravel.ultunnel.compose.base.SelectableMessageDialog
 import ru.ravel.ultunnel.compose.base.UiEvent
+import ru.ravel.ultunnel.compose.base.rememberApplyServiceChangeNotifier
+import ru.ravel.ultunnel.compose.theme.LocalStatusColors
+import ru.ravel.ultunnel.compose.topbar.LocalScaffoldPadding
 import ru.ravel.ultunnel.compose.topbar.OverrideTopBar
 import ru.ravel.ultunnel.database.Settings
 import ru.ravel.ultunnel.utils.DetectionResult
@@ -101,6 +103,7 @@ fun PrivilegeSettingsScreen(navController: NavController, serviceStatus: Status 
 
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val notifyApplyChange = rememberApplyServiceChangeNotifier(serviceStatus)
     val systemHookStatus by HookStatusClient.status.collectAsState()
     var privilegeSettingsEnabled by remember { mutableStateOf(Settings.privilegeSettingsEnabled) }
 
@@ -198,8 +201,8 @@ fun PrivilegeSettingsScreen(navController: NavController, serviceStatus: Status 
                                 messageDialogTitle = context.getString(R.string.error_title)
                                 messageDialogMessage = failure.message ?: failure.toString()
                                 showMessageDialog = true
-                            } else if (serviceStatus == Status.Started) {
-                                GlobalEventBus.tryEmit(UiEvent.RestartToTakeEffect)
+                            } else {
+                                notifyApplyChange(UiEvent.ApplyServiceChange.Mode.Reload)
                             }
                         }
                     },
@@ -303,12 +306,17 @@ fun PrivilegeSettingsScreen(navController: NavController, serviceStatus: Status 
         )
     }
 
+    val scaffoldPadding = LocalScaffoldPadding.current
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.surface)
             .verticalScroll(rememberScrollState())
-            .padding(vertical = 8.dp),
+            .padding(
+                top = scaffoldPadding.calculateTopPadding() + 8.dp,
+                bottom = scaffoldPadding.calculateBottomPadding() + 8.dp,
+            ),
     ) {
         val isLsposedActivated = systemHookStatus?.active == true
         val showLogs = isLsposedActivated && !hasPendingChange
@@ -342,7 +350,7 @@ fun PrivilegeSettingsScreen(navController: NavController, serviceStatus: Status 
         val statusIconTint =
             when {
                 hasPendingDowngrade -> MaterialTheme.colorScheme.error
-                hasPendingUpdate -> Color(0xFFFFC107)
+                hasPendingUpdate -> LocalStatusColors.current.medium
                 isLsposedActivated -> MaterialTheme.colorScheme.primary
                 else -> MaterialTheme.colorScheme.error
             }
@@ -608,8 +616,8 @@ fun PrivilegeSettingsScreen(navController: NavController, serviceStatus: Status 
                                         messageDialogTitle = context.getString(R.string.error_title)
                                         messageDialogMessage = failure.message ?: failure.toString()
                                         showMessageDialog = true
-                                    } else if (checked && serviceStatus == Status.Started) {
-                                        GlobalEventBus.tryEmit(UiEvent.RestartToTakeEffect)
+                                    } else {
+                                        notifyApplyChange(UiEvent.ApplyServiceChange.Mode.Reload)
                                     }
                                 }
                             },
@@ -716,8 +724,8 @@ fun PrivilegeSettingsScreen(navController: NavController, serviceStatus: Status 
                                         messageDialogTitle = context.getString(R.string.error_title)
                                         messageDialogMessage = failure.message ?: failure.toString()
                                         showMessageDialog = true
-                                    } else if (serviceStatus == Status.Started) {
-                                        GlobalEventBus.tryEmit(UiEvent.RestartToTakeEffect)
+                                    } else {
+                                        notifyApplyChange(UiEvent.ApplyServiceChange.Mode.Reload)
                                     }
                                 }
                             },
@@ -895,7 +903,7 @@ private fun SelfTestDialog(isRunning: Boolean, result: DetectionResult?, onDismi
                             Text(
                                 text = notDetectedText,
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = Color(0xFF4CAF50),
+                                color = LocalStatusColors.current.good,
                             )
                         } else {
                             Text(
@@ -931,7 +939,7 @@ private fun SelfTestDialog(isRunning: Boolean, result: DetectionResult?, onDismi
                             Text(
                                 text = notDetectedText,
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = Color(0xFF4CAF50),
+                                color = LocalStatusColors.current.good,
                             )
                         } else {
                             Text(

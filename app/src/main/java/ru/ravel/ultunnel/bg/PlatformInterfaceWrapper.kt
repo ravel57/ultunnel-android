@@ -1,21 +1,22 @@
 package ru.ravel.ultunnel.bg
 
 import android.annotation.SuppressLint
-import android.content.pm.PackageManager
 import android.net.NetworkCapabilities
 import android.os.Build
+import android.os.ParcelFileDescriptor
 import android.os.Process
+import android.provider.Settings
 import android.system.OsConstants
 import android.util.Log
-import androidx.annotation.RequiresApi
 import io.nekohasekai.libbox.BridgeOptions
 import io.nekohasekai.libbox.BridgeSession
 import io.nekohasekai.libbox.ConnectionOwner
 import io.nekohasekai.libbox.InterfaceUpdateListener
 import io.nekohasekai.libbox.Libbox
 import io.nekohasekai.libbox.LocalDNSTransport
-import io.nekohasekai.libbox.NetworkInterfaceIterator
+import io.nekohasekai.libbox.NeighborEntryIterator
 import io.nekohasekai.libbox.NeighborUpdateListener
+import io.nekohasekai.libbox.NetworkInterfaceIterator
 import io.nekohasekai.libbox.PlatformInterface
 import io.nekohasekai.libbox.PlatformUser
 import io.nekohasekai.libbox.ShellSession
@@ -23,11 +24,22 @@ import io.nekohasekai.libbox.StringIterator
 import io.nekohasekai.libbox.TunOptions
 import io.nekohasekai.libbox.WIFIState
 import ru.ravel.ultunnel.Application
+import ru.ravel.ultunnel.ktx.toList
+import ru.ravel.ultunnel.ktx.toStringIterator
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import java.io.File
 import java.net.Inet6Address
 import java.net.InetSocketAddress
 import java.net.InterfaceAddress
 import java.net.NetworkInterface
+import java.security.KeyStore
+import kotlin.io.encoding.Base64
+import kotlin.io.encoding.ExperimentalEncodingApi
+import io.nekohasekai.libbox.NeighborEntry as LibboxNeighborEntry
 import io.nekohasekai.libbox.NetworkInterface as LibboxNetworkInterface
+
+private var neighborCallback: INeighborTableCallback.Stub? = null
 
 interface PlatformInterfaceWrapper : PlatformInterface {
 	override fun usePlatformAutoDetectInterfaceControl(): Boolean = true
@@ -36,12 +48,9 @@ interface PlatformInterfaceWrapper : PlatformInterface {
 	}
 
 	override fun openTun(options: TunOptions): Int {
-		error("invalid argument")
+		error("android: tun inbound requires VPN service")
 	}
 
-	override fun useProcFS(): Boolean = Build.VERSION.SDK_INT < Build.VERSION_CODES.Q
-
-	@RequiresApi(Build.VERSION_CODES.Q)
 	override fun findConnectionOwner(
 		ipProtocol: Int,
 		sourceAddress: String,
@@ -50,53 +59,41 @@ interface PlatformInterfaceWrapper : PlatformInterface {
 		destinationPort: Int,
 	): ConnectionOwner {
 		return try {
-			val uid =
-				Application.connectivity.getConnectionOwnerUid(
-					ipProtocol,
-					InetSocketAddress(sourceAddress, sourcePort),
-					InetSocketAddress(destinationAddress, destinationPort),
-				)
-
-			val owner = ConnectionOwner()
-
-			if (uid == Process.INVALID_UID) {
-				Log.w(
-					"PlatformInterface",
-					"getConnectionOwnerUid: owner not found for $sourceAddress:$sourcePort -> $destinationAddress:$destinationPort, protocol=$ipProtocol",
-				)
-				owner.userId = Process.INVALID_UID
-				owner.userName = ""
-				owner.setAndroidPackageNames(StringArray(emptyList<String>().iterator()))
-				return owner
-			}
-
-			val packages = Application.packageManager.getPackagesForUid(uid)
-			owner.userId = uid
+			val owner =
+				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+					val uid =
+						Application.connectivity.getConnectionOwnerUid(
+							ipProtocol,
+							InetSocketAddress(sourceAddress, sourcePort),
+							InetSocketAddress(destinationAddress, destinationPort),
+						)
+					if (uid == Process.INVALID_UID) {
+						Log.w(
+							"PlatformInterface",
+							"findConnectionOwner: owner not found for $sourceAddress:$sourcePort -> $destinationAddress:$destinationPort, protocol=$ipProtocol",
+						)
+						return emptyConnectionOwner()
+					}
+					ConnectionOwner().also { it.userId = uid }
+				} else {
+					Libbox.findConnectionOwner(ipProtocol, sourceAddress, sourcePort, destinationAddress, destinationPort)
+				}
+			val packages = Application.packageManager.getPackagesForUid(owner.userId)
 			owner.userName = packages?.firstOrNull() ?: ""
 			owner.setAndroidPackageNames(StringArray((packages?.toList() ?: emptyList()).iterator()))
 			owner
-		} catch (e: SecurityException) {
-			Log.e("PlatformInterface", "getConnectionOwnerUid security error", e)
-			ConnectionOwner().apply {
-				userId = Process.INVALID_UID
-				userName = ""
-				setAndroidPackageNames(StringArray(emptyList<String>().iterator()))
-			}
-		} catch (e: IllegalArgumentException) {
-			Log.e("PlatformInterface", "getConnectionOwnerUid bad arguments", e)
-			ConnectionOwner().apply {
-				userId = Process.INVALID_UID
-				userName = ""
-				setAndroidPackageNames(StringArray(emptyList<String>().iterator()))
-			}
 		} catch (e: Exception) {
-			Log.e("PlatformInterface", "getConnectionOwnerUid", e)
-			ConnectionOwner().apply {
-				userId = Process.INVALID_UID
-				userName = ""
-				setAndroidPackageNames(StringArray(emptyList<String>().iterator()))
-			}
+			// Не пробрасываем ошибку в ядро: при неудачном поиске владельца соединение
+			// просто идёт без информации о процессе.
+			Log.e("PlatformInterface", "findConnectionOwner", e)
+			emptyConnectionOwner()
 		}
+	}
+
+	private fun emptyConnectionOwner(): ConnectionOwner = ConnectionOwner().apply {
+		userId = Process.INVALID_UID
+		userName = ""
+		setAndroidPackageNames(StringArray(emptyList<String>().iterator()))
 	}
 
 	override fun startDefaultInterfaceMonitor(listener: InterfaceUpdateListener) {
@@ -121,6 +118,15 @@ interface PlatformInterfaceWrapper : PlatformInterface {
 				networkInterfaces.find { it.name == boxInterface.name } ?: continue
 			boxInterface.dnsServer =
 				StringArray(linkProperties.dnsServers.mapNotNull { it.hostAddress }.iterator())
+			boxInterface.gateway =
+				StringArray(
+					linkProperties.routes
+						.filter { it.destination.prefixLength == 0 }
+						.mapNotNull { it.gateway }
+						.filterNot { it.isAnyLocalAddress }
+						.mapNotNull { it.hostAddress }
+						.iterator(),
+				)
 			boxInterface.type =
 				when {
 					networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> Libbox.InterfaceTypeWIFI
@@ -187,10 +193,41 @@ interface PlatformInterfaceWrapper : PlatformInterface {
 
 	override fun localDNSTransport(): LocalDNSTransport? = LocalResolver
 
-	override fun usePlatformShell(): Boolean = false
+	override fun startNeighborMonitor(listener: NeighborUpdateListener?) {
+		if (listener == null) return
+		val callback = object : INeighborTableCallback.Stub() {
+			override fun onNeighborTableUpdated(entries: ParceledListSlice<*>?) {
+				if (entries == null) return
+				@Suppress("UNCHECKED_CAST")
+				val list = entries.list as List<NeighborEntry>
+				listener.updateNeighborTable(
+					NeighborEntryArray(
+						list.map { entry ->
+							LibboxNeighborEntry().apply {
+								address = entry.address
+								macAddress = entry.macAddress
+								hostname = entry.hostname
+							}
+						}.iterator(),
+					),
+				)
+			}
+		}
+		neighborCallback = callback
+		runBlocking(Dispatchers.IO) {
+			RootClient.registerNeighborTableCallback(callback)
+		}
+	}
+
+	override fun usePlatformShell(): Boolean = true
 
 	override fun checkPlatformShell() {
-		error("not supported")
+		val available = RootClient.rootAvailable.value ?: runBlocking(Dispatchers.IO) {
+			RootClient.checkRootAvailable()
+		}
+		if (!available) {
+			error("missing root permission")
+		}
 	}
 
 	override fun openShellSession(
@@ -201,36 +238,156 @@ interface PlatformInterfaceWrapper : PlatformInterface {
 		rows: Int,
 		cols: Int,
 	): ShellSession {
-		error("not supported")
+		user!!
+		val envList = environ?.toList().orEmpty()
+		if (user.uid == Process.myUid()) {
+			val resolved = ResolvedUser(user.username, user.uid, user.gid, user.homeDir)
+			val shell = UserResolver.findShell(resolved)
+			val shellEnv = buildBasicEnvironment(envList.toTypedArray(), shell, resolved.homeDir, term)
+			val args = if (command.isNullOrEmpty()) {
+				arrayOf("-" + File(shell).name)
+			} else {
+				arrayOf(File(shell).name, "-c", command)
+			}
+			val argsIter = args.asIterable().toStringIterator()
+			val envIter = shellEnv.asIterable().toStringIterator()
+			return if (term.isNullOrEmpty()) {
+				Libbox.openNativePipeSession(
+					shell,
+					resolved.homeDir,
+					argsIter,
+					envIter,
+					-1,
+					-1,
+					null,
+				)
+			} else {
+				Libbox.openNativeShellSession(
+					shell,
+					resolved.homeDir,
+					argsIter,
+					envIter,
+					term,
+					rows,
+					cols,
+					-1,
+					-1,
+					null,
+				)
+			}
+		}
+		val rootSession = runBlocking(Dispatchers.IO) {
+			RootClient.openShellSession(
+				user.username,
+				command,
+				envList.toTypedArray(),
+				term,
+				rows,
+				cols,
+			)
+		}
+		return RootShellSessionWrapper(rootSession)
 	}
 
 	override fun readSystemSSHHostKey(): String {
 		error("not supported")
 	}
 
-	override fun lookupSFTPServer(): String {
-		error("not supported")
+	override fun lookupSFTPServer(): String = runBlocking(Dispatchers.IO) {
+		RootClient.lookupSFTPServer()
 	}
 
-	override fun tailscaleHostname(): String = "${Build.MANUFACTURER} ${Build.MODEL}"
+	override fun tailscaleHostname(): String = Settings.Global.getString(
+		Application.application.contentResolver,
+		Settings.Global.DEVICE_NAME,
+	)?.takeIf { it.isNotBlank() }
+		?: "${Build.MANUFACTURER} ${Build.MODEL}"
 
-	override fun usePlatformBridge(): Boolean = false
+	override fun usePlatformBridge(): Boolean = RootClient.rootAvailable.value ?: runBlocking(Dispatchers.IO) {
+		RootClient.checkRootAvailable()
+	}
 
 	override fun createBridge(options: BridgeOptions?): BridgeSession {
-		error("not supported")
+		options!!
+		val session = runBlocking(Dispatchers.IO) {
+			RootClient.openBridge(
+				options.bridgeName,
+				options.mtu,
+				options.inet4Port,
+				options.inet6Port,
+				options.ruleIndex,
+				options.routeTable,
+			)
+		}
+		return RootBridgeSessionWrapper(session)
 	}
 
-	override fun lookupUser(username: String?): PlatformUser {
-		error("not supported")
+	override fun lookupUser(username: String?): io.nekohasekai.libbox.PlatformUser {
+		val resolved = UserResolver.resolve(Application.packageManager, username!!)
+		val platformUser = io.nekohasekai.libbox.PlatformUser()
+		platformUser.username = resolved.packageName
+		platformUser.uid = resolved.uid
+		platformUser.gid = resolved.gid
+		platformUser.homeDir = resolved.homeDir
+		return platformUser
 	}
 
 	override fun registerMyInterface(name: String?) {
 	}
 
-	override fun startNeighborMonitor(listener: NeighborUpdateListener?) {
+	override fun closeNeighborMonitor(listener: NeighborUpdateListener?) {
+		val callback = neighborCallback ?: return
+		neighborCallback = null
+		runBlocking(Dispatchers.IO) {
+			RootClient.unregisterNeighborTableCallback(callback)
+		}
 	}
 
-	override fun closeNeighborMonitor(listener: NeighborUpdateListener?) {
+	private class RootBridgeSessionWrapper(
+		private val session: IBridgeSession,
+	) : BridgeSession {
+		override fun fileDescriptor(): Int = session.fileDescriptor.detachFd()
+
+		override fun name(): String = session.name
+
+		override fun inet6Active(): Boolean = session.isInet6Active
+
+		override fun setEgress(interfaceName: String?) {
+			session.setEgress(interfaceName ?: "")
+		}
+
+		override fun close() {
+			session.close()
+		}
+	}
+
+	private class RootShellSessionWrapper(
+		private val rootSession: IRootShellSession,
+	) : ShellSession {
+		private val masterPfd: ParcelFileDescriptor = rootSession.masterFD
+
+		override fun masterFD(): Int = masterPfd.fd
+
+		override fun resize(rows: Int, cols: Int) {
+			rootSession.resize(rows, cols)
+		}
+
+		override fun signal(signal: Int) {
+			rootSession.signal(signal)
+		}
+
+		override fun waitExit(): Int = rootSession.waitFor()
+
+		override fun close() {
+			masterPfd.close()
+			rootSession.close()
+		}
+	}
+
+	private class NeighborEntryArray(private val iterator: Iterator<LibboxNeighborEntry>) : NeighborEntryIterator {
+		override fun hasNext(): Boolean = iterator.hasNext()
+
+		override fun next(): LibboxNeighborEntry = iterator.next()
 	}
 
 	private class InterfaceArray(private val iterator: Iterator<LibboxNetworkInterface>) : NetworkInterfaceIterator {

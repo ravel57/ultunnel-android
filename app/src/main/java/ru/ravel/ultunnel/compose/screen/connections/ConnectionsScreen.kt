@@ -62,6 +62,7 @@ import ru.ravel.ultunnel.compat.rememberOverscrollEffectCompat
 import ru.ravel.ultunnel.compose.model.Connection
 import ru.ravel.ultunnel.compose.model.ConnectionSort
 import ru.ravel.ultunnel.compose.model.ConnectionStateFilter
+import ru.ravel.ultunnel.compose.topbar.LocalScaffoldPadding
 import ru.ravel.ultunnel.compose.topbar.OverrideTopBar
 import ru.ravel.ultunnel.compose.util.rememberSheetDismissFromContentOnlyIfGestureStartedAtTopModifier
 import ru.ravel.ultunnel.constant.Status
@@ -280,8 +281,9 @@ fun ConnectionsPage(
             modifier = modifier.fillMaxSize(),
         )
     } else {
+        val scaffoldPadding = LocalScaffoldPadding.current
         Column(
-            modifier = modifier.fillMaxSize(),
+            modifier = modifier.fillMaxSize().padding(scaffoldPadding),
         ) {
             headerContent()
             ConnectionsScreen(
@@ -394,6 +396,13 @@ fun ConnectionsScreen(
     }
 
     val lazyListState = rememberSaveable(saver = LazyListState.Saver) { LazyListState() }
+    val emptyMessage =
+        when {
+            uiState.searchText.isNotBlank() -> R.string.connection_empty_search
+            uiState.stateFilter == ConnectionStateFilter.All -> R.string.connection_empty_all
+            uiState.stateFilter == ConnectionStateFilter.Active -> R.string.connection_empty_active
+            else -> R.string.connection_empty_closed
+        }
 
     if (asSheet) {
         val sheetSwipeToDismissModifier =
@@ -474,8 +483,7 @@ fun ConnectionsScreen(
                             contentAlignment = Alignment.Center,
                         ) {
                             Text(
-                                text = stringResource(R.string.empty_connections),
-                                style = MaterialTheme.typography.bodyLarge,
+                                stringResource(emptyMessage),
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
@@ -547,14 +555,14 @@ fun ConnectionsScreen(
                         contentAlignment = Alignment.Center,
                     ) {
                         Text(
-                            text = stringResource(R.string.empty_connections),
-                            style = MaterialTheme.typography.bodyLarge,
+                            stringResource(emptyMessage),
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
                 }
 
                 else -> {
+                    val scaffoldPadding = if (asSheet) PaddingValues(0.dp) else LocalScaffoldPadding.current
                     val bounceBlockingConnection = rememberBounceBlockingNestedScrollConnection(lazyListState)
                     LazyColumnCompat(
                         modifier =
@@ -562,7 +570,7 @@ fun ConnectionsScreen(
                             .fillMaxSize()
                             .nestedScroll(bounceBlockingConnection),
                         state = lazyListState,
-                        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 16.dp),
+                        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = scaffoldPadding.calculateBottomPadding() + 16.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp),
                         overscrollEffect = rememberOverscrollEffectCompat(),
                     ) {

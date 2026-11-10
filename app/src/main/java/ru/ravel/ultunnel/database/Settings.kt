@@ -6,6 +6,7 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.json.JSONObject
+import io.nekohasekai.libbox.Libbox
 import ru.ravel.ultunnel.Application
 import ru.ravel.ultunnel.BuildConfig
 import ru.ravel.ultunnel.bg.ProxyService
@@ -18,6 +19,7 @@ import ru.ravel.ultunnel.database.preference.RoomPreferenceDataStore
 import ru.ravel.ultunnel.ktx.boolean
 import ru.ravel.ultunnel.ktx.int
 import ru.ravel.ultunnel.ktx.long
+import ru.ravel.ultunnel.ktx.map
 import ru.ravel.ultunnel.ktx.string
 import ru.ravel.ultunnel.ktx.stringSet
 import java.io.File
@@ -30,17 +32,17 @@ object Settings {
 			Application.application,
 			KeyValueDatabase::class.java,
 			Path.SETTINGS_DATABASE_PATH,
-		).allowMainThreadQueries()
-			.fallbackToDestructiveMigration()
+		).fallbackToDestructiveMigration()
 			.enableMultiInstanceInvalidation()
 			.setQueryExecutor { GlobalScope.launch { it.run() } }
 			.build()
 	}
-	val dataStore = RoomPreferenceDataStore(instance.keyValuePairDao())
+	val dataStore = RoomPreferenceDataStore { instance.keyValuePairDao() }
 	var selectedProfile by dataStore.long(SettingsKey.SELECTED_PROFILE) { -1L }
 	var serviceMode by dataStore.string(SettingsKey.SERVICE_MODE) { ServiceMode.NORMAL }
 	var startedByUser by dataStore.boolean(SettingsKey.STARTED_BY_USER)
 
+	var updateSource by dataStore.string(SettingsKey.UPDATE_SOURCE) { "github" }
 	var checkUpdateEnabled by dataStore.boolean(SettingsKey.CHECK_UPDATE_ENABLED) { false }
 	var updateCheckPrompted by dataStore.boolean(SettingsKey.UPDATE_CHECK_PROMPTED) { false }
 	var updateTrack by dataStore.string(SettingsKey.UPDATE_TRACK) {
@@ -54,6 +56,7 @@ object Settings {
 			"stable"
 		}
 	}
+	var githubToken by dataStore.string(SettingsKey.GITHUB_TOKEN) { "" }
 	var silentInstallEnabled by dataStore.boolean(SettingsKey.SILENT_INSTALL_ENABLED) { false }
 	var silentInstallMethod by dataStore.string(SettingsKey.SILENT_INSTALL_METHOD) {
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -62,8 +65,9 @@ object Settings {
 			"SHIZUKU"
 		}
 	}
+	var fdroidMirrorUrl by dataStore.string(SettingsKey.FDROID_MIRROR_URL) { "https://f-droid.org/repo" }
+	var fdroidCustomMirrors by dataStore.stringSet(SettingsKey.FDROID_CUSTOM_MIRRORS) { emptySet() }
 	var autoUpdateEnabled by dataStore.boolean(SettingsKey.AUTO_UPDATE_ENABLED) { false }
-	var disableMemoryLimit by dataStore.boolean(SettingsKey.DISABLE_MEMORY_LIMIT)
 	var dynamicNotification by dataStore.boolean(SettingsKey.DYNAMIC_NOTIFICATION) { true }
 	var disableDeprecatedWarnings by dataStore.boolean(SettingsKey.DISABLE_DEPRECATED_WARNINGS) { false }
 
@@ -94,6 +98,7 @@ object Settings {
 		perAppProxyList
 	}
 
+	var allowBypass by dataStore.boolean(SettingsKey.ALLOW_BYPASS) { false }
 	var systemProxyEnabled by dataStore.boolean(SettingsKey.SYSTEM_PROXY_ENABLED) { true }
 
 	var privilegeSettingsEnabled by dataStore.boolean(SettingsKey.PRIVILEGE_SETTINGS_ENABLED) { false }
@@ -103,8 +108,29 @@ object Settings {
 	) { false }
 	var privilegeSettingsInterfacePrefix by dataStore.string(SettingsKey.PRIVILEGE_SETTINGS_INTERFACE_PREFIX) { "wlan" }
 
+	var oomKillerEnabled by dataStore.boolean(SettingsKey.OOM_KILLER_ENABLED) { false }
+	var oomKillerDisabled by dataStore.boolean(SettingsKey.OOM_KILLER_DISABLED) { true }
+	var oomMemoryLimitMB by dataStore.int(SettingsKey.OOM_MEMORY_LIMIT_MB) { 50 }
+
+	var powerReportEnabled by dataStore.boolean(SettingsKey.POWER_REPORT_ENABLED) { false }
+
 	var dashboardItemOrder by dataStore.string(SettingsKey.DASHBOARD_ITEM_ORDER) { "" }
 	var dashboardDisabledItems by dataStore.stringSet(SettingsKey.DASHBOARD_DISABLED_ITEMS) { emptySet() }
+
+	var activeRemoteServerId by dataStore.long(SettingsKey.ACTIVE_REMOTE_SERVER_ID) { 0L }
+
+	// Tailscale SSH
+	var tailscaleSSHRememberedUsernames by dataStore.map(SettingsKey.TAILSCALE_SSH_REMEMBERED_USERNAMES)
+	var tailscaleSSHRememberedTerminalTypes by dataStore.map(SettingsKey.TAILSCALE_SSH_REMEMBERED_TERMINAL_TYPES)
+	var tailscaleSSHQuickConnectPeers by dataStore.stringSet(SettingsKey.TAILSCALE_SSH_QUICK_CONNECT_PEERS)
+	var tailscaleSSHLightTheme by dataStore.string(SettingsKey.TAILSCALE_SSH_LIGHT_THEME) { "Alabaster" }
+	var tailscaleSSHDarkTheme by dataStore.string(SettingsKey.TAILSCALE_SSH_DARK_THEME) { "Afterglow" }
+	var tailscaleSSHFontFamily by dataStore.string(SettingsKey.TAILSCALE_SSH_FONT_FAMILY)
+	var tailscaleSSHFontSize by dataStore.int(SettingsKey.TAILSCALE_SSH_FONT_SIZE) { 14 }
+	var tailscaleSSHCustomFontPath by dataStore.string(SettingsKey.TAILSCALE_SSH_CUSTOM_FONT_PATH)
+	var tailscaleSSHLightConfig by dataStore.string(SettingsKey.TAILSCALE_SSH_LIGHT_CONFIG)
+	var tailscaleSSHDarkConfig by dataStore.string(SettingsKey.TAILSCALE_SSH_DARK_CONFIG)
+	var tailscaleSSHFontFollowTheme by dataStore.boolean(SettingsKey.TAILSCALE_SSH_FONT_FOLLOW_THEME) { true }
 
 	var cachedUpdateInfo by dataStore.string(SettingsKey.CACHED_UPDATE_INFO) { "" }
 	var cachedApkPath by dataStore.string(SettingsKey.CACHED_APK_PATH) { "" }
@@ -117,34 +143,28 @@ object Settings {
 		else -> ProxyService::class.java
 	}
 
-	suspend fun rebuildServiceMode(): Boolean {
-		var newMode = ServiceMode.NORMAL
+	suspend fun rebuildServiceMode() {
+		val newMode = detectServiceMode()
+		if (serviceMode != newMode) {
+			serviceMode = newMode
+		}
+	}
+
+	suspend fun detectServiceMode(): String {
 		try {
 			if (needVPNService()) {
-				newMode = ServiceMode.VPN
+				return ServiceMode.VPN
 			}
 		} catch (_: Exception) {
 		}
-		if (serviceMode == newMode) {
-			return false
-		}
-		serviceMode = newMode
-		return true
+		return ServiceMode.NORMAL
 	}
 
 	private suspend fun needVPNService(): Boolean {
 		val selectedProfileId = selectedProfile
 		if (selectedProfileId == -1L) return false
-		val profile = ProfileManager.get(selectedProfile) ?: return false
-		val content = JSONObject(File(profile.typed.path).readText())
-		val inbounds = content.getJSONArray("inbounds")
-		for (index in 0 until inbounds.length()) {
-			val inbound = inbounds.getJSONObject(index)
-			if (inbound.getString("type") == "tun") {
-				return true
-			}
-		}
-		return false
+		val profile = ProfileManager.get(selectedProfileId) ?: return false
+		return Libbox.hasTunInbound(File(profile.typed.path).readText())
 	}
 
 }

@@ -2,6 +2,7 @@ package ru.ravel.ultunnel.compose.screen.privilegesettings
 
 import android.annotation.SuppressLint
 import android.content.pm.PackageManager
+import android.os.BadParcelableException
 import android.os.Build
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
@@ -54,11 +55,15 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import ru.ravel.ultunnel.R
+import ru.ravel.ultunnel.compose.base.UiEvent
+import ru.ravel.ultunnel.compose.base.rememberApplyServiceChangeNotifier
 import ru.ravel.ultunnel.compose.shared.AppSelectionCard
 import ru.ravel.ultunnel.compose.shared.PackageCache
 import ru.ravel.ultunnel.compose.shared.SortMode
 import ru.ravel.ultunnel.compose.shared.buildDisplayPackages
+import ru.ravel.ultunnel.compose.topbar.LocalScaffoldPadding
 import ru.ravel.ultunnel.compose.topbar.OverrideTopBar
+import ru.ravel.ultunnel.constant.Status
 import ru.ravel.ultunnel.database.Settings
 import ru.ravel.ultunnel.ktx.clipboardText
 import ru.ravel.ultunnel.utils.PrivilegeSettingsClient
@@ -96,10 +101,14 @@ private enum class RiskCategory {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PrivilegeSettingsManageScreen(onBack: () -> Unit) {
+fun PrivilegeSettingsManageScreen(
+	onBack: () -> Unit,
+	serviceStatus: Status = Status.Stopped,
+) {
 	val context = LocalContext.current
 	val focusManager = LocalFocusManager.current
 	val coroutineScope = rememberCoroutineScope()
+	val notifyApplyChange = rememberApplyServiceChangeNotifier(serviceStatus)
 
 	var sortMode by remember { mutableStateOf(SortMode.NAME) }
 	var sortReverse by remember { mutableStateOf(false) }
@@ -177,6 +186,8 @@ fun PrivilegeSettingsManageScreen(onBack: () -> Unit) {
 				}
 			if (failure != null) {
 				syncErrorMessage = failure.message ?: failure.toString()
+			} else {
+				notifyApplyChange(UiEvent.ApplyServiceChange.Mode.Reload)
 			}
 		}
 	}
@@ -265,10 +276,11 @@ fun PrivilegeSettingsManageScreen(onBack: () -> Unit) {
 				@Suppress("DEPRECATION")
 				PackageManager.GET_PERMISSIONS or PackageManager.GET_UNINSTALLED_PACKAGES
 			}
+		var loadError: String? = null
 		val loadResult =
 			withContext(Dispatchers.IO) {
 				try {
-					val installedPackages = PackageQueryManager.getInstalledPackages(packageManagerFlags, packageManagerFlags)
+					val installedPackages = PackageQueryManager.getInstalledPackages(packageManagerFlags)
 					val packageManager = context.packageManager
 					val packageCaches =
 						installedPackages.mapNotNull { packageInfo ->
@@ -286,13 +298,17 @@ fun PrivilegeSettingsManageScreen(onBack: () -> Unit) {
 						}.toSet()
 					LoadResult(packageCaches, selectedUidSet)
 				} catch (_: PrivilegedAccessRequiredException) {
+					loadError = context.getString(R.string.privileged_access_required)
+					null
+				} catch (e: BadParcelableException) {
+					loadError = e.message
 					null
 				}
 			}
 		if (loadResult == null) {
 			Toast.makeText(
 				context,
-				R.string.privileged_access_required,
+				loadError,
 				Toast.LENGTH_LONG,
 			).show()
 			onBack()
@@ -447,8 +463,12 @@ fun PrivilegeSettingsManageScreen(onBack: () -> Unit) {
 		)
 	}
 
+	val scaffoldPadding = LocalScaffoldPadding.current
+
 	Column(
-		modifier = Modifier.fillMaxSize(),
+		modifier = Modifier
+			.fillMaxSize()
+			.padding(scaffoldPadding),
 	) {
 		AnimatedVisibility(
 			visible = isLoading,
@@ -522,8 +542,10 @@ fun PrivilegeSettingsManageScreen(onBack: () -> Unit) {
 			modifier = Modifier.fillMaxSize(),
 			contentPadding =
 				androidx.compose.foundation.layout.PaddingValues(
-					horizontal = 16.dp,
-					vertical = 12.dp,
+				start = 16.dp,
+				end = 16.dp,
+				top = 12.dp,
+				bottom = scaffoldPadding.calculateBottomPadding() + 12.dp,
 				),
 			verticalArrangement = Arrangement.spacedBy(8.dp),
 		) {
