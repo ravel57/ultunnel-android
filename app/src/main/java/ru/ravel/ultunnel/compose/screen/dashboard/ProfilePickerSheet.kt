@@ -25,6 +25,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.InsertDriveFile
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Error
+import androidx.compose.material.icons.filled.NetworkCheck
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.ExpandLess
@@ -33,6 +36,7 @@ import androidx.compose.material.icons.filled.IosShare
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.QrCode2
 import androidx.compose.material.icons.filled.Save
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -42,6 +46,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -83,6 +88,9 @@ fun ProfilePickerSheet(
     onProfileDelete: (Profile) -> Unit,
     onProfileMove: (Int, Int) -> Unit,
     onDismiss: () -> Unit,
+    checkingProfiles: Boolean = false,
+    checkResults: Map<Long, ProfileCheckResult> = emptyMap(),
+    onCheckProfiles: () -> Unit = {},
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val context = LocalContext.current
@@ -102,17 +110,49 @@ fun ProfilePickerSheet(
                 .fillMaxWidth()
                 .padding(bottom = 32.dp),
         ) {
-            Text(
-                text = stringResource(R.string.title_configuration),
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(
-                    start = 24.dp,
-                    end = 24.dp,
-                    top = 8.dp,
-                    bottom = 16.dp,
-                ),
-            )
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 24.dp, end = 16.dp, top = 8.dp, bottom = 16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = stringResource(R.string.title_configuration),
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                    )
+                    val finished = checkResults.values.filter { it.state != ProfileCheckState.Checking }
+                    if (finished.isNotEmpty()) {
+                        val working = finished.count { it.state == ProfileCheckState.Success }
+                        Text(
+                            text = "Работают: $working из ${checkResults.size}",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+
+                TextButton(
+                    onClick = onCheckProfiles,
+                    enabled = !checkingProfiles && profiles.isNotEmpty(),
+                ) {
+                    if (checkingProfiles) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(18.dp),
+                            strokeWidth = 2.dp,
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.Default.NetworkCheck,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp),
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(if (checkingProfiles) "Проверка..." else "Проверить")
+                }
+            }
 
             val lazyListState = rememberLazyListState()
             val reorderableLazyListState =
@@ -137,6 +177,7 @@ fun ProfilePickerSheet(
                             profile = profile,
                             isSelected = profile.id == selectedProfileId,
                             isDragging = isDragging,
+                            checkResult = checkResults[profile.id],
                             onSelect = {
                                 onProfileSelected(profile)
                                 onDismiss()
@@ -208,6 +249,7 @@ private fun ProfilePickerRow(
     profile: Profile,
     isSelected: Boolean,
     isDragging: Boolean,
+    checkResult: ProfileCheckResult?,
     onSelect: () -> Unit,
     onEdit: () -> Unit,
     onShare: () -> Unit,
@@ -330,6 +372,10 @@ private fun ProfilePickerRow(
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                 )
+
+                if (checkResult != null) {
+                    ProfileCheckStatusLine(checkResult)
+                }
             }
 
             Row(
@@ -484,5 +530,45 @@ private fun ProfilePickerRow(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun ProfileCheckStatusLine(result: ProfileCheckResult) {
+    val color = when (result.state) {
+        ProfileCheckState.Checking -> MaterialTheme.colorScheme.onSurfaceVariant
+        ProfileCheckState.Success -> MaterialTheme.colorScheme.primary
+        ProfileCheckState.Failed -> MaterialTheme.colorScheme.error
+    }
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        when (result.state) {
+            ProfileCheckState.Checking -> CircularProgressIndicator(
+                modifier = Modifier.size(12.dp),
+                strokeWidth = 1.5.dp,
+                color = color,
+            )
+
+            ProfileCheckState.Success -> Icon(
+                imageVector = Icons.Default.CheckCircle,
+                contentDescription = null,
+                modifier = Modifier.size(12.dp),
+                tint = color,
+            )
+
+            ProfileCheckState.Failed -> Icon(
+                imageVector = Icons.Default.Error,
+                contentDescription = null,
+                modifier = Modifier.size(12.dp),
+                tint = color,
+            )
+        }
+        Spacer(modifier = Modifier.width(4.dp))
+        Text(
+            text = result.message,
+            style = MaterialTheme.typography.labelSmall,
+            color = color,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
     }
 }

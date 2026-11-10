@@ -3,9 +3,6 @@ package ru.ravel.ultunnel.compose.screen.dashboard
 import androidx.compose.foundation.layout.Arrangement
 import android.widget.Toast
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -15,18 +12,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Pending
-import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.pullrefresh.PullRefreshIndicator
 import androidx.compose.material.pullrefresh.pullRefresh
 import androidx.compose.material.pullrefresh.rememberPullRefreshState
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -60,7 +50,6 @@ import ru.ravel.ultunnel.compose.navigation.NewProfileArgs
 import ru.ravel.ultunnel.compose.topbar.LocalScaffoldPadding
 import ru.ravel.ultunnel.compose.topbar.OverrideTopBar
 import ru.ravel.ultunnel.constant.Status
-import ru.ravel.ultunnel.database.Profile
 import ru.ravel.ultunnel.utils.ProfileConfigsUpdater
 import ru.ravel.ultunnel.utils.RemoteControlManager
 import kotlinx.coroutines.launch
@@ -155,8 +144,8 @@ fun DashboardScreen(
 	if (uiState.showCardSettingsDialog) {
 		DashboardSettingsBottomSheet(
 			sheetState = sheetState,
-			visibleCards = uiState.visibleCards,
-			cardOrder = uiState.cardOrder,
+			visibleCards = uiState.visibleCards - hiddenDashboardCards,
+			cardOrder = uiState.cardOrder - hiddenDashboardCards,
 			onToggleCard = viewModel::toggleCardVisibility,
 			onReorderCards = viewModel::reorderCards,
 			onResetOrder = viewModel::resetCardOrder,
@@ -189,8 +178,11 @@ fun DashboardScreen(
 		PullRefreshIndicator(
 			refreshing = isRefreshing,
 			state = pullRefreshState,
+			// Контент рисуется под верхней панелью (edge-to-edge), поэтому опускаем
+			// индикатор на высоту хедера, иначе он прячется за ним.
 			modifier = Modifier
 				.align(Alignment.TopCenter)
+				.padding(top = scaffoldPadding.calculateTopPadding())
 				.zIndex(10f),
 		)
 
@@ -214,7 +206,7 @@ fun DashboardScreen(
 
 			// Filter cards based on availability
 			val actuallyVisibleCards =
-				uiState.visibleCards.filter { cardGroup ->
+				uiState.visibleCards.filter { it !in hiddenDashboardCards }.filter { cardGroup ->
 					when {
 						// The remote dashboard only renders cards backed by the
 						// command protocol: profiles and system proxy are
@@ -236,17 +228,6 @@ fun DashboardScreen(
 					cardOrder = uiState.cardOrder,
 					visibleCards = actuallyVisibleCards,
 				)
-
-			if (!isRemote) {
-				item {
-					ProfileCheckCard(
-						profiles = uiState.profiles,
-						checkingProfiles = uiState.checkingProfiles,
-						results = uiState.profileCheckResults,
-						onCheckClick = viewModel::checkAllProfilesThroughVpn,
-					)
-				}
-			}
 
 			items(cardRenderItems) { renderItem ->
 				if (renderItem.isRow && renderItem.cards.size >= 2) {
@@ -281,6 +262,7 @@ fun DashboardScreen(
 								onShowProfilePickerSheet = viewModel::showProfilePickerSheet,
 								onHideProfilePickerSheet = viewModel::hideProfilePickerSheet,
 								onOpenNewProfile = onOpenNewProfile,
+								onCheckProfiles = viewModel::checkAllProfilesThroughVpn,
 								commandClient = viewModel.commandClient,
 								modifier =
 								Modifier
@@ -318,6 +300,7 @@ fun DashboardScreen(
 							onShowProfilePickerSheet = viewModel::showProfilePickerSheet,
 							onHideProfilePickerSheet = viewModel::hideProfilePickerSheet,
 							onOpenNewProfile = onOpenNewProfile,
+							onCheckProfiles = viewModel::checkAllProfilesThroughVpn,
 							commandClient = viewModel.commandClient,
 						)
 					}
@@ -379,129 +362,4 @@ fun isCardAvailableWhenServiceRunning(cardGroup: CardGroup, uiState: DashboardUi
 	CardGroup.Connections -> uiState.trafficVisible
 	CardGroup.SystemProxy -> uiState.systemProxyVisible
 	CardGroup.Profiles -> true // This shouldn't be called for Profiles, but return true for safety
-}
-
-@Composable
-private fun ProfileCheckCard(
-	profiles: List<Profile>,
-	checkingProfiles: Boolean,
-	results: Map<Long, ProfileCheckResult>,
-	onCheckClick: () -> Unit,
-) {
-	if (profiles.isEmpty()) return
-
-	val successCount = results.values.count { it.state == ProfileCheckState.Success }
-	val failedCount = results.values.count { it.state == ProfileCheckState.Failed }
-
-	Card(
-		modifier = Modifier.fillMaxWidth(),
-		colors = CardDefaults.cardColors(),
-	) {
-		Column(
-			modifier = Modifier
-				.fillMaxWidth()
-				.padding(16.dp),
-			verticalArrangement = Arrangement.spacedBy(10.dp),
-		) {
-			Row(
-				modifier = Modifier.fillMaxWidth(),
-				horizontalArrangement = Arrangement.spacedBy(12.dp),
-				verticalAlignment = Alignment.CenterVertically,
-			) {
-				Button(
-					enabled = !checkingProfiles,
-					onClick = onCheckClick,
-				) {
-					Icon(
-						imageVector = Icons.Default.Security,
-						contentDescription = null,
-					)
-
-					Spacer(modifier = Modifier.padding(horizontal = 4.dp))
-
-					Text(
-						if (checkingProfiles) {
-							"Проверка..."
-						} else {
-							"Проверить конфиги"
-						},
-					)
-				}
-
-				if (checkingProfiles) {
-					CircularProgressIndicator()
-				}
-
-				Spacer(modifier = Modifier.weight(1f))
-
-				if (results.isNotEmpty()) {
-					Text(
-						text = "Работают: $successCount, ошибки: $failedCount",
-						style = MaterialTheme.typography.bodySmall,
-						color = MaterialTheme.colorScheme.onSurfaceVariant,
-					)
-				}
-			}
-
-			if (results.isNotEmpty()) {
-				Spacer(modifier = Modifier.height(4.dp))
-
-				profiles.forEach { profile ->
-					val result = results[profile.id]
-
-					if (result != null) {
-						ProfileCheckResultRow(
-							profileName = profile.name,
-							result = result,
-						)
-					}
-				}
-			}
-		}
-	}
-}
-
-@Composable
-private fun ProfileCheckResultRow(
-	profileName: String,
-	result: ProfileCheckResult,
-) {
-	val icon = when (result.state) {
-		ProfileCheckState.Checking -> Icons.Default.Pending
-		ProfileCheckState.Success -> Icons.Default.CheckCircle
-		ProfileCheckState.Failed -> Icons.Default.Error
-	}
-
-	val color = when (result.state) {
-		ProfileCheckState.Checking -> MaterialTheme.colorScheme.onSurfaceVariant
-		ProfileCheckState.Success -> MaterialTheme.colorScheme.primary
-		ProfileCheckState.Failed -> MaterialTheme.colorScheme.error
-	}
-
-	Row(
-		modifier = Modifier.fillMaxWidth(),
-		horizontalArrangement = Arrangement.spacedBy(10.dp),
-		verticalAlignment = Alignment.Top,
-	) {
-		Icon(
-			imageVector = icon,
-			contentDescription = null,
-			tint = color,
-		)
-
-		Column(
-			modifier = Modifier.weight(1f),
-		) {
-			Text(
-				text = profileName,
-				style = MaterialTheme.typography.bodyMedium,
-			)
-
-			Text(
-				text = result.message,
-				style = MaterialTheme.typography.bodySmall,
-				color = MaterialTheme.colorScheme.onSurfaceVariant,
-			)
-		}
-	}
 }

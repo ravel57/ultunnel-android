@@ -53,16 +53,31 @@ class BoxService(private val service: Service, private val platformInterface: Pl
 	companion object {
 		private const val PROFILE_UPDATE_INTERVAL = 15L * 60 * 1000 // 15 minutes in milliseconds
 		private const val TAG = "BoxService"
+		/**
+		 * Если задан — сервис запускается с этим конфигом вместо выбранного профиля
+		 * (режим параллельной проверки профилей).
+		 */
 		@Volatile
-		var configCheckMode: Boolean = false
+		var configCheckContent: String? = null
+
+		val configCheckMode: Boolean
+			get() = configCheckContent != null
 
 		@OptIn(DelicateCoroutinesApi::class)
 		fun start() = GlobalScope.launch(Dispatchers.Main.immediate) {
 			Settings.dataStore.initialize()
+			val serviceClass =
+				if (configCheckMode) {
+					// Конфиг проверки профилей без TUN: хватает ProxyService,
+					// режим сервиса выбранного профиля при этом не меняем.
+					ProxyService::class.java
+				} else {
 					withContext(Dispatchers.IO) {
-				Settings.rebuildServiceMode()
+						Settings.rebuildServiceMode()
+					}
+					Settings.serviceClass()
 				}
-			val intent = Intent(Application.application, Settings.serviceClass())
+			val intent = Intent(Application.application, serviceClass)
 			ContextCompat.startForegroundService(Application.application, intent)
 		}
 
@@ -173,27 +188,38 @@ class BoxService(private val service: Service, private val platformInterface: Pl
 		}
 	}
 
+	/** Возвращает (имя для уведомления, конфиг) либо null, если конфиг недоступен (alert уже показан). */
+	private suspend fun loadServiceConfig(): Pair<String, String>? {
+		configCheckContent?.let { checkContent ->
+			return "Проверка профилей" to checkContent
+		}
+
+		val selectedProfileId = Settings.selectedProfile
+		if (selectedProfileId == -1L) {
+			stopAndAlert(Alert.EmptyConfiguration)
+			return null
+		}
+
+		val profile = ProfileManager.get(selectedProfileId)
+		if (profile == null) {
+			stopAndAlert(Alert.EmptyConfiguration)
+			return null
+		}
+
+		val content = File(profile.typed.path).readText()
+		if (content.isBlank()) {
+			stopAndAlert(Alert.EmptyConfiguration)
+			return null
+		}
+
+		return profile.name to content
+	}
+
 	private suspend fun startService() {
 		try {
-			val selectedProfileId = Settings.selectedProfile
-			if (selectedProfileId == -1L) {
-				stopAndAlert(Alert.EmptyConfiguration)
-				return
-			}
+			val (profileName, content) = loadServiceConfig() ?: return
 
-			val profile = ProfileManager.get(selectedProfileId)
-			if (profile == null) {
-				stopAndAlert(Alert.EmptyConfiguration)
-				return
-			}
-
-			val content = File(profile.typed.path).readText()
-			if (content.isBlank()) {
-				stopAndAlert(Alert.EmptyConfiguration)
-				return
-			}
-
-			lastProfileName = profile.name
+			lastProfileName = profileName
 			withContext(Dispatchers.Main) {
 				notification.show(lastProfileName, R.string.status_starting)
 			}
@@ -254,24 +280,8 @@ class BoxService(private val service: Service, private val platformInterface: Pl
 	}
 
 	suspend fun serviceReload0() {
-		val selectedProfileId = Settings.selectedProfile
-		if (selectedProfileId == -1L) {
-			stopAndAlert(Alert.EmptyConfiguration)
-			return
-		}
-
-		val profile = ProfileManager.get(selectedProfileId)
-		if (profile == null) {
-			stopAndAlert(Alert.EmptyConfiguration)
-			return
-		}
-
-		val content = File(profile.typed.path).readText()
-		if (content.isBlank()) {
-			stopAndAlert(Alert.EmptyConfiguration)
-			return
-		}
-		lastProfileName = profile.name
+		val (profileName, content) = loadServiceConfig() ?: return
+		lastProfileName = profileName
 		try {
 			commandServer.startOrReloadService(
 				content,

@@ -164,7 +164,7 @@
     <string name="profile_add_scan_qr_code">Сканировать QR-код</string>
 
     <string name="profile_add_create_manually">Создать вручную</string>
-    <string name="profile_override">Перезапись профиля</string>
+    <string name="profile_override">Раздельная маршрутизация</string>
     <string name="basic_information">Основная информация</string>
     <string name="remote_configuration">Удалённая конфигурация</string>
     <string name="last_updated_format">Последнее обновление: %s</string>
@@ -256,7 +256,7 @@
     <string name="system_http_proxy">Системный HTTP-прокси</string>
     <string name="update_settings">Настройки обновлений</string>
 
-    <string name="title_profile_override">Переопределение профиля</string>
+    <string name="title_profile_override">Раздельная маршрутизация</string>
     <string name="profile_override_description">Переопределяет элементы конфигурации профиля платформоспецифическими значениями.</string>
     <string name="profile_override_configure">Настроить</string>
 

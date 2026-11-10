@@ -4,7 +4,12 @@ import androidx.lifecycle.viewModelScope
 import io.nekohasekai.libbox.Libbox
 import io.nekohasekai.libbox.OutboundGroup
 import io.nekohasekai.libbox.StatusMessage
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -12,6 +17,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.withTimeoutOrNull
 import org.json.JSONArray
 import org.json.JSONException
 import ru.ravel.ultunnel.bg.BoxService
@@ -29,11 +35,19 @@ import ru.ravel.ultunnel.utils.HTTPClient
 import ru.ravel.ultunnel.utils.RemoteControlManager
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import ru.ravel.ultunnel.utils.ProfileCheckConfigBuilder
 import java.io.File
 import java.net.HttpURLConnection
+import java.net.InetSocketAddress
+import java.net.Socket
+import java.io.IOException
+import java.net.Proxy
 import java.net.URL
 import java.util.Collections
 import java.util.Date
+
+/** Карточки, убранные с главного экрана ULtunnel (и из настроек дашборда). */
+val hiddenDashboardCards: Set<CardGroup> = setOf(CardGroup.Debug, CardGroup.Connections)
 
 enum class CardGroup(val pairGroup: CardPairGroup? = null) {
 	ClashMode,
@@ -803,12 +817,13 @@ class DashboardViewModel :
 		if (currentState.checkingProfiles) return
 
 		viewModelScope.launch(Dispatchers.IO) {
-			val originalSelectedProfile = Settings.selectedProfile
 			val originalServiceStatus = _serviceStatus.value
 			val shouldRestoreService = originalServiceStatus == Status.Started || originalServiceStatus == Status.Starting
+			var checkConfig: ProfileCheckConfigBuilder.Result? = null
 
 			try {
 				val profiles = ProfileManager.list()
+				if (profiles.isEmpty()) return@launch
 
 				withContext(Dispatchers.Main) {
 					updateState {
@@ -817,97 +832,113 @@ class DashboardViewModel :
 							profileCheckResults = profiles.associate { profile ->
 								profile.id to ProfileCheckResult(
 									state = ProfileCheckState.Checking,
-									message = "Ожидает проверки",
+									message = "Подготовка конфига...",
 								)
 							},
 						)
 					}
 				}
 
-				stopServiceAndWait()
+				// Один общий конфиг: на каждый профиль свой локальный mixed-инбаунд.
+				val builtConfig = ProfileCheckConfigBuilder.build(profiles)
+				checkConfig = builtConfig
 
-				for (profile in profiles) {
-					withContext(Dispatchers.Main) {
-						updateProfileCheckResult(
-							profile.id,
-							ProfileCheckResult(
-								state = ProfileCheckState.Checking,
-								message = "Подключение VPN...",
-							),
+				withContext(Dispatchers.Main) {
+					updateState {
+						copy(
+							profileCheckResults = profileCheckResults.toMutableMap().apply {
+								builtConfig.errors.forEach { (profileId, message) ->
+									put(profileId, ProfileCheckResult(ProfileCheckState.Failed, message))
+								}
+							},
 						)
-					}
-
-					try {
-						Settings.selectedProfile = profile.id
-
-						withContext(Dispatchers.Main) {
-							updateState {
-								copy(
-									selectedProfileId = profile.id,
-									selectedProfileName = profile.name,
-								)
-							}
-						}
-
-						BoxService.configCheckMode = true
-						BoxService.start()
-
-						waitServiceStatus(
-							expected = Status.Started,
-							timeoutMs = 30_000L,
-							timeoutMessage = "VPN не подключился за 30 секунд",
-						)
-
-						delay(1_500L)
-
-						val ip = requestIpInfoIp()
-
-						withContext(Dispatchers.Main) {
-							updateProfileCheckResult(
-								profile.id,
-								ProfileCheckResult(
-									state = ProfileCheckState.Success,
-									message = "Работает, IP: $ip",
-								),
-							)
-						}
-					} catch (e: Exception) {
-						withContext(Dispatchers.Main) {
-							updateProfileCheckResult(
-								profile.id,
-								ProfileCheckResult(
-									state = ProfileCheckState.Failed,
-									message = e.message ?: "Конфиг не работает",
-								),
-							)
-						}
-					} finally {
-						stopServiceAndWait()
 					}
 				}
+
+				val content = builtConfig.content ?: return@launch
+
+				stopServiceAndWait()
+
+				BoxService.configCheckContent = content
+				BoxService.start()
+
+				try {
+					// Готовность определяем по локальным портам, а не по статусу сервиса:
+					// экран может быть привязан к другому классу сервиса (VPN/Proxy).
+					waitLocalPortsOpen(
+						ports = builtConfig.ports.values,
+						timeoutMs = CHECK_SERVICE_START_TIMEOUT_MS,
+					)
+				} catch (e: Exception) {
+					val message = e.message ?: "Сервис проверки не запустился"
+					withContext(Dispatchers.Main) {
+						builtConfig.ports.keys.forEach { profileId ->
+							updateProfileCheckResult(profileId, ProfileCheckResult(ProfileCheckState.Failed, message))
+						}
+					}
+					return@launch
+				}
+
+				withContext(Dispatchers.Main) {
+					builtConfig.ports.keys.forEach { profileId ->
+						updateProfileCheckResult(
+							profileId,
+							ProfileCheckResult(ProfileCheckState.Checking, "Проверка..."),
+						)
+					}
+				}
+
+				// Все профили проверяются одновременно, каждый — не дольше PROFILE_CHECK_TIMEOUT_MS.
+				coroutineScope {
+					builtConfig.ports.map { (profileId, port) ->
+						launch(Dispatchers.IO) {
+							val result = try {
+								val ip = requestIpThroughProxy(port)
+								ProfileCheckResult(ProfileCheckState.Success, "Работает, IP: $ip")
+							} catch (e: TimeoutCancellationException) {
+								ProfileCheckResult(
+									ProfileCheckState.Failed,
+									"Нет ответа за ${PROFILE_CHECK_TIMEOUT_MS / 1000.0} с",
+								)
+							} catch (e: CancellationException) {
+								throw e
+							} catch (e: Exception) {
+								ProfileCheckResult(
+									ProfileCheckState.Failed,
+									e.message ?: "Конфиг не работает",
+								)
+							}
+
+							withContext(Dispatchers.Main) {
+								updateProfileCheckResult(profileId, result)
+							}
+						}
+					}
+				}
+			} catch (e: CancellationException) {
+				throw e
 			} catch (e: Exception) {
 				sendError(e)
 			} finally {
-				BoxService.configCheckMode = false
+				withContext(NonCancellable) {
+					if (BoxService.configCheckMode) {
+						runCatching {
+							BoxService.stop()
+							waitLocalPortClosed(
+								port = checkConfig?.ports?.values?.firstOrNull(),
+								timeoutMs = CHECK_SERVICE_STOP_TIMEOUT_MS,
+							)
+						}
+						BoxService.configCheckContent = null
 
-				Settings.selectedProfile = originalSelectedProfile
-
-				withContext(Dispatchers.Main) {
-					val restoredProfile = runCatching {
-						ProfileManager.get(originalSelectedProfile)
-					}.getOrNull()
-
-					updateState {
-						copy(
-							checkingProfiles = false,
-							selectedProfileId = originalSelectedProfile,
-							selectedProfileName = restoredProfile?.name ?: selectedProfileName,
-						)
+						if (shouldRestoreService && Settings.selectedProfile != -1L) {
+							BoxService.start()
+						}
 					}
-				}
 
-				if (shouldRestoreService && originalSelectedProfile != -1L) {
-					BoxService.start()
+					withContext(Dispatchers.Main) {
+						updateState { copy(checkingProfiles = false) }
+					}
 				}
 			}
 		}
@@ -952,32 +983,83 @@ class DashboardViewModel :
 		}
 	}
 
-	private fun requestIpInfoIp(): String {
-		val connection = URL("https://ipinfo.io/ip").openConnection() as HttpURLConnection
+	/**
+	 * Запрос к ipinfo.io через локальный mixed-инбаунд профиля.
+	 * Общий дедлайн — PROFILE_CHECK_TIMEOUT_MS: по таймауту соединение рвётся принудительно.
+	 */
+	private suspend fun requestIpThroughProxy(port: Int): String {
+		val proxy = Proxy(Proxy.Type.HTTP, InetSocketAddress("127.0.0.1", port))
+		val connection = URL("https://ipinfo.io/ip").openConnection(proxy) as HttpURLConnection
 
 		return try {
-			connection.requestMethod = "GET"
-			connection.connectTimeout = 12_000
-			connection.readTimeout = 12_000
-			connection.useCaches = false
-			connection.setRequestProperty("Cache-Control", "no-cache")
-			connection.setRequestProperty("User-Agent", "Ultunnel/AndroidConfigCheck")
+			coroutineScope {
+				val request = async(Dispatchers.IO) {
+					connection.requestMethod = "GET"
+					connection.connectTimeout = PROFILE_CHECK_TIMEOUT_MS.toInt()
+					connection.readTimeout = PROFILE_CHECK_TIMEOUT_MS.toInt()
+					connection.useCaches = false
+					connection.setRequestProperty("Cache-Control", "no-cache")
+					connection.setRequestProperty("User-Agent", "Ultunnel/AndroidConfigCheck")
 
-			val code = connection.responseCode
+					val code = connection.responseCode
 
-			if (code !in 200..299) {
-				throw IllegalStateException("ipinfo.io/ip вернул HTTP $code")
+					if (code !in 200..299) {
+						throw IllegalStateException("ipinfo.io/ip вернул HTTP $code")
+					}
+
+					val ip = connection.inputStream.bufferedReader().use { it.readText() }.trim()
+
+					if (ip.isBlank()) {
+						throw IllegalStateException("ipinfo.io/ip вернул пустой IP")
+					}
+
+					ip
+				}
+
+				try {
+					withTimeout(PROFILE_CHECK_TIMEOUT_MS) { request.await() }
+				} finally {
+					// Разблокирует поток с запросом, если сработал таймаут.
+					connection.disconnect()
+				}
 			}
-
-			val ip = connection.inputStream.bufferedReader().use { it.readText() }.trim()
-
-			if (ip.isBlank()) {
-				throw IllegalStateException("ipinfo.io/ip вернул пустой IP")
-			}
-
-			ip
 		} finally {
 			connection.disconnect()
 		}
+	}
+
+	private suspend fun waitLocalPortsOpen(ports: Collection<Int>, timeoutMs: Long) {
+		val firstPort = ports.firstOrNull() ?: return
+		try {
+			withTimeout(timeoutMs) {
+				while (!isLocalPortOpen(firstPort)) {
+					delay(100L)
+				}
+			}
+		} catch (e: TimeoutCancellationException) {
+			throw IllegalStateException("Сервис проверки не запустился за ${timeoutMs / 1000} с")
+		}
+	}
+
+	private suspend fun waitLocalPortClosed(port: Int?, timeoutMs: Long) {
+		port ?: return
+		withTimeoutOrNull(timeoutMs) {
+			while (isLocalPortOpen(port)) {
+				delay(100L)
+			}
+		}
+	}
+
+	private fun isLocalPortOpen(port: Int): Boolean = try {
+		Socket().use { it.connect(InetSocketAddress("127.0.0.1", port), 200) }
+		true
+	} catch (_: IOException) {
+		false
+	}
+
+	private companion object {
+		const val PROFILE_CHECK_TIMEOUT_MS = 2_500L
+		const val CHECK_SERVICE_START_TIMEOUT_MS = 15_000L
+		const val CHECK_SERVICE_STOP_TIMEOUT_MS = 10_000L
 	}
 }

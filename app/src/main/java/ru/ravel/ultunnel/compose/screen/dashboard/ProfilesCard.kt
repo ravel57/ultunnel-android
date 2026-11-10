@@ -101,6 +101,9 @@ fun ProfilesCard(
 	onShowProfilePickerSheet: () -> Unit,
 	onHideProfilePickerSheet: () -> Unit,
 	onOpenNewProfile: (NewProfileArgs) -> Unit,
+	checkingProfiles: Boolean = false,
+	profileCheckResults: Map<Long, ProfileCheckResult> = emptyMap(),
+	onCheckProfiles: () -> Unit = {},
 ) {
 	val context = LocalContext.current
 	val coroutineScope = rememberCoroutineScope()
@@ -243,30 +246,6 @@ fun ProfilesCard(
 						fontWeight = FontWeight.Bold,
 					)
 				}
-
-				Surface(
-					onClick = onShowAddProfileSheet,
-					shape = RoundedCornerShape(12.dp),
-					color = if (isSystemInDarkTheme()) {
-						lerp(
-							MaterialTheme.colorScheme.surfaceContainerHighest,
-							MaterialTheme.colorScheme.surfaceContainerHigh,
-							0.5f,
-						)
-					} else {
-						MaterialTheme.colorScheme.surfaceDim
-					},
-					modifier = Modifier.size(44.dp),
-				) {
-					Box(contentAlignment = Alignment.Center) {
-						Icon(
-							imageVector = Icons.Default.Add,
-							contentDescription = stringResource(R.string.add_profile),
-							modifier = Modifier.size(20.dp),
-							tint = MaterialTheme.colorScheme.onSurfaceVariant,
-						)
-					}
-				}
 			}
 
 			Spacer(modifier = Modifier.height(12.dp))
@@ -370,6 +349,9 @@ fun ProfilesCard(
 			onProfileDelete = onProfileDelete,
 			onProfileMove = onProfileMove,
 			onDismiss = onHideProfilePickerSheet,
+			checkingProfiles = checkingProfiles,
+			checkResults = profileCheckResults,
+			onCheckProfiles = onCheckProfiles,
 		)
 	}
 

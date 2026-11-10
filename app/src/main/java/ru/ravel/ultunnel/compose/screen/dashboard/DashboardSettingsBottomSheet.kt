@@ -160,8 +160,6 @@ fun DashboardSettingsBottomSheet(
                             listOfNotNull(
                                 CardGroup.UploadTraffic,
                                 CardGroup.DownloadTraffic,
-                                CardGroup.Debug,
-                                CardGroup.Connections,
                                 CardGroup.SystemProxy,
                                 CardGroup.ClashMode,
                                 CardGroup.Profiles,
@@ -171,8 +169,6 @@ fun DashboardSettingsBottomSheet(
                                 CardGroup.ClashMode,
                                 CardGroup.UploadTraffic,
                                 CardGroup.DownloadTraffic,
-                                CardGroup.Debug,
-                                CardGroup.Connections,
                                 CardGroup.SystemProxy,
                                 CardGroup.Profiles,
                             )

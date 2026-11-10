@@ -40,6 +40,9 @@ object ProfileConfigsUpdater {
 				"https://admin.ultunnel.ru/api/v1/get-users-proxy-servers-singbox" +
 						"?secretKey=$key&platform=android"
 
+			// Имя выбранного профиля, чтобы после пересоздания профилей выбрать тот же
+			val previousSelectedName = ProfileManager.get(Settings.selectedProfile)?.name
+
 			val fetchedData = fetchData(url)?.also {
 				if (it.isNotEmpty()) {
 					BoxService.stop()
@@ -62,6 +65,14 @@ object ProfileConfigsUpdater {
 
 				configFile.writeText(config.content)
 				ProfileManager.create(profile)
+			}
+
+			if (!fetchedData.isNullOrEmpty()) {
+				// Профили пересозданы с новыми ID: старый selectedProfile больше не существует.
+				val profiles = ProfileManager.list()
+				val selected = profiles.firstOrNull { it.name == previousSelectedName } ?: profiles.firstOrNull()
+				Settings.selectedProfile = selected?.id ?: -1L
+				Settings.rebuildServiceMode()
 			}
 
 			withContext(Dispatchers.Main) {

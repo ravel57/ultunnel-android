@@ -139,9 +139,12 @@ fun PerAppProxyScreen(
     var scanProgress by remember { mutableStateOf<ScanProgress?>(null) }
     var scanResult by remember { mutableStateOf<ScanResult?>(null) }
 
-    fun buildPackageList(newUids: Set<Int>): Set<String> = newUids.mapNotNull { uid ->
-        packages.find { it.uid == uid }?.packageName
-    }.toSet()
+    // VpnService фильтрует по UID, поэтому сохраняем все пакеты с выбранными UID (shared UID),
+    // а не только первый найденный.
+    fun buildPackageList(newUids: Set<Int>): Set<String> = packages
+        .filter { it.uid in newUids }
+        .map { it.packageName }
+        .toSet()
 
     fun updateCurrentPackages(filterQuery: String) {
         currentPackages =

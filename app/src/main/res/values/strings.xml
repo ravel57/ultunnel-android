@@ -157,7 +157,7 @@
     <string name="profile_add_import_file">Import from file</string>
     <string name="profile_add_scan_qr_code">Scan QR code</string>
     <string name="profile_add_create_manually">Create Manually</string>
-    <string name="profile_override">Profile Override</string>
+    <string name="profile_override">Split Routing</string>
     <string name="basic_information">Basic Information</string>
     <string name="remote_configuration">Remote Configuration</string>
     <string name="last_updated_format">Last updated: %s</string>
@@ -718,7 +718,7 @@
     <string name="quick_toggle">Переключить</string>
     <string name="title_overview">Обзор</string>
     <string name="core_version">Версия</string>
-    <string name="title_profile_override">Переопределение профиля</string>
+    <string name="title_profile_override">Split Routing</string>
     <string name="profile_override_description">Переопределяет элементы конфигурации профиля платформоспецифическими значениями.</string>
     <string name="profile_override_configure">Настроить</string>
     <string name="title_per_app_proxy" translatable="false">title_per_app_proxy</string>

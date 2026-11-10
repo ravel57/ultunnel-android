@@ -681,18 +681,14 @@ fun ProfileOverrideScreen(
                             modifier = Modifier.clickable {
                                 packageQueryMode = Settings.PACKAGE_QUERY_MODE_SHIZUKU
                                 PackageQueryManager.setQueryMode(Settings.PACKAGE_QUERY_MODE_SHIZUKU)
-                                scope.launch(Dispatchers.IO) {
-                                    Settings.perAppProxyPackageQueryMode = Settings.PACKAGE_QUERY_MODE_SHIZUKU
-                                }
+                                Settings.perAppProxyPackageQueryMode = Settings.PACKAGE_QUERY_MODE_SHIZUKU
                                 if (
                                     perAppProxyEnabled &&
                                     isShizukuStateInitialized &&
                                     !PackageQueryManager.isShizukuAvailable()
                                 ) {
                                     perAppProxyEnabled = false
-                                    scope.launch(Dispatchers.IO) {
-                                        Settings.perAppProxyEnabled = false
-                                    }
+                                    Settings.perAppProxyEnabled = false
                                 }
                                 notifyApplyChange(UiEvent.ApplyServiceChange.Mode.Reload)
                                 showModeDialog = false
