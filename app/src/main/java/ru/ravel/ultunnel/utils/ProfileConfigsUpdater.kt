@@ -13,7 +13,6 @@ import ru.ravel.ultunnel.database.Profile
 import ru.ravel.ultunnel.database.ProfileManager
 import ru.ravel.ultunnel.database.Settings
 import ru.ravel.ultunnel.database.TypedProfile
-import ru.ravel.ultunnel.model.Config
 import ru.ravel.ultunnel.model.ConfigFileFromServer
 import ru.ravel.ultunnel.model.ConfigWithServerName
 import java.io.File
@@ -100,10 +99,11 @@ object ProfileConfigsUpdater {
 							json.configs
 								.map { gson.fromJson(it, JsonObject::class.java) }
 								.map { cfgJson ->
-									val jsonConfig = gson.fromJson(cfgJson, Config::class.java)
+									val normalized = MobileProfileConfig.normalize(org.json.JSONObject(cfgJson.toString()))
+                                    val protocol = MobileProfileConfig.protocol(normalized)
 									ConfigFileFromServer(
-										content = cfgJson.toString(),
-										name = "${json.server}-${jsonConfig.outbounds[0].type ?: "null"}",
+										content = normalized.toString(),
+										name = "${json.server}-$protocol",
 									)
 								}
 						}

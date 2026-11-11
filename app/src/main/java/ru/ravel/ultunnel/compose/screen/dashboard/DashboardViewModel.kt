@@ -6,6 +6,8 @@ import io.nekohasekai.libbox.OutboundGroup
 import io.nekohasekai.libbox.StatusMessage
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.async
@@ -888,7 +890,7 @@ class DashboardViewModel :
 					}
 				}
 
-				// Все профили проверяются одновременно, каждый — не дольше PROFILE_CHECK_TIMEOUT_MS.
+				// Все профили проверяются одновременно, каждый запрос — не дольше PROFILE_CHECK_TIMEOUT_MS.
 				coroutineScope {
 					builtConfig.ports.map { (profileId, port) ->
 						launch(Dispatchers.IO) {
@@ -987,9 +989,22 @@ class DashboardViewModel :
 	 * Запрос к ipinfo.io через локальный mixed-инбаунд профиля.
 	 * Общий дедлайн — PROFILE_CHECK_TIMEOUT_MS: по таймауту соединение рвётся принудительно.
 	 */
-	private suspend fun requestIpThroughProxy(port: Int): String {
+    private suspend fun requestIpThroughProxy(port: Int): String {
+        val errors = mutableListOf<String>()
+        for (url in listOf("https://ipinfo.io/ip", "https://api.ipify.org")) {
+            try { return requestIpFromUrl(port, url) }
+            catch (e: Exception) {
+                currentCoroutineContext().ensureActive()
+                if (e is CancellationException && e !is TimeoutCancellationException) throw e
+                errors.add("$url: ${e.message ?: e.javaClass.simpleName}")
+            }
+        }
+        error(errors.joinToString("; "))
+    }
+
+    private suspend fun requestIpFromUrl(port: Int, url: String): String {
 		val proxy = Proxy(Proxy.Type.HTTP, InetSocketAddress("127.0.0.1", port))
-		val connection = URL("https://ipinfo.io/ip").openConnection(proxy) as HttpURLConnection
+		val connection = URL(url).openConnection(proxy) as HttpURLConnection
 
 		return try {
 			coroutineScope {
@@ -1009,7 +1024,7 @@ class DashboardViewModel :
 
 					val ip = connection.inputStream.bufferedReader().use { it.readText() }.trim()
 
-					if (ip.isBlank()) {
+					if (!com.google.common.net.InetAddresses.isInetAddress(ip)) {
 						throw IllegalStateException("ipinfo.io/ip вернул пустой IP")
 					}
 
@@ -1058,7 +1073,7 @@ class DashboardViewModel :
 	}
 
 	private companion object {
-		const val PROFILE_CHECK_TIMEOUT_MS = 2_500L
+		const val PROFILE_CHECK_TIMEOUT_MS = 10_000L
 		const val CHECK_SERVICE_START_TIMEOUT_MS = 15_000L
 		const val CHECK_SERVICE_STOP_TIMEOUT_MS = 10_000L
 	}

@@ -46,7 +46,7 @@ object ProfileCheckConfigBuilder {
 				Libbox.checkConfig(assemble(mapOf(profile.id to item), mapOf(profile.id to 0)).toString())
 				prepared[profile.id] = item
 			} catch (e: Exception) {
-				errors[profile.id] = "Ошибка конфига: ${e.message ?: e.javaClass.simpleName}"
+				errors[profile.id] = "Ошибка конфига: ${e.message?.replace(Regex("\\u001B\\[[0-?]*[ -/]*[@-~]"), "") ?: e.javaClass.simpleName}"
 			}
 		}
 
@@ -70,7 +70,7 @@ object ProfileCheckConfigBuilder {
 	}
 
 	private fun prepareProfile(profile: Profile): PreparedProfile {
-		val config = JSONObject(File(profile.typed.path).readText())
+		val config = MobileProfileConfig.normalize(JSONObject(File(profile.typed.path).readText()))
 		val prefix = "p${profile.id}-"
 
 		val rawOutbounds = config.optJSONArray("outbounds").toObjectList()
@@ -85,14 +85,39 @@ object ProfileCheckConfigBuilder {
 			if (endpoint.optString("tag").isEmpty()) endpoint.put("tag", "endpoint-$index")
 		}
 
-		val knownTags = (rawOutbounds + rawEndpoints).map { it.getString("tag") }.toSet()
+        val nodes = (rawOutbounds + rawEndpoints).associateBy { it.getString("tag") }
+        require(nodes.size == rawOutbounds.size + rawEndpoints.size) { "повторяется тег outbound/endpoint" }
+        val knownTags = nodes.keys
 		val finalTag = config.optJSONObject("route")?.optString("final").orEmpty()
 		val mainTag = when {
-			finalTag.isNotEmpty() && finalTag in knownTags -> finalTag
-			rawOutbounds.isNotEmpty() -> rawOutbounds.first().getString("tag")
-			rawEndpoints.isNotEmpty() -> rawEndpoints.first().getString("tag")
+            "proxy" in knownTags -> "proxy"
+			finalTag.isNotEmpty() && finalTag in knownTags && nodes[finalTag]?.optString("type") !in setOf("direct", "block", "dns") -> finalTag
+            rawEndpoints.isNotEmpty() -> rawEndpoints.first().getString("tag")
+            rawOutbounds.any { it.optString("type") != "direct" } -> rawOutbounds.first { it.optString("type") != "direct" }.getString("tag")
 			else -> throw IllegalStateException("в профиле нет outbounds")
 		}
+
+        val reachable = linkedSetOf<String>()
+        val active = mutableSetOf<String>()
+        fun visit(tag: String) {
+            require(tag !in active) { "циклическая зависимость: $tag" }
+            if (tag in reachable) return
+            val item = nodes[tag] ?: error("не найдена зависимость: $tag")
+            active.add(tag)
+            listOf("detour", "default").map { item.optString(it) }.filter { it.isNotEmpty() }.forEach(::visit)
+            item.optJSONArray("outbounds")?.let { list -> (0 until list.length()).forEach { visit(list.getString(it)) } }
+            active.remove(tag)
+            reachable.add(tag)
+        }
+        visit(mainTag)
+        rawEndpoints.filter { it.optString("tag") in reachable && it.optString("type") == "wireguard" }.forEach { endpoint ->
+            val peers = endpoint.optJSONArray("peers").toObjectList()
+            require(peers.isNotEmpty() && peers.all { it.optString("address").isNotBlank() && it.optInt("port") in 1..65535 }) {
+                "нет адреса или порта peer WireGuard/AmneziaWG; обновите конфиги из админки"
+            }
+            endpoint.put("system", false).put("listen_port", 0)
+            endpoint.remove("name")
+        }
 
 		fun rewrite(item: JSONObject): JSONObject {
 			item.put("tag", prefix + item.getString("tag"))
@@ -107,8 +132,8 @@ object ProfileCheckConfigBuilder {
 		}
 
 		return PreparedProfile(
-			outbounds = rawOutbounds.map(::rewrite),
-			endpoints = rawEndpoints.map(::rewrite),
+			outbounds = rawOutbounds.filter { it.optString("tag") in reachable }.map(::rewrite),
+			endpoints = rawEndpoints.filter { it.optString("tag") in reachable }.map(::rewrite),
 			mainTag = prefix + mainTag,
 		)
 	}
@@ -144,9 +169,9 @@ object ProfileCheckConfigBuilder {
 			put("log", JSONObject().put("level", "warn"))
 			put(
 				"dns",
-				JSONObject().put(
+				JSONObject().put("strategy", "ipv4_only").put(
 					"servers",
-					JSONArray().put(JSONObject().put("type", "local").put("tag", DNS_TAG)),
+					JSONArray().put(JSONObject().put("type", "udp").put("server", "1.1.1.1").put("tag", DNS_TAG)),
 				),
 			)
 			put("inbounds", inbounds)
@@ -158,7 +183,7 @@ object ProfileCheckConfigBuilder {
 					.put("rules", rules)
 					.put("final", DIRECT_TAG)
 					.put("auto_detect_interface", true)
-					.put("default_domain_resolver", DNS_TAG),
+					.put("default_domain_resolver", JSONObject().put("server", DNS_TAG).put("strategy", "ipv4_only")),
 			)
 		}
 	}
