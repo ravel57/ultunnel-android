@@ -24,6 +24,7 @@ open class CommandClient(
 	private val connectionTypes: List<ConnectionType>,
 	private val handler: Handler,
 	private val localOnly: Boolean = false,
+	private val statusIntervalMillis: Long = 1_000L,
 ) {
 	constructor(
 		scope: CoroutineScope,
@@ -133,7 +134,7 @@ open class CommandClient(
 				}
 			options.addCommand(command)
 		}
-		options.statusInterval = 1 * 1000 * 1000 * 1000
+		options.statusInterval = statusIntervalMillis.coerceAtLeast(1_000L) * 1_000_000L
 			val remoteServer = if (localOnly) null else CommandTarget.remoteServer
 			val newClient: io.nekohasekai.libbox.CommandClient
 			try {

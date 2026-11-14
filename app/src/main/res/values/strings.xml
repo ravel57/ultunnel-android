@@ -805,4 +805,6 @@
     <string name="endpoint_browser_navigation_failed">Browser navigation failed: %1$s</string>
     <string name="endpoint_browser_too_many_windows">The authentication page opened too many browser windows.</string>
     <string name="endpoint_browser_profile_unavailable">Browser authentication is unavailable on this device.</string>
+    <string name="auto_recovery_title">Automatic connection recovery</string>
+    <string name="auto_recovery_description">Recent received data confirms connectivity. Without traffic, check HTTPS and find a replacement. Open but stalled connections do not suppress checks. Never enables Wi-Fi or mobile data. Switching interrupts connections.</string>
 </resources>

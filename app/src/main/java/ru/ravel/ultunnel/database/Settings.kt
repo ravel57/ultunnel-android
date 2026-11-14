@@ -75,6 +75,7 @@ object Settings {
 	const val PER_APP_PROXY_EXCLUDE = 1
 	const val PER_APP_PROXY_INCLUDE = 2
 
+	var autoRecoveryEnabled by dataStore.boolean(SettingsKey.AUTO_RECOVERY_ENABLED) { true }
 	var autoRedirect by dataStore.boolean(SettingsKey.AUTO_REDIRECT) { false }
 	var perAppProxyEnabled by dataStore.boolean(SettingsKey.PER_APP_PROXY_ENABLED) { false }
 	var perAppProxyMode by dataStore.int(SettingsKey.PER_APP_PROXY_MODE) { PER_APP_PROXY_EXCLUDE }

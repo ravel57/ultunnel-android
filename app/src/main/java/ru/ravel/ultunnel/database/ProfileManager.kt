@@ -36,6 +36,10 @@ object ProfileManager {
 			.build()
 	}
 
+	fun notifySelectionChanged() {
+		for (callback in callbacks.toList()) callback()
+	}
+
 	suspend fun nextOrder(): Long = instance.profileDao().nextOrder() ?: 0
 
 	suspend fun nextFileID(): Long = instance.profileDao().nextFileID() ?: 1

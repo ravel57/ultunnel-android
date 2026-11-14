@@ -90,6 +90,7 @@ fun ServiceSettingsScreen(
         )
     }
 
+    var autoRecovery by remember { mutableStateOf(Settings.autoRecoveryEnabled) }
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var isBatteryOptimizationIgnored by remember { mutableStateOf(false) }
@@ -129,6 +130,22 @@ fun ServiceSettingsScreen(
                 bottom = scaffoldPadding.calculateBottomPadding() + 8.dp,
             ),
     ) {
+        ListItem(
+            headlineContent = { Text(stringResource(R.string.auto_recovery_title)) },
+            supportingContent = { Text(stringResource(R.string.auto_recovery_description)) },
+            trailingContent = {
+                Switch(checked = autoRecovery, onCheckedChange = { checked ->
+                    autoRecovery = checked
+                    scope.launch(Dispatchers.IO) {
+                        Settings.autoRecoveryEnabled = checked
+                        Settings.dataStore.flush()
+                        withContext(Dispatchers.Main) {
+                            notifyApplyChange(UiEvent.ApplyServiceChange.Mode.Reload)
+                        }
+                    }
+                })
+            },
+        )
         if (!isBatteryOptimizationIgnored && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             Card(
                 modifier =

@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="auto_recovery_title">Автовосстановление соединения</string>
+    <string name="auto_recovery_description">Получение новых данных подтверждает работу. При отсутствии обмена проверяется HTTPS и ищется замена. Зависшие соединения не мешают проверке. Wi-Fi и мобильные данные не включаются. Переключение прерывает соединения.</string>
+</resources>

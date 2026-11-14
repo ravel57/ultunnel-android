@@ -1,0 +1,45 @@
+{
+  "coreSource": "/Users/petr/dev/GolandProjects/sing-box",
+  "builtAt": "2026-11-11",
+  "go": "go1.25.5",
+  "protocols": [
+    "amneziawg-3.1",
+    "tuic-v5",
+    "masque",
+    "anytls",
+    "shadowtls-v3+shadowsocks",
+    "trusttunnel",
+    "hysteria2+gecko",
+    "naive"
+  ],
+  "android": {
+    "libbox.aar": {
+      "sha256": "f94400a91368a00a993b641fca33bd38499afb20ed0f0ce7b2318ca7b1c09dce",
+      "abis": [
+        "armeabi-v7a",
+        "arm64-v8a",
+        "x86",
+        "x86_64"
+      ],
+      "naive": true
+    },
+    "libbox-legacy.aar": {
+      "sha256": "f402efcddea08605563aa5b5578914c98ccf63ae9b0201791850f4eb53b2ec23",
+      "abis": [
+        "armeabi-v7a",
+        "arm64-v8a",
+        "x86",
+        "x86_64"
+      ],
+      "naive": false
+    }
+  },
+  "apple": {
+    "ios-arm64": {
+      "sha256": "bc8d10428d6266dace1e97110276cdc1c06a891eaa5e2c87ef11b6b9b74caaa8"
+    },
+    "ios-arm64_x86_64-simulator": {
+      "sha256": "c5ac72a83983d972d4cab08ad73740199eebf76466d90b2644aef2a96eb46dea"
+    }
+  }
+}

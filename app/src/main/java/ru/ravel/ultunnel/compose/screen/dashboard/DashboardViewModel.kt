@@ -47,6 +47,7 @@ import java.net.Proxy
 import java.net.URL
 import java.util.Collections
 import java.util.Date
+import kotlin.time.Duration.Companion.milliseconds
 
 /** Карточки, убранные с главного экрана ULtunnel (и из настроек дашборда). */
 val hiddenDashboardCards: Set<CardGroup> = setOf(CardGroup.Debug, CardGroup.Connections)
@@ -302,6 +303,7 @@ class DashboardViewModel :
 	}
 
 	fun selectProfile(profileId: Long) {
+		BoxService.onUserProfileSelection()
 		if (currentState.isLoading) return
 
 		viewModelScope.launch(Dispatchers.IO) {
@@ -334,7 +336,7 @@ class DashboardViewModel :
 			if (_serviceStatus.value == Status.Stopped) {
 				break
 			}
-			delay(100L)
+			delay(100L.milliseconds)
 		}
 		sendGlobalEvent(UiEvent.RequestStartService)
 	}
@@ -799,7 +801,7 @@ class DashboardViewModel :
 	}
 
 	private fun saveDisabledItems(visibleCards: Set<CardGroup>) {
-		val allItems = CardGroup.values().toSet()
+		val allItems = CardGroup.entries.toSet()
 		// Always ensure Profiles is in visibleCards (cannot be disabled)
 		val actualVisibleCards = visibleCards + CardGroup.Profiles
 		val disabledItems = allItems - actualVisibleCards
@@ -975,7 +977,7 @@ class DashboardViewModel :
 		timeoutMessage: String,
 	) {
 		try {
-			withTimeout(timeoutMs) {
+			withTimeout(timeoutMs.milliseconds) {
 				while (_serviceStatus.value != expected) {
 					delay(250L)
 				}
@@ -1032,7 +1034,7 @@ class DashboardViewModel :
 				}
 
 				try {
-					withTimeout(PROFILE_CHECK_TIMEOUT_MS) { request.await() }
+					withTimeout(PROFILE_CHECK_TIMEOUT_MS.milliseconds) { request.await() }
 				} finally {
 					// Разблокирует поток с запросом, если сработал таймаут.
 					connection.disconnect()
@@ -1046,7 +1048,7 @@ class DashboardViewModel :
 	private suspend fun waitLocalPortsOpen(ports: Collection<Int>, timeoutMs: Long) {
 		val firstPort = ports.firstOrNull() ?: return
 		try {
-			withTimeout(timeoutMs) {
+			withTimeout(timeoutMs.milliseconds) {
 				while (!isLocalPortOpen(firstPort)) {
 					delay(100L)
 				}
@@ -1058,7 +1060,7 @@ class DashboardViewModel :
 
 	private suspend fun waitLocalPortClosed(port: Int?, timeoutMs: Long) {
 		port ?: return
-		withTimeoutOrNull(timeoutMs) {
+		withTimeoutOrNull(timeoutMs.milliseconds) {
 			while (isLocalPortOpen(port)) {
 				delay(100L)
 			}

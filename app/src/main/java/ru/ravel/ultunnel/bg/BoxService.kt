@@ -37,6 +37,18 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withTimeoutOrNull
+import org.json.JSONObject
+import ru.ravel.ultunnel.utils.ProfileCheckConfigBuilder
+import java.util.concurrent.atomic.AtomicLong
 import ru.ravel.ultunnel.Application
 import ru.ravel.ultunnel.R
 import ru.ravel.ultunnel.constant.Action
@@ -48,11 +60,15 @@ import ru.ravel.ultunnel.ktx.hasPermission
 //import ru.ravel.ultunnel.ui.MainActivity
 import ru.ravel.ultunnel.utils.CommandClient
 import java.io.File
+import kotlin.time.Duration.Companion.milliseconds
 
 class BoxService(private val service: Service, private val platformInterface: PlatformInterface) : CommandServerHandler {
 	companion object {
 		private const val PROFILE_UPDATE_INTERVAL = 15L * 60 * 1000 // 15 minutes in milliseconds
 		private const val TAG = "BoxService"
+		internal val userActionVersion = AtomicLong()
+
+		fun onUserProfileSelection() { userActionVersion.incrementAndGet() }
 		/**
 		 * Если задан — сервис запускается с этим конфигом вместо выбранного профиля
 		 * (режим параллельной проверки профилей).
@@ -82,6 +98,7 @@ class BoxService(private val service: Service, private val platformInterface: Pl
 		}
 
 		fun stop() {
+			userActionVersion.incrementAndGet()
 			Application.application.sendBroadcast(
 				Intent(Action.SERVICE_CLOSE).setPackage(
 					Application.application.packageName,
@@ -98,6 +115,126 @@ class BoxService(private val service: Service, private val platformInterface: Pl
 	private lateinit var commandServer: CommandServer
 	private val idleModeScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 	private val idleModeUpdates = Channel<Boolean>(Channel.UNLIMITED)
+	private val runtimeMutex = Mutex()
+	@Volatile private var serviceWanted = false
+	@Volatile private var healthPort: Int? = null
+	private var activeContent: String? = null
+	private var recoveryCursor = 0
+	private val recovery = ConnectionRecovery(idleModeScope, { healthPort }) { valid ->
+		recoverConnection(valid)
+	}
+
+	private fun monitoredContent(content: String): String {
+		healthPort = null
+		if (configCheckMode || !Settings.autoRecoveryEnabled) return content
+		return try {
+			val prepared = RecoveryConfig.prepare(content)
+			healthPort = prepared.port
+			prepared.content
+		} catch (e: Exception) {
+			Log.w(TAG, "Automatic recovery unavailable for this profile: ${e.javaClass.simpleName}")
+			content
+		}
+	}
+
+	private suspend fun recoverConnection(valid: () -> Boolean): Boolean = runtimeMutex.withLock {
+		if (!serviceWanted || !valid()) return@withLock false
+		val originalId = Settings.selectedProfile
+		val actionVersion = userActionVersion.get()
+		val originalContent = activeContent ?: return@withLock false
+		val originalPort = healthPort
+		val allowed = {
+			serviceWanted && valid() && userActionVersion.get() == actionVersion &&
+				Settings.selectedProfile == originalId
+		}
+		if (originalPort != null && ConnectionRecovery.probe(originalPort, allowed)) return@withLock false
+		if (!allowed()) return@withLock false
+		val candidates = ProfileManager.list().filter { profile ->
+			profile.id != originalId && runCatching {
+				val config = JSONObject(File(profile.typed.path).readText())
+				val inbounds = config.optJSONArray("inbounds")
+				val tun = inbounds != null && (0 until inbounds.length()).any {
+					inbounds.optJSONObject(it)?.optString("type") == "tun"
+				}
+				tun == (service is VPNService)
+			}.getOrDefault(false)
+		}
+		if (candidates.isEmpty() || !allowed()) return@withLock false
+		// Bound memory use; subsequent failed rounds continue with the next batch.
+		val batch = (candidates.drop(recoveryCursor % candidates.size) +
+			candidates.take(recoveryCursor % candidates.size)).take(9)
+		recoveryCursor = (recoveryCursor + batch.size) % candidates.size
+		val checks = ProfileCheckConfigBuilder.build(batch)
+		val checkContent = checks.content ?: return@withLock false
+		if (!allowed()) return@withLock false
+		val merged = RecoveryConfig.withCandidates(originalContent, checkContent)
+		Libbox.checkConfig(merged)
+		var temporaryRuntime = false
+		var committed = false
+		try {
+			if (!allowed()) return@withLock false
+			temporaryRuntime = true
+			commandServer.startOrReloadService(merged, buildOverrideOptions())
+			recovery.runtimeReloaded()
+			val winner = withTimeoutOrNull(60_000.milliseconds) {
+				var found: Long? = null
+				for (group in checks.ports.entries.chunked(3)) {
+					if (!allowed()) break
+					val results = coroutineScope {
+						group.map { (id, port) -> async { id to ConnectionRecovery.probe(port, allowed) } }.awaitAll()
+					}
+					if (!allowed()) break
+					found = results.firstOrNull { it.second }?.first
+					if (found != null) break
+				}
+				found
+			} ?: return@withLock false
+			if (!allowed()) return@withLock false
+			val profile = ProfileManager.get(winner) ?: return@withLock false
+			val replacement = monitoredContent(File(profile.typed.path).readText())
+			Libbox.checkConfig(replacement)
+			currentCoroutineContext().ensureActive()
+			if (!allowed()) return@withLock false
+			commandServer.startOrReloadService(replacement, buildOverrideOptions())
+			recovery.runtimeReloaded()
+			// Verify the actual selected runtime too, not just its test outbound graph.
+			val replacementPort = healthPort ?: return@withLock false
+			if (!ConnectionRecovery.probe(replacementPort, allowed) || !allowed()) return@withLock false
+			withContext(Dispatchers.Main) {
+				currentCoroutineContext().ensureActive()
+				if (allowed()) {
+					Settings.selectedProfile = winner
+					activeContent = replacement
+					lastProfileName = profile.name
+					committed = true
+					notification.show(lastProfileName, R.string.status_started)
+					ProfileManager.notifySelectionChanged()
+				}
+			}
+			if (committed) {
+				Settings.dataStore.flush()
+				Log.i(TAG, "Automatic recovery selected profile $winner")
+			}
+			committed
+		} finally {
+			if (temporaryRuntime && !committed) {
+				// A radio-off/manual-selection event cancels search. Restore the runtime without
+				// changing the stored selection or asking Android to activate any network.
+				withContext(NonCancellable) {
+					healthPort = originalPort
+					if (serviceWanted) {
+						try {
+							commandServer.startOrReloadService(originalContent, buildOverrideOptions())
+							recovery.runtimeReloaded()
+						} catch (e: Exception) {
+							stopAndAlert(Alert.CreateService, e.message)
+						}
+					}
+				}
+			}
+		}
+	}
+
 
 	init {
 		idleModeScope.launch {
@@ -215,9 +352,11 @@ class BoxService(private val service: Service, private val platformInterface: Pl
 		return profile.name to content
 	}
 
-	private suspend fun startService() {
+	private suspend fun startService() = runtimeMutex.withLock {
 		try {
-			val (profileName, content) = loadServiceConfig() ?: return
+			val (profileName, rawContent) = loadServiceConfig() ?: return@withLock
+			if (!serviceWanted) return@withLock
+			val content = monitoredContent(rawContent)
 
 			lastProfileName = profileName
 			withContext(Dispatchers.Main) {
@@ -235,7 +374,7 @@ class BoxService(private val service: Service, private val platformInterface: Pl
 				startLogcatForwarder()
 			} catch (e: Exception) {
 				stopAndAlert(Alert.CreateService, e.message)
-				return
+				return@withLock
 			}
 
 			if (commandServer.needWIFIState()) {
@@ -247,22 +386,27 @@ class BoxService(private val service: Service, private val platformInterface: Pl
 					}
 				if (!service.hasPermission(wifiPermission)) {
 					stopAndAlert(Alert.RequestLocationPermission)
-					return
+					return@withLock
 				}
 			}
 
+			if (!serviceWanted) return@withLock
+			activeContent = content
 			status.postValue(Status.Started)
 			withContext(Dispatchers.Main) {
 				notification.show(lastProfileName, R.string.status_started)
 			}
 			notification.start()
+			if (!configCheckMode) recovery.start()
 		} catch (e: Exception) {
 			stopAndAlert(Alert.StartService, e.message)
-			return
+			return@withLock
 		}
 	}
 
 	override fun serviceStop() {
+		serviceWanted = false
+		recovery.stop()
 		notification.close()
 		status.postValue(Status.Starting)
 		val pfd = fileDescriptor
@@ -280,29 +424,38 @@ class BoxService(private val service: Service, private val platformInterface: Pl
 	}
 
 	suspend fun serviceReload0() {
-		val (profileName, content) = loadServiceConfig() ?: return
-		lastProfileName = profileName
-		try {
-			commandServer.startOrReloadService(
-				content,
-				buildOverrideOptions(),
-			)
-		} catch (e: Exception) {
-			stopAndAlert(Alert.CreateService, e.message)
-			return
-		}
-
-		if (commandServer.needWIFIState()) {
-			val wifiPermission =
-				if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
-					android.Manifest.permission.ACCESS_FINE_LOCATION
-				} else {
-					android.Manifest.permission.ACCESS_BACKGROUND_LOCATION
-				}
-			if (!service.hasPermission(wifiPermission)) {
-				stopAndAlert(Alert.RequestLocationPermission)
-				return
+		userActionVersion.incrementAndGet()
+		recovery.stop()
+		runtimeMutex.withLock {
+			if (!serviceWanted) return@withLock
+			val (profileName, rawContent) = loadServiceConfig() ?: return@withLock
+			val content = monitoredContent(rawContent)
+			lastProfileName = profileName
+			try {
+				commandServer.startOrReloadService(
+					content,
+					buildOverrideOptions(),
+				)
+			} catch (e: Exception) {
+				stopAndAlert(Alert.CreateService, e.message)
+				return@withLock
 			}
+
+			if (commandServer.needWIFIState()) {
+				val wifiPermission =
+					if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+						android.Manifest.permission.ACCESS_FINE_LOCATION
+					} else {
+						android.Manifest.permission.ACCESS_BACKGROUND_LOCATION
+					}
+				if (!service.hasPermission(wifiPermission)) {
+					stopAndAlert(Alert.RequestLocationPermission)
+					return@withLock
+				}
+			}
+			activeContent = content
+			if (serviceWanted && !configCheckMode) recovery.start()
+			withContext(Dispatchers.Main) { notification.show(lastProfileName, R.string.status_started) }
 		}
 	}
 
@@ -328,7 +481,9 @@ class BoxService(private val service: Service, private val platformInterface: Pl
 
 	@OptIn(DelicateCoroutinesApi::class)
 	private fun stopService() {
-		if (status.value != Status.Started) return
+		serviceWanted = false
+		recovery.stop()
+		if (status.value == Status.Stopped || status.value == Status.Stopping) return
 		status.value = Status.Stopping
 		if (receiverRegistered) {
 			service.unregisterReceiver(receiver)
@@ -336,25 +491,26 @@ class BoxService(private val service: Service, private val platformInterface: Pl
 		}
 		notification.close()
 		GlobalScope.launch(Dispatchers.IO) {
-			val pfd = fileDescriptor
-			if (pfd != null) {
-				pfd.close()
-				fileDescriptor = null
-			}
-			DefaultNetworkMonitor.stop()
-			closeService()
-			stopLogcatForwarder()
-			commandServer.apply {
-				close()
-//                Seq.destroyRef(refnum)
-			}
-			Libbox.discardPowerReportDraft()
-			PowerReportManager.refresh()
-			Settings.startedByUser = false
-			Settings.dataStore.flush()
-			withContext(Dispatchers.Main) {
-				status.value = Status.Stopped
-				service.stopSelf()
+			runtimeMutex.withLock {
+				val pfd = fileDescriptor
+				if (pfd != null) {
+					pfd.close()
+					fileDescriptor = null
+				}
+				DefaultNetworkMonitor.stop()
+				stopLogcatForwarder()
+				if (::commandServer.isInitialized) {
+					closeService()
+					commandServer.close()
+				}
+				Libbox.discardPowerReportDraft()
+				PowerReportManager.refresh()
+				Settings.startedByUser = false
+				Settings.dataStore.flush()
+				withContext(Dispatchers.Main) {
+					status.value = Status.Stopped
+					service.stopSelf()
+				}
 			}
 		}
 	}
@@ -368,6 +524,8 @@ class BoxService(private val service: Service, private val platformInterface: Pl
 	}
 
 	private suspend fun stopAndAlert(type: Alert, message: String? = null) {
+		serviceWanted = false
+		recovery.stop()
 		Settings.startedByUser = false
 		Settings.dataStore.flush()
 		val pfd = fileDescriptor
@@ -398,6 +556,7 @@ class BoxService(private val service: Service, private val platformInterface: Pl
 	@Suppress("SameReturnValue")
 	internal fun onStartCommand(): Int {
 		if (status.value != Status.Stopped) return Service.START_NOT_STICKY
+		serviceWanted = true
 		status.value = Status.Starting
 		notification.show(lastProfileName, R.string.status_starting)
 
@@ -417,13 +576,16 @@ class BoxService(private val service: Service, private val platformInterface: Pl
 		}
 
 		GlobalScope.launch(Dispatchers.IO) {
-			Settings.startedByUser = true
-			try {
-				Application.application.setupLibbox()
-				startCommandServer()
-			} catch (e: Exception) {
-				stopAndAlert(Alert.StartCommandServer, e.message)
-				return@launch
+			runtimeMutex.withLock {
+				if (!serviceWanted) return@launch
+				Settings.startedByUser = true
+				try {
+					Application.application.setupLibbox()
+					startCommandServer()
+				} catch (e: Exception) {
+					stopAndAlert(Alert.StartCommandServer, e.message)
+					return@launch
+				}
 			}
 			startService()
 		}
@@ -433,6 +595,8 @@ class BoxService(private val service: Service, private val platformInterface: Pl
 	internal fun onBind(): IBinder = binder
 
 	internal fun onDestroy() {
+		serviceWanted = false
+		recovery.stop()
 		idleModeUpdates.cancel()
 		idleModeScope.cancel()
 		binder.close()
