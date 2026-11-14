@@ -152,6 +152,7 @@ import ru.ravel.ultunnel.ktx.launchCustomTab
 import ru.ravel.ultunnel.update.UpdateState
 import ru.ravel.ultunnel.utils.RemoteControlManager
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 
 class MainActivity :
 	AppCompatActivity(),
@@ -389,7 +390,12 @@ class MainActivity :
 		val currentRoute = currentDestination?.route
 
 		LaunchedEffect(currentRoute) {
-			val inSettings = currentRoute?.startsWith(Screen.Settings.route) == true
+			// NavHost sets the graph inside the Scaffold's subcomposition, which on some devices
+			// (OnePlus 15) happens after this effect first runs; navigate() would then throw
+			// "You must call setGraph() before calling getGraph()". currentBackStackEntryFlow emits
+			// only once the graph is set, and its route is fresher than currentRoute.
+			val route = navController.currentBackStackEntryFlow.first().destination.route
+			val inSettings = route?.startsWith(Screen.Settings.route) == true
 			if (Settings.accessKey.isBlank() && !inSettings) {
 				navController.navigate(Screen.Settings.route) {
 					popUpTo(navController.graph.findStartDestination().id) { inclusive = true }
@@ -967,6 +973,8 @@ class MainActivity :
 		val pendingRoute = pendingNavigationRoute.value
 		LaunchedEffect(pendingRoute) {
 			if (pendingRoute != null) {
+				// Deep links set pendingRoute before the first frame; wait until NavHost has a graph.
+				navController.currentBackStackEntryFlow.first()
 				navController.navigate(pendingRoute) {
 					launchSingleTop = true
 				}
